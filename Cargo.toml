@@ -11,7 +11,7 @@ config = "0.13.3"
 log = "0.4.17"
 nyoom = "0.0.1"
 rand = "0.8.5"
-rsfs = "0.4.1"
+rsfs = { git = "https://github.com/queer/rsfs", rev = "3399680" }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_derive = "1.0.152"
 thiserror = "1.0.38"
