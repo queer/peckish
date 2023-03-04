@@ -28,7 +28,10 @@ impl Artifact for TarballArtifact {
     async fn extract(&self) -> Result<MemoryFS> {
         let fs = MemoryFS::new();
 
-        // Unpack TAR to a temporary archive, then copy it to the memory filesystem
+        // Unpack TAR to a temporary archive, then copy it to the memory
+        // filesystem.
+        // This is sadly necessary because Rust's tar libraries don't allow for
+        // in-memory manipulation.
         let mut archive = Archive::new(File::open(&self.path).await.map_err(Fix::Io)?);
         let mut tmp = std::env::temp_dir();
         tmp.push(format!("peckish_unpack-{}", rand::random::<u64>()));
