@@ -1,9 +1,9 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use color_eyre::Result;
-use rsfs::unix_ext::GenFSExt;
 use rsfs::{FileType, GenFS, Metadata};
-use tokio::fs::{read_link, File};
+use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 
 use crate::util::{traverse_memfs, Fix, MemoryFS};
@@ -34,31 +34,18 @@ impl Artifact for TarballArtifact {
         tmp.push(format!("peckish_unpack-{}", rand::random::<u64>()));
         archive.unpack(&tmp).await.map_err(Fix::Io)?;
         let walk_results = nyoom::walk(&tmp, |_path, _| ())?;
-        for e in walk_results.paths.iter() {
-            let path = e.key().clone();
-            let file_type = path.metadata()?.file_type();
-            let path = path.strip_prefix(&tmp)?.to_path_buf();
+        let paths = walk_results
+            .paths
+            .iter()
+            .map(|e| {
+                let path = e.key().clone();
+                let memfs_path = path.strip_prefix(&tmp).unwrap().to_path_buf();
+                (path, memfs_path)
+            })
+            .collect::<HashMap<_, _>>();
 
-            // TODO: DRY with FileArtifact
-            if file_type.is_dir() {
-                fs.create_dir_all(path)?;
-            } else if file_type.is_file() {
-                let mut file_handle = fs.create_file(&path)?;
-                let path_clone = path.clone();
-                let join_handle = tokio::spawn(async move {
-                    let mut file = std::fs::File::open(path_clone).map_err(Fix::Io).unwrap();
-                    std::io::copy(&mut file, &mut file_handle)
-                        .map_err(Fix::Io)
-                        .unwrap();
-                });
-                join_handle.await?;
-            } else if file_type.is_symlink() {
-                let link = read_link(&path).await.map_err(Fix::Io)?;
-                fs.symlink(&path, link)?;
-            } else {
-                panic!("unknown file type for path {path:?}");
-            }
-        }
+        super::file::copy_files_from_paths_to_memfs(&paths, &fs).await?;
+
         tokio::fs::remove_dir_all(tmp).await.map_err(Fix::Io)?;
 
         Ok(fs)
