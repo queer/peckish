@@ -1,0 +1,15 @@
+[package]
+name = "peckish"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.69"
+async-trait = "0.1.64"
+color-eyre = { version = "0.6.2", features = ["issue-url"] }
+log = "0.4.17"
+rsfs = "0.4.1"
+thiserror = "1.0.38"
+tokio = { version = "1.25.0", features = ["full"] }
+tokio-stream = "0.1.12"
+tokio-tar = "0.3.0"
