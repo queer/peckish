@@ -34,7 +34,7 @@ impl Artifact for TarballArtifact {
         // in-memory manipulation.
         let mut archive = Archive::new(File::open(&self.path).await.map_err(Fix::Io)?);
         let mut tmp = std::env::temp_dir();
-        tmp.push(format!("peckish_unpack-{}", rand::random::<u64>()));
+        tmp.push(format!("peckish-archive_unpack-{}-{}", self.name, rand::random::<u64>()));
         archive.unpack(&tmp).await.map_err(Fix::Io)?;
         let walk_results = nyoom::walk(&tmp, |_path, _| ())?;
         let paths = walk_results
