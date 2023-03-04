@@ -35,7 +35,6 @@ mod tests {
 
     #[tokio::test]
     async fn test_basic_transform_works() -> Result<()> {
-        println!("building file artifact");
         let file_artifact = file::FileArtifact {
             name: "Cargo.toml".to_string(),
             paths: vec![PathBuf::from("Cargo.toml")],
@@ -45,7 +44,6 @@ mod tests {
             out: "test.tar.gz".to_string(),
         };
 
-        println!("building tarball artifact");
         let tarball_artifact = tarball_producer.produce(&file_artifact).await?;
 
         assert_eq!(tarball_artifact.name(), "test.tar.gz");
@@ -56,7 +54,6 @@ mod tests {
             out: "test".to_string(),
         };
 
-        println!("building file artifact");
         let file_artifact = file_producer.produce(&tarball_artifact).await?;
 
         assert_eq!(file_artifact.name(), "test");
@@ -64,8 +61,12 @@ mod tests {
             assert!(path.exists());
         }
 
-        tokio::fs::remove_file(tarball_artifact.name()).await.map_err(Fix::Io)?;
-        tokio::fs::remove_dir_all(file_artifact.name()).await.map_err(Fix::Io)?;
+        tokio::fs::remove_file(tarball_artifact.name())
+            .await
+            .map_err(Fix::Io)?;
+        tokio::fs::remove_dir_all(file_artifact.name())
+            .await
+            .map_err(Fix::Io)?;
 
         Ok(())
     }

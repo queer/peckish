@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use color_eyre::Result;
-use rsfs::{GenFS, DirEntry, Metadata};
+use rsfs::{DirEntry, GenFS, Metadata};
 use thiserror::Error;
 
 pub type MemoryFS = rsfs::mem::unix::FS;
