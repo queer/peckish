@@ -10,6 +10,7 @@ use crate::util::{traverse_memfs, Fix, MemoryFS};
 
 use super::{Artifact, ArtifactProducer};
 
+#[derive(Debug, Clone)]
 pub struct TarballArtifact {
     pub name: String,
     pub path: PathBuf,
@@ -34,7 +35,11 @@ impl Artifact for TarballArtifact {
         // in-memory manipulation.
         let mut archive = Archive::new(File::open(&self.path).await.map_err(Fix::Io)?);
         let mut tmp = std::env::temp_dir();
-        tmp.push(format!("peckish-archive_unpack-{}-{}", self.name, rand::random::<u64>()));
+        tmp.push(format!(
+            "peckish-archive_unpack-{}-{}",
+            self.name,
+            rand::random::<u64>()
+        ));
         archive.unpack(&tmp).await.map_err(Fix::Io)?;
         let walk_results = nyoom::walk(&tmp, |_path, _| ())?;
         let paths = walk_results
@@ -55,17 +60,25 @@ impl Artifact for TarballArtifact {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct TarballProducer {
-    pub out: String,
+    pub name: String,
+    pub path: PathBuf,
 }
 
 #[async_trait::async_trait]
-impl ArtifactProducer<TarballArtifact> for TarballProducer {
+impl ArtifactProducer for TarballProducer {
+    type Output = TarballArtifact;
+
+    fn name(&self) -> &String {
+        &self.name
+    }
+
     async fn produce(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
         let fs = previous.extract().await?;
         let paths = traverse_memfs(&fs, &PathBuf::from("/"))?;
 
-        let file = File::create(&self.out).await.map_err(Fix::Io)?;
+        let file = File::create(&self.path).await.map_err(Fix::Io)?;
         let mut archive_builder = tokio_tar::Builder::new(file);
         for path in paths {
             let mut stream = fs.open_file(&path)?;
@@ -93,8 +106,8 @@ impl ArtifactProducer<TarballArtifact> for TarballProducer {
         }
 
         Ok(TarballArtifact {
-            name: self.out.clone(),
-            path: self.out.clone().into(),
+            name: self.path.to_string_lossy().to_string(),
+            path: self.path.clone(),
         })
     }
 }

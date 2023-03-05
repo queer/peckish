@@ -10,6 +10,7 @@ use crate::util::{traverse_memfs, Fix, MemoryFS};
 
 use super::{Artifact, ArtifactProducer};
 
+#[derive(Debug, Clone)]
 pub struct FileArtifact {
     pub name: String,
     pub paths: Vec<PathBuf>,
@@ -69,19 +70,27 @@ pub async fn copy_files_from_paths_to_memfs(
     Ok(())
 }
 
+#[derive(Debug, Clone)]
 pub struct FileProducer {
-    pub out: String,
+    pub name: String,
+    pub path: PathBuf,
 }
 
 #[async_trait::async_trait]
-impl ArtifactProducer<FileArtifact> for FileProducer {
+impl ArtifactProducer for FileProducer {
+    type Output = FileArtifact;
+
+    fn name(&self) -> &String {
+        &self.name
+    }
+
     async fn produce(&self, previous: &dyn Artifact) -> Result<FileArtifact> {
         let fs = previous.extract().await?;
         let paths = traverse_memfs(&fs, &PathBuf::from("/"))?;
 
         for path in &paths {
             let mut full_path = PathBuf::from("/");
-            full_path.push(&self.out);
+            full_path.push(&self.path);
             full_path.push(path.strip_prefix("/")?);
             let full_path = full_path.strip_prefix("/")?;
             if let Some(parent) = full_path.parent() {
@@ -99,7 +108,7 @@ impl ArtifactProducer<FileArtifact> for FileProducer {
             .collect();
 
         Ok(FileArtifact {
-            name: self.out.clone(),
+            name: self.path.to_string_lossy().to_string(),
             paths,
         })
     }

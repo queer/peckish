@@ -18,9 +18,13 @@ pub trait Artifact: Send + Sync {
 
 /// An artifact producer takes in the previous artifact and produces a new one.
 #[async_trait::async_trait]
-pub trait ArtifactProducer<T: Artifact> {
+pub trait ArtifactProducer {
+    type Output: Artifact;
+
+    fn name(&self) -> &String;
+
     /// Produce a new artifact, given a previous artifact.
-    async fn produce(&self, previous: &dyn Artifact) -> Result<T>;
+    async fn produce(&self, previous: &dyn Artifact) -> Result<Self::Output>;
 }
 
 #[cfg(test)]
@@ -36,12 +40,13 @@ mod tests {
     #[tokio::test]
     async fn test_basic_transform_works() -> Result<()> {
         let file_artifact = file::FileArtifact {
-            name: "Cargo.toml".to_string(),
+            name: "Cargo.toml".into(),
             paths: vec![PathBuf::from("Cargo.toml")],
         };
 
         let tarball_producer = tarball::TarballProducer {
-            out: "test.tar.gz".to_string(),
+            name: "test-tarball-producer".into(),
+            path: "test.tar.gz".into(),
         };
 
         let tarball_artifact = tarball_producer.produce(&file_artifact).await?;
@@ -51,7 +56,8 @@ mod tests {
         assert!(tarball_path.exists());
 
         let file_producer = file::FileProducer {
-            out: "test".to_string(),
+            name: "test-file-producer".into(),
+            path: "test".into(),
         };
 
         let file_artifact = file_producer.produce(&tarball_artifact).await?;

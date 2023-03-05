@@ -7,13 +7,13 @@ edition = "2021"
 anyhow = "1.0.69"
 async-trait = "0.1.64"
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
-config = "0.13.3"
 log = "0.4.17"
 nyoom = "0.0.1"
 rand = "0.8.5"
 rsfs = { git = "https://github.com/queer/rsfs", rev = "3399680" }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_derive = "1.0.152"
+serde_yaml = "0.9.17"
 thiserror = "1.0.38"
 tokio = { version = "1.25.0", features = ["full"] }
 tokio-stream = "0.1.12"

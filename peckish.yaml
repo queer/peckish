@@ -1,0 +1,10 @@
+input:
+  name: "rust: peckish release binary"
+  type: "file"
+  paths:
+    - "./target/release/peckish"
+
+output:
+  - name: "tarball: peckish release binary"
+    type: "tarball"
+    path: "./peckish-release-binary.tar"

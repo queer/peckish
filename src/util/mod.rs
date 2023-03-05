@@ -4,6 +4,8 @@ use color_eyre::Result;
 use rsfs::{DirEntry, GenFS, Metadata};
 use thiserror::Error;
 
+pub mod config;
+
 pub type MemoryFS = rsfs::mem::unix::FS;
 
 #[derive(Error, Debug)]
