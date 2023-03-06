@@ -1,14 +1,17 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+use color_eyre::eyre::eyre;
 use color_eyre::Result;
-use rsfs::{FileType, GenFS, Metadata};
+use log::*;
+use rsfs::GenFS;
 use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 
+use crate::util::config::Injection;
 use crate::util::{traverse_memfs, Fix, MemoryFS};
 
-use super::{Artifact, ArtifactProducer};
+use super::{Artifact, ArtifactProducer, InternalFileType};
 
 #[derive(Debug, Clone)]
 pub struct TarballArtifact {
@@ -40,6 +43,7 @@ impl Artifact for TarballArtifact {
             self.name,
             rand::random::<u64>()
         ));
+        debug!("unpacking archive to temporary directory: {:?}", tmp);
         archive.unpack(&tmp).await.map_err(Fix::Io)?;
         let walk_results = nyoom::walk(&tmp, |_path, _| ())?;
         let paths = walk_results
@@ -50,11 +54,16 @@ impl Artifact for TarballArtifact {
                 let memfs_path = path.strip_prefix(&tmp).unwrap().to_path_buf();
                 (path, memfs_path)
             })
+            .filter(|(_, memfs_path)| !memfs_path.as_os_str().is_empty())
             .collect::<HashMap<_, _>>();
 
-        super::file::copy_files_from_paths_to_memfs(&paths, &fs).await?;
+        debug!("copying {} paths to memfs!", paths.len());
+        super::copy_files_from_paths_to_memfs(&paths, &fs).await?;
 
-        tokio::fs::remove_dir_all(tmp).await.map_err(Fix::Io)?;
+        if tmp.exists() {
+            debug!("removing temporary directory: {:?}", tmp);
+            tokio::fs::remove_dir_all(tmp).await.map_err(Fix::Io)?;
+        }
 
         Ok(fs)
     }
@@ -64,6 +73,7 @@ impl Artifact for TarballArtifact {
 pub struct TarballProducer {
     pub name: String,
     pub path: PathBuf,
+    pub injections: Vec<Injection>,
 }
 
 #[async_trait::async_trait]
@@ -74,36 +84,53 @@ impl ArtifactProducer for TarballProducer {
         &self.name
     }
 
+    fn injections(&self) -> &[Injection] {
+        &self.injections
+    }
+
     async fn produce(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
         let fs = previous.extract().await?;
-        let paths = traverse_memfs(&fs, &PathBuf::from("/"))?;
+        let fs = self.inject(&fs)?;
+        let paths = traverse_memfs(fs, &PathBuf::from("/"))?;
 
         let file = File::create(&self.path).await.map_err(Fix::Io)?;
         let mut archive_builder = tokio_tar::Builder::new(file);
+        archive_builder.follow_symlinks(false);
         for path in paths {
             let mut stream = fs.open_file(&path)?;
             let path = path.strip_prefix("/")?;
 
-            let mut data = Vec::new();
-            std::io::copy(&mut stream, &mut data)?;
-
             let mut header = Header::new_gnu();
             header.set_path(path).map_err(Fix::Io)?;
 
-            let file_type = fs.metadata(path)?.file_type();
-            if file_type.is_dir() {
+            let file_type = super::determine_file_type_from_memfs(fs, path)?;
+            if file_type == InternalFileType::Dir {
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
-            } else if file_type.is_file() {
+                let empty: &[u8] = &[];
+                archive_builder.append(&header, empty).await?;
+            } else if file_type == InternalFileType::File {
+                let mut data = Vec::new();
+                std::io::copy(&mut stream, &mut data)?;
                 header.set_size(data.len() as u64);
-            } else if file_type.is_symlink() {
+                archive_builder
+                    .append_data(&mut header, path, data.as_slice())
+                    .await
+                    .map_err(Fix::Io)?;
+            } else if file_type == InternalFileType::Symlink {
+                let link = fs.read_link(path)?;
+                header.set_entry_type(EntryType::Symlink);
+                header.set_link_name(link.to_str().unwrap())?;
+                let empty: &[u8] = &[1];
+                header.set_size(empty.len() as u64);
+                header.set_cksum();
+                archive_builder.append(&header, empty).await?;
+            } else {
+                return Err(eyre!("Unsupported file type: {:?}", file_type));
             }
-
-            archive_builder
-                .append_data(&mut header, path, data.as_slice())
-                .await
-                .map_err(Fix::Io)?;
         }
+
+        archive_builder.into_inner().await?;
 
         Ok(TarballArtifact {
             name: self.path.to_string_lossy().to_string(),

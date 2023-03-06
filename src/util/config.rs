@@ -1,12 +1,18 @@
+use std::io::Write;
 use std::path::PathBuf;
 
 use color_eyre::Result;
+use log::*;
+use rsfs::unix_ext::GenFSExt;
+use rsfs::{GenFS, Metadata};
 use serde::{Deserialize, Serialize};
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
+
+use super::MemoryFS;
 
 #[derive(Debug)]
 pub struct PeckishConfig {
@@ -61,8 +67,16 @@ impl Into<ConfiguredArtifact> for InputArtifact {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum OutputProducer {
-    File { name: String, path: PathBuf },
-    Tarball { name: String, path: PathBuf },
+    File {
+        name: String,
+        path: PathBuf,
+        injections: Vec<Injection>,
+    },
+    Tarball {
+        name: String,
+        path: PathBuf,
+        injections: Vec<Injection>,
+    },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -70,16 +84,24 @@ enum OutputProducer {
 impl Into<ConfiguredProducer> for &OutputProducer {
     fn into(self) -> ConfiguredProducer {
         match self {
-            OutputProducer::File { name, path } => ConfiguredProducer::File(FileProducer {
+            OutputProducer::File {
+                name,
+                path,
+                injections,
+            } => ConfiguredProducer::File(FileProducer {
                 name: name.clone(),
                 path: path.clone(),
+                injections: injections.clone(),
             }),
-            OutputProducer::Tarball { name, path } => {
-                ConfiguredProducer::Tarball(TarballProducer {
-                    name: name.clone(),
-                    path: path.clone(),
-                })
-            }
+            OutputProducer::Tarball {
+                name,
+                path,
+                injections,
+            } => ConfiguredProducer::Tarball(TarballProducer {
+                name: name.clone(),
+                path: path.clone(),
+                injections: injections.clone(),
+            }),
         }
     }
 }
@@ -94,4 +116,64 @@ pub enum ConfiguredArtifact {
 pub enum ConfiguredProducer {
     File(FileProducer),
     Tarball(TarballProducer),
+}
+
+impl ConfiguredProducer {
+    pub fn name(&self) -> &str {
+        match self {
+            ConfiguredProducer::File(producer) => &producer.name,
+            ConfiguredProducer::Tarball(producer) => &producer.name,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum Injection {
+    Move(PathBuf, PathBuf),
+    Copy(PathBuf, PathBuf),
+    Symlink(PathBuf, PathBuf),
+    Touch(PathBuf),
+    Delete(PathBuf),
+    Create(PathBuf, Vec<u8>),
+}
+
+impl Injection {
+    pub fn inject(&self, fs: &MemoryFS) -> Result<()> {
+        match self {
+            Injection::Move(src, dest) => {
+                debug!("Moving {:?} to {:?}", src, dest);
+                fs.rename(src, dest)?;
+            }
+            Injection::Copy(src, dest) => {
+                debug!("Copying {:?} to {:?}", src, dest);
+                fs.copy(src, dest)?;
+            }
+            Injection::Symlink(src, dest) => {
+                debug!("Symlinking {:?} to {:?}", src, dest);
+                fs.symlink(src, dest)?;
+            }
+            Injection::Touch(path) => {
+                debug!("Touching {:?}", path);
+                fs.create_dir_all(path.parent().unwrap())?;
+                fs.create_file(path)?;
+            }
+            Injection::Delete(path) => {
+                debug!("Deleting {:?}", path);
+                let metadata = fs.metadata(path)?;
+                if metadata.is_dir() {
+                    fs.remove_dir_all(path)?;
+                } else {
+                    fs.remove_file(path)?;
+                }
+            }
+            Injection::Create(path, content) => {
+                debug!("Creating {:?} with content {:?}", path, content);
+                fs.create_dir_all(path.parent().unwrap())?;
+                let mut file = fs.create_file(path)?;
+                file.write_all(content)?;
+            }
+        }
+
+        Ok(())
+    }
 }

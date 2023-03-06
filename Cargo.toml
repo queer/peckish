@@ -7,8 +7,10 @@ edition = "2021"
 anyhow = "1.0.69"
 async-trait = "0.1.64"
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
+ctor = "0.1.26"
 log = "0.4.17"
 nyoom = "0.0.1"
+pretty_env_logger = "0.4.0"
 rand = "0.8.5"
 rsfs = { git = "https://github.com/queer/rsfs", rev = "3399680" }
 serde = { version = "1.0.152", features = ["derive"] }
@@ -17,4 +19,4 @@ serde_yaml = "0.9.17"
 thiserror = "1.0.38"
 tokio = { version = "1.25.0", features = ["full"] }
 tokio-stream = "0.1.12"
-tokio-tar = "0.3.0"
+tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
