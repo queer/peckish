@@ -11,15 +11,18 @@ use tokio::fs::read_link;
 use crate::util::config::Injection;
 use crate::util::{Fix, MemoryFS};
 
-pub mod arch;
+/// WIP PACKAGE, DO NOT USE YET
+mod arch;
+
+pub mod docker;
 pub mod file;
 pub mod tarball;
 
 /// An artifact is the result of some build process.
 #[async_trait::async_trait]
 pub trait Artifact: Send + Sync {
-    fn name(&self) -> &String;
-    fn description(&self) -> String;
+    fn name(&self) -> &str;
+    fn description(&self) -> &str;
 
     /// Extract this artifact into a virtual filesystem. Used for manipulating
     /// the artifact's contents.
@@ -31,7 +34,7 @@ pub trait Artifact: Send + Sync {
 pub trait ArtifactProducer {
     type Output: Artifact;
 
-    fn name(&self) -> &String;
+    fn name(&self) -> &str;
 
     fn injections(&self) -> &[Injection];
 
@@ -68,27 +71,66 @@ pub async fn copy_files_from_paths_to_memfs(
         let file_type = determine_file_type_from_filesystem(path).await?;
         debug!("copying {path:?} ({file_type:?}) to {memfs_path:?}");
         if file_type == InternalFileType::Dir {
-            debug!("creating dir {path:?}");
-            fs.create_dir_all(path)?;
+            copy_dir_to_memfs(path, memfs_path, fs).await?;
         } else if file_type == InternalFileType::File {
-            debug!("creating file {path:?}");
-            let mut file_handle = fs.create_file(memfs_path)?;
-            let path_clone = path.clone();
-            let join_handle = tokio::spawn(async move {
-                let mut file = std::fs::File::open(path_clone).map_err(Fix::Io).unwrap();
-                std::io::copy(&mut file, &mut file_handle)
-                    .map_err(Fix::Io)
-                    .unwrap();
-            });
-            join_handle.await?;
+            copy_file_to_memfs(path, memfs_path, fs).await?;
         } else if file_type == InternalFileType::Symlink {
-            let link = read_link(&path).await.map_err(Fix::Io)?;
-            debug!("linking {path:?} to {link:?}");
-            fs.symlink(link, memfs_path)?;
+            add_symlink_to_memfs(path, memfs_path, fs).await?;
         } else {
             error!("unknown file type for path {path:?}");
         }
     }
+
+    Ok(())
+}
+
+async fn copy_file_to_memfs(path: &Path, memfs_path: &Path, fs: &MemoryFS) -> Result<()> {
+    debug!("creating file {path:?}");
+    if let Some(memfs_parent) = memfs_path.parent() {
+        fs.create_dir_all(memfs_parent)?;
+    }
+
+    let mut file_handle = fs.create_file(memfs_path)?;
+    let path_clone = path.to_path_buf();
+    let join_handle = tokio::spawn(async move {
+        let mut file = std::fs::File::open(path_clone).map_err(Fix::Io).unwrap();
+        std::io::copy(&mut file, &mut file_handle)
+            .map_err(Fix::Io)
+            .unwrap();
+    });
+
+    join_handle.await?;
+
+    Ok(())
+}
+
+#[async_recursion::async_recursion]
+async fn copy_dir_to_memfs(path: &Path, memfs_path: &Path, fs: &MemoryFS) -> Result<()> {
+    debug!("creating dir {memfs_path:?}");
+    fs.create_dir_all(memfs_path)?;
+
+    let mut files = tokio::fs::read_dir(path).await?;
+
+    while let Some(file) = files.next_entry().await? {
+        let file_type = file.file_type().await?;
+        let mut file_path = memfs_path.to_path_buf();
+        file_path.push(file.file_name());
+        if file_type.is_dir() {
+            copy_dir_to_memfs(&file.path(), &file_path, fs).await?;
+        } else if file_type.is_file() {
+            copy_file_to_memfs(&file.path(), &file_path, fs).await?;
+        } else if file_type.is_symlink() {
+            add_symlink_to_memfs(&file.path(), &file_path, fs).await?;
+        }
+    }
+
+    Ok(())
+}
+
+async fn add_symlink_to_memfs(path: &Path, memfs_path: &Path, fs: &MemoryFS) -> Result<()> {
+    let link = read_link(&path).await.map_err(Fix::Io)?;
+    debug!("linking {memfs_path:?} to {link:?}");
+    fs.symlink(link, memfs_path)?;
 
     Ok(())
 }

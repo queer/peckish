@@ -5,7 +5,7 @@ use log::*;
 use rsfs::GenFS;
 
 use crate::util::config::Injection;
-use crate::util::{traverse_memfs, Fix, MemoryFS};
+use crate::util::{is_in_tmp_dir, traverse_memfs, Fix, MemoryFS};
 
 use super::{copy_files_from_paths_to_memfs, Artifact, ArtifactProducer, InternalFileType};
 
@@ -17,12 +17,12 @@ pub struct FileArtifact {
 
 #[async_trait::async_trait]
 impl Artifact for FileArtifact {
-    fn name(&self) -> &String {
+    fn name(&self) -> &str {
         &self.name
     }
 
-    fn description(&self) -> String {
-        "An artifact of one or more files".to_string()
+    fn description(&self) -> &str {
+        "An artifact of one or more files"
     }
 
     async fn extract(&self) -> Result<MemoryFS> {
@@ -51,7 +51,7 @@ pub struct FileProducer {
 impl ArtifactProducer for FileProducer {
     type Output = FileArtifact;
 
-    fn name(&self) -> &String {
+    fn name(&self) -> &str {
         &self.name
     }
 
@@ -70,7 +70,14 @@ impl ArtifactProducer for FileProducer {
             let mut full_path = PathBuf::from("/");
             full_path.push(&self.path);
             full_path.push(path.strip_prefix("/")?);
-            let full_path = full_path.strip_prefix("/")?;
+            // If the path isn't in a tmp dir, or if the user didn't explicitly
+            // specify that paths should end up at the root, strip the leading
+            // `/` to avoid writing to the wrong place.
+            let full_path = if is_in_tmp_dir(path)? || self.path.starts_with("/") {
+                full_path
+            } else {
+                full_path.strip_prefix("/")?.to_path_buf()
+            };
             debug!("full_path = {full_path:?}");
             if let Some(parent) = full_path.parent() {
                 tokio::fs::create_dir_all(parent).await.map_err(Fix::Io)?;

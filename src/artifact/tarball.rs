@@ -9,7 +9,7 @@ use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 
 use crate::util::config::Injection;
-use crate::util::{traverse_memfs, Fix, MemoryFS};
+use crate::util::{create_tmp_dir, traverse_memfs, Fix, MemoryFS};
 
 use super::{Artifact, ArtifactProducer, InternalFileType};
 
@@ -21,12 +21,12 @@ pub struct TarballArtifact {
 
 #[async_trait::async_trait]
 impl Artifact for TarballArtifact {
-    fn name(&self) -> &String {
+    fn name(&self) -> &str {
         &self.name
     }
 
-    fn description(&self) -> String {
-        "An artifact of one or more files".to_string()
+    fn description(&self) -> &str {
+        "An artifact of one or more files"
     }
 
     async fn extract(&self) -> Result<MemoryFS> {
@@ -36,13 +36,9 @@ impl Artifact for TarballArtifact {
         // filesystem.
         // This is sadly necessary because Rust's tar libraries don't allow for
         // in-memory manipulation.
+        debug!("unpacking tarball to {:?}", self.path);
         let mut archive = Archive::new(File::open(&self.path).await.map_err(Fix::Io)?);
-        let mut tmp = std::env::temp_dir();
-        tmp.push(format!(
-            "peckish-archive_unpack-{}-{}",
-            self.name,
-            rand::random::<u64>()
-        ));
+        let tmp = create_tmp_dir().await?;
         debug!("unpacking archive to temporary directory: {:?}", tmp);
         archive.unpack(&tmp).await.map_err(Fix::Io)?;
         let walk_results = nyoom::walk(&tmp, |_path, _| ())?;
@@ -80,7 +76,7 @@ pub struct TarballProducer {
 impl ArtifactProducer for TarballProducer {
     type Output = TarballArtifact;
 
-    fn name(&self) -> &String {
+    fn name(&self) -> &str {
         &self.name
     }
 
@@ -97,7 +93,7 @@ impl ArtifactProducer for TarballProducer {
         let mut archive_builder = tokio_tar::Builder::new(file);
         archive_builder.follow_symlinks(false);
         for path in paths {
-            let mut stream = fs.open_file(&path)?;
+            debug!("tarball producing path: {path:?}");
             let path = path.strip_prefix("/")?;
 
             let mut header = Header::new_gnu();
@@ -107,23 +103,32 @@ impl ArtifactProducer for TarballProducer {
             if file_type == InternalFileType::Dir {
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
+                header.set_cksum();
+
                 let empty: &[u8] = &[];
                 archive_builder.append(&header, empty).await?;
             } else if file_type == InternalFileType::File {
                 let mut data = Vec::new();
+                let mut stream = fs.open_file(path)?;
                 std::io::copy(&mut stream, &mut data)?;
+
+                header.set_entry_type(EntryType::Regular);
                 header.set_size(data.len() as u64);
+                header.set_cksum();
+
                 archive_builder
                     .append_data(&mut header, path, data.as_slice())
                     .await
                     .map_err(Fix::Io)?;
             } else if file_type == InternalFileType::Symlink {
                 let link = fs.read_link(path)?;
+                let empty: &[u8] = &[];
+
                 header.set_entry_type(EntryType::Symlink);
                 header.set_link_name(link.to_str().unwrap())?;
-                let empty: &[u8] = &[1];
                 header.set_size(empty.len() as u64);
                 header.set_cksum();
+
                 archive_builder.append(&header, empty).await?;
             } else {
                 return Err(eyre!("Unsupported file type: {:?}", file_type));

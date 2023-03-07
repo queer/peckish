@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 
+use crate::artifact::docker::{DockerArtifact, DockerProducer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
 
@@ -47,6 +48,7 @@ struct InternalConfig {
 enum InputArtifact {
     File { name: String, paths: Vec<PathBuf> },
     Tarball { name: String, path: PathBuf },
+    Docker { name: String, image: String },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -57,8 +59,13 @@ impl Into<ConfiguredArtifact> for InputArtifact {
             InputArtifact::File { name, paths } => {
                 ConfiguredArtifact::File(FileArtifact { name, paths })
             }
+
             InputArtifact::Tarball { name, path } => {
                 ConfiguredArtifact::Tarball(TarballArtifact { name, path })
+            }
+
+            InputArtifact::Docker { name, image } => {
+                ConfiguredArtifact::Docker(DockerArtifact { name, image })
             }
         }
     }
@@ -77,6 +84,11 @@ enum OutputProducer {
         path: PathBuf,
         injections: Vec<Injection>,
     },
+    Docker {
+        name: String,
+        image: String,
+        injections: Vec<Injection>,
+    },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -93,6 +105,7 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 path: path.clone(),
                 injections: injections.clone(),
             }),
+
             OutputProducer::Tarball {
                 name,
                 path,
@@ -100,6 +113,16 @@ impl Into<ConfiguredProducer> for &OutputProducer {
             } => ConfiguredProducer::Tarball(TarballProducer {
                 name: name.clone(),
                 path: path.clone(),
+                injections: injections.clone(),
+            }),
+
+            OutputProducer::Docker {
+                name,
+                image,
+                injections,
+            } => ConfiguredProducer::Docker(DockerProducer {
+                name: name.clone(),
+                image: image.clone(),
                 injections: injections.clone(),
             }),
         }
@@ -110,12 +133,14 @@ impl Into<ConfiguredProducer> for &OutputProducer {
 pub enum ConfiguredArtifact {
     File(FileArtifact),
     Tarball(TarballArtifact),
+    Docker(DockerArtifact),
 }
 
 #[derive(Debug, Clone)]
 pub enum ConfiguredProducer {
     File(FileProducer),
     Tarball(TarballProducer),
+    Docker(DockerProducer),
 }
 
 impl ConfiguredProducer {
@@ -123,6 +148,7 @@ impl ConfiguredProducer {
         match self {
             ConfiguredProducer::File(producer) => &producer.name,
             ConfiguredProducer::Tarball(producer) => &producer.name,
+            ConfiguredProducer::Docker(producer) => &producer.name,
         }
     }
 }
