@@ -181,7 +181,9 @@ impl ArtifactProducer for DockerProducer {
 
         while let Some(progress) = stream.next().await {
             let progress = progress?;
-            info!("importing {:?}: {:?}", progress.id, progress.progress);
+            if let Some(status) = progress.status {
+                info!("docker import: {}", status);
+            }
         }
 
         tokio::fs::remove_dir_all(&tmp).await?;
