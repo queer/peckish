@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 
+use crate::artifact::arch::{ArchArtifact, ArchProducer};
 use crate::artifact::docker::{DockerArtifact, DockerProducer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
@@ -49,6 +50,7 @@ enum InputArtifact {
     File { name: String, paths: Vec<PathBuf> },
     Tarball { name: String, path: PathBuf },
     Docker { name: String, image: String },
+    Arch { name: String, path: PathBuf },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -67,6 +69,9 @@ impl Into<ConfiguredArtifact> for InputArtifact {
             InputArtifact::Docker { name, image } => {
                 ConfiguredArtifact::Docker(DockerArtifact { name, image })
             }
+            InputArtifact::Arch { name, path } => {
+                ConfiguredArtifact::Arch(ArchArtifact { name, path })
+            }
         }
     }
 }
@@ -77,16 +82,25 @@ enum OutputProducer {
     File {
         name: String,
         path: PathBuf,
+        #[serde(default)]
         injections: Vec<Injection>,
     },
     Tarball {
         name: String,
         path: PathBuf,
+        #[serde(default)]
         injections: Vec<Injection>,
     },
     Docker {
         name: String,
         image: String,
+        #[serde(default)]
+        injections: Vec<Injection>,
+    },
+    Arch {
+        name: String,
+        path: PathBuf,
+        #[serde(default)]
         injections: Vec<Injection>,
     },
 }
@@ -125,6 +139,16 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 image: image.clone(),
                 injections: injections.clone(),
             }),
+
+            OutputProducer::Arch {
+                name,
+                path,
+                injections,
+            } => ConfiguredProducer::Arch(ArchProducer {
+                name: name.clone(),
+                path: path.clone(),
+                injections: injections.clone(),
+            }),
         }
     }
 }
@@ -134,6 +158,7 @@ pub enum ConfiguredArtifact {
     File(FileArtifact),
     Tarball(TarballArtifact),
     Docker(DockerArtifact),
+    Arch(ArchArtifact),
 }
 
 #[derive(Debug, Clone)]
@@ -141,6 +166,7 @@ pub enum ConfiguredProducer {
     File(FileProducer),
     Tarball(TarballProducer),
     Docker(DockerProducer),
+    Arch(ArchProducer),
 }
 
 impl ConfiguredProducer {
@@ -149,41 +175,46 @@ impl ConfiguredProducer {
             ConfiguredProducer::File(producer) => &producer.name,
             ConfiguredProducer::Tarball(producer) => &producer.name,
             ConfiguredProducer::Docker(producer) => &producer.name,
+            ConfiguredProducer::Arch(producer) => &producer.name,
         }
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum Injection {
-    Move(PathBuf, PathBuf),
-    Copy(PathBuf, PathBuf),
-    Symlink(PathBuf, PathBuf),
-    Touch(PathBuf),
-    Delete(PathBuf),
-    Create(PathBuf, Vec<u8>),
+    Move { src: PathBuf, dest: PathBuf },
+    Copy { src: PathBuf, dest: PathBuf },
+    Symlink { src: PathBuf, dest: PathBuf },
+    Touch { path: PathBuf },
+    Delete { path: PathBuf },
+    Create { path: PathBuf, content: Vec<u8> },
 }
 
 impl Injection {
     pub fn inject(&self, fs: &MemoryFS) -> Result<()> {
         match self {
-            Injection::Move(src, dest) => {
+            Injection::Move { src, dest } => {
                 debug!("Moving {:?} to {:?}", src, dest);
+                if let Some(parent) = dest.parent() {
+                    fs.create_dir_all(parent)?;
+                }
                 fs.rename(src, dest)?;
             }
-            Injection::Copy(src, dest) => {
+            Injection::Copy { src, dest } => {
                 debug!("Copying {:?} to {:?}", src, dest);
                 fs.copy(src, dest)?;
             }
-            Injection::Symlink(src, dest) => {
+            Injection::Symlink { src, dest } => {
                 debug!("Symlinking {:?} to {:?}", src, dest);
                 fs.symlink(src, dest)?;
             }
-            Injection::Touch(path) => {
+            Injection::Touch { path } => {
                 debug!("Touching {:?}", path);
                 fs.create_dir_all(path.parent().unwrap())?;
                 fs.create_file(path)?;
             }
-            Injection::Delete(path) => {
+            Injection::Delete { path } => {
                 debug!("Deleting {:?}", path);
                 let metadata = fs.metadata(path)?;
                 if metadata.is_dir() {
@@ -192,7 +223,7 @@ impl Injection {
                     fs.remove_file(path)?;
                 }
             }
-            Injection::Create(path, content) => {
+            Injection::Create { path, content } => {
                 debug!("Creating {:?} with content {:?}", path, content);
                 fs.create_dir_all(path.parent().unwrap())?;
                 let mut file = fs.create_file(path)?;

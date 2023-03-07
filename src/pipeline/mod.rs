@@ -12,14 +12,16 @@ impl Pipeline {
     }
 
     pub async fn run(&self, config: PeckishConfig) -> Result<()> {
+        info!("running pipeline with {} steps!", config.output.len());
         let mut last_artifact: Box<dyn Artifact> = match config.input {
             ConfiguredArtifact::File(file) => Box::new(file),
             ConfiguredArtifact::Tarball(tarball) => Box::new(tarball),
             ConfiguredArtifact::Docker(docker) => Box::new(docker),
+            ConfiguredArtifact::Arch(arch) => Box::new(arch),
         };
 
-        for producer in config.output {
-            debug!("running producer {}", producer.name());
+        for (i, producer) in config.output.iter().enumerate() {
+            info!("step {}: {}", i + 1, producer.name());
             last_artifact = match producer {
                 ConfiguredProducer::File(file) => {
                     Box::new(file.produce(last_artifact.as_ref()).await?)
@@ -31,6 +33,10 @@ impl Pipeline {
 
                 ConfiguredProducer::Docker(docker) => {
                     Box::new(docker.produce(last_artifact.as_ref()).await?)
+                }
+
+                ConfiguredProducer::Arch(arch) => {
+                    Box::new(arch.produce(last_artifact.as_ref()).await?)
                 }
             }
         }
@@ -98,7 +104,10 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    injections: vec![Injection::Move("Cargo.toml".into(), "Cargo-2.toml".into())],
+                    injections: vec![Injection::Move {
+                        src: "Cargo.toml".into(),
+                        dest: "Cargo-2.toml".into(),
+                    }],
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
@@ -133,7 +142,10 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    injections: vec![Injection::Copy("Cargo.toml".into(), "Cargo-2.toml".into())],
+                    injections: vec![Injection::Copy {
+                        src: "Cargo.toml".into(),
+                        dest: "Cargo-2.toml".into(),
+                    }],
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
@@ -168,10 +180,10 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    injections: vec![Injection::Symlink(
-                        "Cargo.toml".into(),
-                        "Cargo-2.toml".into(),
-                    )],
+                    injections: vec![Injection::Symlink {
+                        src: "Cargo.toml".into(),
+                        dest: "Cargo-2.toml".into(),
+                    }],
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
@@ -206,7 +218,9 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    injections: vec![Injection::Touch("Cargo-2.toml".into())],
+                    injections: vec![Injection::Touch {
+                        path: "Cargo-2.toml".into(),
+                    }],
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
@@ -241,7 +255,9 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    injections: vec![Injection::Delete("Cargo.toml".into())],
+                    injections: vec![Injection::Delete {
+                        path: "Cargo.toml".into(),
+                    }],
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
@@ -277,7 +293,10 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    injections: vec![Injection::Create("Cargo-2.toml".into(), "test".into())],
+                    injections: vec![Injection::Create {
+                        path: "Cargo-2.toml".into(),
+                        content: "test".into(),
+                    }],
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),

@@ -11,9 +11,7 @@ use tokio::fs::read_link;
 use crate::util::config::Injection;
 use crate::util::{Fix, MemoryFS};
 
-/// WIP PACKAGE, DO NOT USE YET
-mod arch;
-
+pub mod arch;
 pub mod docker;
 pub mod file;
 pub mod tarball;
@@ -63,6 +61,10 @@ pub enum InternalFileType {
 /// Takes in a mapping of host paths -> memfs paths and a memfs.
 /// Allows an optional prefix to strip so that ex. temporary workdirs can be
 /// used as expected.
+// TODO: Preserve timestamps
+// TODO: Preserve permissions
+// TODO: Preserve ownership
+// TODO: Other metadata?
 pub async fn copy_files_from_paths_to_memfs(
     paths: &HashMap<PathBuf, PathBuf>,
     fs: &MemoryFS,
@@ -155,6 +157,7 @@ pub fn determine_file_type_from_memfs(fs: &MemoryFS, path: &Path) -> Result<Inte
 }
 
 pub async fn determine_file_type_from_filesystem(path: &Path) -> Result<InternalFileType> {
+    debug!("determining type of {path:?}");
     match tokio::fs::read_link(path).await {
         Ok(_) => Ok(InternalFileType::Symlink),
         Err(_) => {
