@@ -44,13 +44,6 @@ pub async fn traverse_memfs(fs: &MemoryFS, root_path: &Path) -> Result<Vec<PathB
     Ok(paths)
 }
 
-pub async fn create_tmp_dir() -> Result<PathBuf> {
-    let mut tmp = std::env::temp_dir();
-    tmp.push(format!("peckish-workdir-{}", rand::random::<u64>()));
-    tokio::fs::create_dir_all(&tmp).await.map_err(Fix::Io)?;
-    Ok(tmp)
-}
-
 pub fn is_in_tmp_dir(path: &Path) -> Result<bool> {
     Ok(path.starts_with("/tmp/peckish-"))
 }

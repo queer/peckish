@@ -8,8 +8,9 @@ use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 
+use crate::fs::TempDir;
 use crate::util::config::Injection;
-use crate::util::{create_tmp_dir, traverse_memfs, Fix, MemoryFS};
+use crate::util::{traverse_memfs, Fix, MemoryFS};
 
 use super::{Artifact, ArtifactProducer, InternalFileType};
 
@@ -34,10 +35,13 @@ impl Artifact for TarballArtifact {
         // in-memory manipulation.
         debug!("unpacking tarball to {:?}", self.path);
         let mut archive = Archive::new(File::open(&self.path).await.map_err(Fix::Io)?);
-        let tmp = create_tmp_dir().await?;
-        debug!("unpacking archive to temporary directory: {:?}", tmp);
+        let tmp = TempDir::new().await?;
+        debug!(
+            "unpacking archive to temporary directory: {:?}",
+            tmp.path_view()
+        );
         archive.unpack(&tmp).await.map_err(Fix::Io)?;
-        let walk_results = nyoom::walk(&tmp, |_path, _| ())?;
+        let walk_results = nyoom::walk(tmp.as_ref(), |_path, _| ())?;
         let paths = walk_results
             .paths
             .iter()
@@ -51,11 +55,6 @@ impl Artifact for TarballArtifact {
 
         debug!("copying {} paths to memfs!", paths.len());
         super::copy_files_from_paths_to_memfs(&paths, &fs).await?;
-
-        if tmp.exists() {
-            debug!("removing temporary directory: {:?}", tmp);
-            tokio::fs::remove_dir_all(tmp).await.map_err(Fix::Io)?;
-        }
 
         Ok(fs)
     }

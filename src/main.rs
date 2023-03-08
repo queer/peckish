@@ -5,6 +5,7 @@ use crate::pipeline::Pipeline;
 use crate::util::config::PeckishConfig;
 
 mod artifact;
+mod fs;
 mod pipeline;
 mod util;
 

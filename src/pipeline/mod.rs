@@ -47,16 +47,14 @@ impl Pipeline {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-
     use color_eyre::Result;
     use tokio::fs::File;
     use tokio::io::AsyncReadExt;
 
     use crate::artifact::file::{FileArtifact, FileProducer};
     use crate::artifact::tarball::TarballProducer;
+    use crate::fs::TempDir;
     use crate::util::config::Injection;
-    use crate::util::create_tmp_dir;
 
     use super::*;
 
@@ -67,8 +65,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_basic_pipeline_works() -> Result<()> {
-        let tmp = create_tmp_dir().await?;
-        let tar = tmp.join("cargo.toml.tar");
+        let tmp = TempDir::new().await?;
+        let tar = tmp.path_view().join("cargo.toml.tar");
 
         let config = PeckishConfig {
             input: ConfiguredArtifact::File(FileArtifact {
@@ -85,15 +83,14 @@ mod tests {
         let pipeline = Pipeline::new();
         assert!(pipeline.run(config).await.is_ok());
 
-        tokio::fs::remove_dir_all(&tmp).await?;
-
         Ok(())
     }
 
     #[tokio::test]
     async fn test_move_injection_works() -> Result<()> {
-        let tar = create_tmp_dir().await?.join("cargo.toml.moveinject.tar");
-        let tmp = create_tmp_dir().await?;
+        let tar_dir = TempDir::new().await?;
+        let tar = tar_dir.path_view().join("cargo.toml.moveinject.tar");
+        let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
             input: ConfiguredArtifact::File(FileArtifact {
@@ -111,7 +108,7 @@ mod tests {
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
-                    path: tmp.clone(),
+                    path: tmp.path_view(),
                     injections: vec![],
                 }),
             ],
@@ -119,19 +116,17 @@ mod tests {
 
         let pipeline = Pipeline::new();
         pipeline.run(config).await?;
-        assert!(Path::new(&tmp).join("Cargo-2.toml").exists());
-        assert!(!Path::new(&tmp).join("Cargo.toml").exists());
-
-        tokio::fs::remove_dir_all(&tar.parent().unwrap()).await?;
-        tokio::fs::remove_dir_all(&tmp).await?;
+        assert!(tmp.path_view().join("Cargo-2.toml").exists());
+        assert!(!tmp.path_view().join("Cargo.toml").exists());
 
         Ok(())
     }
 
     #[tokio::test]
     async fn test_copy_injection_works() -> Result<()> {
-        let tar = create_tmp_dir().await?.join("cargo.toml.copyinject.tar");
-        let tmp = create_tmp_dir().await?;
+        let tar_dir = TempDir::new().await?;
+        let tar = tar_dir.path_view().join("cargo.toml.copyinject.tar");
+        let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
             input: ConfiguredArtifact::File(FileArtifact {
@@ -149,7 +144,7 @@ mod tests {
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
-                    path: tmp.clone(),
+                    path: tmp.path_view(),
                     injections: vec![],
                 }),
             ],
@@ -157,19 +152,17 @@ mod tests {
 
         let pipeline = Pipeline::new();
         pipeline.run(config).await?;
-        assert!(Path::new(&tmp).join("Cargo-2.toml").exists());
-        assert!(Path::new(&tmp).join("Cargo.toml").exists());
-
-        tokio::fs::remove_dir_all(&tar.parent().unwrap()).await?;
-        tokio::fs::remove_dir_all(&tmp).await?;
+        assert!(tmp.path_view().join("Cargo-2.toml").exists());
+        assert!(tmp.path_view().join("Cargo.toml").exists());
 
         Ok(())
     }
 
     #[tokio::test]
     async fn test_symlink_injection_works() -> Result<()> {
-        let tar = create_tmp_dir().await?.join("cargo.toml.symlinkinject.tar");
-        let tmp = create_tmp_dir().await?;
+        let tar_dir = TempDir::new().await?;
+        let tar = tar_dir.path_view().join("cargo.toml.symlinkinject.tar");
+        let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
             input: ConfiguredArtifact::File(FileArtifact {
@@ -187,7 +180,7 @@ mod tests {
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
-                    path: tmp.clone(),
+                    path: tmp.path_view(),
                     injections: vec![],
                 }),
             ],
@@ -195,19 +188,17 @@ mod tests {
 
         let pipeline = Pipeline::new();
         pipeline.run(config).await?;
-        assert!(Path::new(&tmp).join("Cargo-2.toml").is_symlink());
-        assert!(Path::new(&tmp).join("Cargo.toml").exists());
-
-        tokio::fs::remove_dir_all(&tar.parent().unwrap()).await?;
-        tokio::fs::remove_dir_all(&tmp).await?;
+        assert!(tmp.path_view().join("Cargo-2.toml").is_symlink());
+        assert!(tmp.path_view().join("Cargo.toml").exists());
 
         Ok(())
     }
 
     #[tokio::test]
     async fn test_touch_injection_works() -> Result<()> {
-        let tar = create_tmp_dir().await?.join("cargo.toml.touchinject.tar");
-        let tmp = create_tmp_dir().await?;
+        let tar_dir = TempDir::new().await?;
+        let tar = tar_dir.path_view().join("cargo.toml.touchinject.tar");
+        let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
             input: ConfiguredArtifact::File(FileArtifact {
@@ -224,7 +215,7 @@ mod tests {
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
-                    path: tmp.clone(),
+                    path: tmp.path_view(),
                     injections: vec![],
                 }),
             ],
@@ -232,19 +223,17 @@ mod tests {
 
         let pipeline = Pipeline::new();
         pipeline.run(config).await?;
-        assert!(Path::new(&tmp).join("Cargo-2.toml").exists());
-        assert!(Path::new(&tmp).join("Cargo.toml").exists());
-
-        tokio::fs::remove_dir_all(&tar.parent().unwrap()).await?;
-        tokio::fs::remove_dir_all(&tmp).await?;
+        assert!(tmp.path_view().join("Cargo-2.toml").exists());
+        assert!(tmp.path_view().join("Cargo.toml").exists());
 
         Ok(())
     }
 
     #[tokio::test]
     async fn test_delete_injection_works() -> Result<()> {
-        let tar = create_tmp_dir().await?.join("cargo.toml.deleteinject.tar");
-        let tmp = create_tmp_dir().await?;
+        let tar_dir = TempDir::new().await?;
+        let tar = tar_dir.path_view().join("cargo.toml.deleteinject.tar");
+        let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
             input: ConfiguredArtifact::File(FileArtifact {
@@ -261,7 +250,7 @@ mod tests {
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
-                    path: tmp.clone(),
+                    path: tmp.path_view(),
                     injections: vec![],
                 }),
             ],
@@ -269,20 +258,16 @@ mod tests {
 
         let pipeline = Pipeline::new();
         pipeline.run(config).await?;
-        assert!(!Path::new(&tmp).join("Cargo.toml").exists());
-
-        tokio::fs::remove_dir_all(&tar.parent().unwrap()).await?;
-        if tmp.exists() {
-            tokio::fs::remove_dir_all(&tmp).await?;
-        }
+        assert!(!tmp.path_view().join("Cargo.toml").exists());
 
         Ok(())
     }
 
     #[tokio::test]
     async fn test_create_inject_works() -> Result<()> {
-        let tar = create_tmp_dir().await?.join("cargo.toml.createinject.tar");
-        let tmp = create_tmp_dir().await?;
+        let tar_dir = TempDir::new().await?;
+        let tar = tar_dir.path_view().join("cargo.toml.createinject.tar");
+        let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
             input: ConfiguredArtifact::File(FileArtifact {
@@ -300,7 +285,7 @@ mod tests {
                 }),
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
-                    path: tmp.clone(),
+                    path: tmp.path_view(),
                     injections: vec![],
                 }),
             ],
@@ -308,15 +293,12 @@ mod tests {
 
         let pipeline = Pipeline::new();
         pipeline.run(config).await?;
-        assert!(Path::new(&tmp).join("Cargo-2.toml").exists());
-        assert!(Path::new(&tmp).join("Cargo.toml").exists());
-        let mut file = File::open(tmp.join("Cargo-2.toml")).await?;
+        assert!(tmp.path_view().join("Cargo-2.toml").exists());
+        assert!(tmp.path_view().join("Cargo.toml").exists());
+        let mut file = File::open(tmp.path_view().join("Cargo-2.toml")).await?;
         let mut buf = String::new();
         file.read_to_string(&mut buf).await?;
         assert_eq!(buf, "test");
-
-        tokio::fs::remove_dir_all(&tar.parent().unwrap()).await?;
-        tokio::fs::remove_dir_all(&tmp).await?;
 
         Ok(())
     }

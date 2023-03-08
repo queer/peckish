@@ -12,8 +12,9 @@ use tokio_stream::StreamExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
 use crate::artifact::copy_files_from_paths_to_memfs;
+use crate::fs::TempDir;
 use crate::util::config::Injection;
-use crate::util::{create_tmp_dir, MemoryFS};
+use crate::util::MemoryFS;
 
 use super::tarball::{TarballArtifact, TarballProducer};
 use super::{Artifact, ArtifactProducer};
@@ -50,11 +51,11 @@ impl Artifact for DockerArtifact {
         }
 
         // Export image to a TAR file
-        let tmp = create_tmp_dir().await?;
+        let tmp = TempDir::new().await?;
 
         let mut export = docker.export_image(&self.image);
         let export_name = format!("{}.tar", self.name);
-        let export_path = tmp.join(&export_name);
+        let export_path = tmp.path_view().join(&export_name);
         let export_path_clone = export_path.clone();
         let join_handle = tokio::spawn(async move {
             tokio::fs::create_dir_all(export_path_clone.parent().unwrap())
@@ -99,11 +100,11 @@ impl Artifact for DockerArtifact {
             .map(|v| v.as_str().unwrap())
             .collect();
 
-        let tmp = create_tmp_dir().await?;
+        let tmp = TempDir::new().await?;
         for layer in layers {
             // For each layer, extract it into the tmp directory.
             let layer_tar = basic_tar_fs.open_file(&format!("/{}", layer)).await?;
-            let tmp_clone = tmp.clone();
+            let tmp_clone = tmp.path_view();
             let mut layer_tar = tokio_tar::Archive::new(layer_tar);
             layer_tar.unpack(&tmp_clone).await?;
         }
@@ -117,10 +118,8 @@ impl Artifact for DockerArtifact {
         debug!("copying docker layers to memfs!");
 
         let mut memfs_paths = HashMap::new();
-        memfs_paths.insert(tmp.to_path_buf(), PathBuf::from("/"));
+        memfs_paths.insert(tmp.path_view(), PathBuf::from("/"));
         copy_files_from_paths_to_memfs(&memfs_paths, &fs).await?;
-
-        tokio::fs::remove_dir_all(&tmp).await?;
 
         Ok(fs)
     }
@@ -147,8 +146,8 @@ impl ArtifactProducer for DockerProducer {
 
     async fn produce(&self, previous: &dyn Artifact) -> Result<DockerArtifact> {
         // Produce a tarball artifact from the previous artifact
-        let tmp = create_tmp_dir().await?;
-        let tarball_path = tmp.join("image.tar");
+        let tmp = TempDir::new().await?;
+        let tarball_path = tmp.path_view().join("image.tar");
         let tarball = TarballProducer {
             name: self.name.clone(),
             path: tarball_path,
@@ -225,7 +224,7 @@ mod tests {
 
         let new_image = "peckish-dev/repackaged".to_string();
         let producer = DockerProducer {
-            name: "docker iamge producer".into(),
+            name: "docker image producer".into(),
             image: new_image.clone(),
             injections: vec![],
         };
