@@ -174,7 +174,6 @@ impl MemFS {
         Ok(())
     }
 
-    /// The rsfs method doessn't handle symlinks right for some reason.
     pub async fn determine_file_type(&self, path: &Path) -> Result<InternalFileType> {
         match self.fs.read_link(path).await {
             Ok(_) => Ok(InternalFileType::Symlink),
