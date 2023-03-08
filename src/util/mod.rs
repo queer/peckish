@@ -51,7 +51,7 @@ pub fn is_in_tmp_dir(path: &Path) -> Result<bool> {
 #[cfg(test)]
 #[allow(unused_must_use)]
 pub fn test_init() {
-    std::env::set_var("RUST_LOG", "DEBUG");
+    // std::env::set_var("RUST_LOG", "DEBUG");
     std::env::set_var("RUST_BACKTRACE", "full");
     std::panic::catch_unwind(|| {
         // TODO: This logs a crash but it works
