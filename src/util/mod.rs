@@ -2,12 +2,13 @@ use std::path::{Path, PathBuf};
 
 use color_eyre::Result;
 use log::*;
-use rsfs::{DirEntry, GenFS, Metadata};
+use rsfs_tokio::{DirEntry, GenFS, Metadata};
 use thiserror::Error;
+use tokio_stream::StreamExt;
 
 pub mod config;
 
-pub type MemoryFS = rsfs::mem::unix::FS;
+pub type MemoryFS = rsfs_tokio::mem::unix::FS;
 
 #[derive(Error, Debug)]
 pub enum Fix {
@@ -18,22 +19,25 @@ pub enum Fix {
     Io(#[from] std::io::Error),
 }
 
-pub fn traverse_memfs(fs: &MemoryFS, root_path: &Path) -> Result<Vec<PathBuf>> {
+#[async_recursion::async_recursion]
+pub async fn traverse_memfs(fs: &MemoryFS, root_path: &Path) -> Result<Vec<PathBuf>> {
     let mut paths = Vec::new();
     debug!("traversing memfs from {root_path:?}");
 
-    for entry in fs.read_dir(root_path)? {
-        let entry = entry?;
-        let metadata = entry.metadata()?;
+    let mut read_dir = fs.read_dir(root_path).await?;
+    while let Some(entry) = read_dir.next().await {
+        if let Some(entry) = entry? {
+            let metadata = entry.metadata().await?;
 
-        #[allow(clippy::if_same_then_else)]
-        if metadata.is_dir() {
-            let mut sub_paths = traverse_memfs(fs, &entry.path())?;
-            paths.append(&mut sub_paths);
-        } else if metadata.is_file() {
-            paths.push(entry.path());
-        } else if fs.read_link(entry.path()).is_ok() {
-            paths.push(entry.path());
+            #[allow(clippy::if_same_then_else)]
+            if metadata.is_dir() {
+                let mut sub_paths = traverse_memfs(fs, &entry.path()).await?;
+                paths.append(&mut sub_paths);
+            } else if metadata.is_file() {
+                paths.push(entry.path());
+            } else if fs.read_link(entry.path()).await.is_ok() {
+                paths.push(entry.path());
+            }
         }
     }
 

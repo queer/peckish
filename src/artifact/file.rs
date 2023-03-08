@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use color_eyre::Result;
 use log::*;
-use rsfs::GenFS;
+use rsfs_tokio::GenFS;
 
 use crate::util::config::Injection;
 use crate::util::{is_in_tmp_dir, traverse_memfs, Fix, MemoryFS};
@@ -61,8 +61,8 @@ impl ArtifactProducer for FileProducer {
 
     async fn produce(&self, previous: &dyn Artifact) -> Result<FileArtifact> {
         let fs = previous.extract().await?;
-        let fs = self.inject(&fs)?;
-        let paths = traverse_memfs(fs, &PathBuf::from("/"))?;
+        let fs = self.inject(&fs).await?;
+        let paths = traverse_memfs(fs, &PathBuf::from("/")).await?;
         debug!("traversed memfs, found {} paths", paths.len());
 
         for path in &paths {
@@ -83,26 +83,21 @@ impl ArtifactProducer for FileProducer {
                 tokio::fs::create_dir_all(parent).await.map_err(Fix::Io)?;
             }
 
-            let file_type = super::determine_file_type_from_memfs(fs, path)?;
+            let file_type = super::determine_file_type_from_memfs(fs, path).await?;
             debug!("{path:?} is {file_type:?}");
 
             if file_type == InternalFileType::File {
                 debug!("writing file to {full_path:?}");
-                let mut file = std::fs::File::create(full_path).map_err(Fix::Io).unwrap();
-                let mut file_handle = fs.open_file(path).unwrap();
-                let join_handle = tokio::spawn(async move {
-                    std::io::copy(&mut file_handle, &mut file)
-                        .map_err(Fix::Io)
-                        .unwrap();
-                });
-                join_handle.await?;
+                let mut file = tokio::fs::File::create(full_path).await?;
+                let mut file_handle = fs.open_file(path).await?;
+                tokio::io::copy(&mut file_handle, &mut file).await?;
             } else if file_type == InternalFileType::Dir {
                 debug!("creating dir {full_path:?}");
                 tokio::fs::create_dir_all(full_path)
                     .await
                     .map_err(Fix::Io)?;
             } else if file_type == InternalFileType::Symlink {
-                let symlink_target = fs.read_link(path)?;
+                let symlink_target = fs.read_link(path).await?;
                 debug!("creating symlink {full_path:?} -> {symlink_target:?}");
                 tokio::fs::symlink(symlink_target, full_path)
                     .await

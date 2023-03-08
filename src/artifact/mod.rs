@@ -4,8 +4,8 @@ use std::path::{Path, PathBuf};
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use log::*;
-use rsfs::unix_ext::GenFSExt;
-use rsfs::{FileType, GenFS, Metadata};
+use rsfs_tokio::unix_ext::GenFSExt;
+use rsfs_tokio::{FileType, GenFS, Metadata};
 use tokio::fs::read_link;
 
 use crate::util::config::Injection;
@@ -40,10 +40,10 @@ pub trait ArtifactProducer {
     async fn produce(&self, previous: &dyn Artifact) -> Result<Self::Output>;
 
     /// Inject this producer's changes into the memfs.
-    fn inject<'a>(&self, fs: &'a MemoryFS) -> Result<&'a MemoryFS> {
+    async fn inject<'a>(&self, fs: &'a MemoryFS) -> Result<&'a MemoryFS> {
         for injection in self.injections() {
             debug!("applying injection {injection:?}");
-            injection.inject(fs)?;
+            injection.inject(fs).await?;
         }
 
         Ok(fs)
@@ -89,19 +89,15 @@ pub async fn copy_files_from_paths_to_memfs(
 async fn copy_file_to_memfs(path: &Path, memfs_path: &Path, fs: &MemoryFS) -> Result<()> {
     debug!("creating file {path:?}");
     if let Some(memfs_parent) = memfs_path.parent() {
-        fs.create_dir_all(memfs_parent)?;
+        fs.create_dir_all(memfs_parent).await?;
     }
 
-    let mut file_handle = fs.create_file(memfs_path)?;
+    let mut file_handle = fs.create_file(memfs_path).await?;
     let path_clone = path.to_path_buf();
-    let join_handle = tokio::spawn(async move {
-        let mut file = std::fs::File::open(path_clone).map_err(Fix::Io).unwrap();
-        std::io::copy(&mut file, &mut file_handle)
-            .map_err(Fix::Io)
-            .unwrap();
-    });
-
-    join_handle.await?;
+    let mut file = tokio::fs::File::open(path_clone).await?;
+    tokio::io::copy(&mut file, &mut file_handle)
+        .await
+        .map_err(Fix::Io)?;
 
     Ok(())
 }
@@ -109,7 +105,7 @@ async fn copy_file_to_memfs(path: &Path, memfs_path: &Path, fs: &MemoryFS) -> Re
 #[async_recursion::async_recursion]
 async fn copy_dir_to_memfs(path: &Path, memfs_path: &Path, fs: &MemoryFS) -> Result<()> {
     debug!("creating dir {memfs_path:?}");
-    fs.create_dir_all(memfs_path)?;
+    fs.create_dir_all(memfs_path).await?;
 
     let mut files = tokio::fs::read_dir(path).await?;
 
@@ -132,17 +128,20 @@ async fn copy_dir_to_memfs(path: &Path, memfs_path: &Path, fs: &MemoryFS) -> Res
 async fn add_symlink_to_memfs(path: &Path, memfs_path: &Path, fs: &MemoryFS) -> Result<()> {
     let link = read_link(&path).await.map_err(Fix::Io)?;
     debug!("linking {memfs_path:?} to {link:?}");
-    fs.symlink(link, memfs_path)?;
+    fs.symlink(link, memfs_path).await?;
 
     Ok(())
 }
 
 /// The rsfs method doessn't handle symlinks right for some reason.
-pub fn determine_file_type_from_memfs(fs: &MemoryFS, path: &Path) -> Result<InternalFileType> {
-    match fs.read_link(path) {
+pub async fn determine_file_type_from_memfs(
+    fs: &MemoryFS,
+    path: &Path,
+) -> Result<InternalFileType> {
+    match fs.read_link(path).await {
         Ok(_) => Ok(InternalFileType::Symlink),
         Err(_) => {
-            let file_type = fs.metadata(path)?.file_type();
+            let file_type = fs.metadata(path).await?.file_type();
             if file_type.is_symlink() {
                 Ok(InternalFileType::Symlink)
             } else if file_type.is_dir() {

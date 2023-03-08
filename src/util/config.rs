@@ -1,13 +1,12 @@
-use std::io::Write;
 use std::path::PathBuf;
 
 use color_eyre::Result;
 use log::*;
-use rsfs::unix_ext::GenFSExt;
-use rsfs::{GenFS, Metadata};
+use rsfs_tokio::unix_ext::GenFSExt;
+use rsfs_tokio::{GenFS, Metadata};
 use serde::{Deserialize, Serialize};
 use tokio::fs::File;
-use tokio::io::AsyncReadExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::artifact::arch::{ArchArtifact, ArchProducer};
 use crate::artifact::docker::{DockerArtifact, DockerProducer};
@@ -192,42 +191,42 @@ pub enum Injection {
 }
 
 impl Injection {
-    pub fn inject(&self, fs: &MemoryFS) -> Result<()> {
+    pub async fn inject(&self, fs: &MemoryFS) -> Result<()> {
         match self {
             Injection::Move { src, dest } => {
                 debug!("Moving {:?} to {:?}", src, dest);
                 if let Some(parent) = dest.parent() {
-                    fs.create_dir_all(parent)?;
+                    fs.create_dir_all(parent).await?;
                 }
-                fs.rename(src, dest)?;
+                fs.rename(src, dest).await?;
             }
             Injection::Copy { src, dest } => {
                 debug!("Copying {:?} to {:?}", src, dest);
-                fs.copy(src, dest)?;
+                fs.copy(src, dest).await?;
             }
             Injection::Symlink { src, dest } => {
                 debug!("Symlinking {:?} to {:?}", src, dest);
-                fs.symlink(src, dest)?;
+                fs.symlink(src, dest).await?;
             }
             Injection::Touch { path } => {
                 debug!("Touching {:?}", path);
-                fs.create_dir_all(path.parent().unwrap())?;
-                fs.create_file(path)?;
+                fs.create_dir_all(path.parent().unwrap()).await?;
+                fs.create_file(path).await?;
             }
             Injection::Delete { path } => {
                 debug!("Deleting {:?}", path);
-                let metadata = fs.metadata(path)?;
+                let metadata = fs.metadata(path).await?;
                 if metadata.is_dir() {
-                    fs.remove_dir_all(path)?;
+                    fs.remove_dir_all(path).await?;
                 } else {
-                    fs.remove_file(path)?;
+                    fs.remove_file(path).await?;
                 }
             }
             Injection::Create { path, content } => {
                 debug!("Creating {:?} with content {:?}", path, content);
-                fs.create_dir_all(path.parent().unwrap())?;
-                let mut file = fs.create_file(path)?;
-                file.write_all(content)?;
+                fs.create_dir_all(path.parent().unwrap()).await?;
+                let mut file = fs.create_file(path).await?;
+                file.write_all(content).await?;
             }
         }
 

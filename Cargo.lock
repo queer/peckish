@@ -53,6 +53,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-stream"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad445822218ce64be7a341abfb0b1ea43b5c23aa83902542a4542e78309d8e5e"
+dependencies = [
+ "async-stream-impl",
+ "futures-core",
+ "pin-project-lite",
+]
+
+[[package]]
+name = "async-stream-impl"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4655ae1a7b0cdf149156f780c5bf3f1352bc53cbd9e0a361a7ef7b22947e965"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "async-trait"
 version = "0.1.66"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -891,7 +913,7 @@ dependencies = [
  "nyoom",
  "pretty_env_logger",
  "rand",
- "rsfs",
+ "rsfs-tokio",
  "serde",
  "serde_derive",
  "serde_json",
@@ -1039,11 +1061,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 
 [[package]]
-name = "rsfs"
-version = "0.4.1"
-source = "git+https://github.com/queer/rsfs?rev=3399680#339968050eb0146cc45e53227ed805b54ce0e949"
+name = "rsfs-tokio"
+version = "0.5.0"
+source = "git+https://github.com/queer/rsfs-tokio?rev=d4b378a#d4b378aec52c1bad65b247b5ed0cde77ca363e78"
 dependencies = [
+ "async-stream",
+ "async-trait",
  "parking_lot",
+ "pin-utils",
+ "tokio",
+ "tokio-stream",
 ]
 
 [[package]]

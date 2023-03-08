@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use log::*;
-use rsfs::GenFS;
+use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 
@@ -86,8 +86,8 @@ impl ArtifactProducer for TarballProducer {
 
     async fn produce(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
         let fs = previous.extract().await?;
-        let fs = self.inject(&fs)?;
-        let paths = traverse_memfs(fs, &PathBuf::from("/"))?;
+        let fs = self.inject(&fs).await?;
+        let paths = traverse_memfs(fs, &PathBuf::from("/")).await?;
 
         let file = File::create(&self.path).await.map_err(Fix::Io)?;
         let mut archive_builder = tokio_tar::Builder::new(file);
@@ -99,7 +99,7 @@ impl ArtifactProducer for TarballProducer {
             let mut header = Header::new_gnu();
             header.set_path(path).map_err(Fix::Io)?;
 
-            let file_type = super::determine_file_type_from_memfs(fs, path)?;
+            let file_type = super::determine_file_type_from_memfs(fs, path).await?;
             if file_type == InternalFileType::Dir {
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
@@ -109,8 +109,8 @@ impl ArtifactProducer for TarballProducer {
                 archive_builder.append(&header, empty).await?;
             } else if file_type == InternalFileType::File {
                 let mut data = Vec::new();
-                let mut stream = fs.open_file(path)?;
-                std::io::copy(&mut stream, &mut data)?;
+                let mut stream = fs.open_file(path).await?;
+                tokio::io::copy(&mut stream, &mut data).await?;
 
                 header.set_entry_type(EntryType::Regular);
                 header.set_size(data.len() as u64);
@@ -121,7 +121,7 @@ impl ArtifactProducer for TarballProducer {
                     .await
                     .map_err(Fix::Io)?;
             } else if file_type == InternalFileType::Symlink {
-                let link = fs.read_link(path)?;
+                let link = fs.read_link(path).await?;
                 let empty: &[u8] = &[];
 
                 header.set_entry_type(EntryType::Symlink);

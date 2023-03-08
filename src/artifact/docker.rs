@@ -5,9 +5,9 @@ use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use color_eyre::Result;
 use log::*;
-use rsfs::GenFS;
+use rsfs_tokio::GenFS;
 use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_stream::StreamExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
@@ -86,8 +86,10 @@ impl Artifact for DockerArtifact {
         tokio::fs::remove_dir_all(&tmp).await?;
 
         // Collect layers
-        let manifest = basic_tar_fs.open_file("/manifest.json")?;
-        let manifest: serde_json::Value = serde_json::from_reader(manifest)?;
+        let mut manifest = basic_tar_fs.open_file("/manifest.json").await?;
+        let mut buf = String::new();
+        manifest.read_to_string(&mut buf).await?;
+        let manifest: serde_json::Value = serde_json::from_str(&buf)?;
         let layers: Vec<&str> = manifest
             .as_array()
             .unwrap()
@@ -104,13 +106,10 @@ impl Artifact for DockerArtifact {
         let tmp = create_tmp_dir().await?;
         for layer in layers {
             // For each layer, extract it into the tmp directory.
-            let layer_tar = basic_tar_fs.open_file(&format!("/{}", layer))?;
+            let layer_tar = basic_tar_fs.open_file(&format!("/{}", layer)).await?;
             let tmp_clone = tmp.clone();
-            let join_handle = tokio::spawn(async move {
-                let mut layer_tar = tar::Archive::new(layer_tar);
-                layer_tar.unpack(&tmp_clone).unwrap();
-            });
-            join_handle.await?;
+            let mut layer_tar = tokio_tar::Archive::new(layer_tar);
+            layer_tar.unpack(&tmp_clone).await?;
         }
 
         // Read Docker layers into the memfs
@@ -210,7 +209,7 @@ mod tests {
     use super::*;
 
     use color_eyre::Result;
-    use rsfs::GenFS;
+    use rsfs_tokio::GenFS;
 
     #[ctor::ctor]
     fn init() {
@@ -225,7 +224,7 @@ mod tests {
         };
         {
             let fs = artifact.extract().await?;
-            assert!(fs.open_file(Path::new("/bin/sh")).is_ok());
+            assert!(fs.open_file(Path::new("/bin/sh")).await.is_ok());
         }
 
         let new_image = "peckish-dev/repackaged".to_string();
