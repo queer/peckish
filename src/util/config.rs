@@ -99,6 +99,10 @@ enum OutputProducer {
     Arch {
         name: String,
         path: PathBuf,
+        package_name: String,
+        description: String,
+        version: String,
+        author: String,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -142,9 +146,17 @@ impl Into<ConfiguredProducer> for &OutputProducer {
             OutputProducer::Arch {
                 name,
                 path,
+                package_name,
+                description,
+                version,
+                author,
                 injections,
             } => ConfiguredProducer::Arch(ArchProducer {
                 name: name.clone(),
+                package_name: package_name.clone(),
+                package_desc: description.clone(),
+                package_ver: version.clone(),
+                package_author: author.clone(),
                 path: path.clone(),
                 injections: injections.clone(),
             }),
