@@ -21,10 +21,6 @@ impl Artifact for FileArtifact {
         &self.name
     }
 
-    fn description(&self) -> &str {
-        "An artifact of one or more files"
-    }
-
     async fn extract(&self) -> Result<MemoryFS> {
         let fs = MemoryFS::new();
 

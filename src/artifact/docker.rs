@@ -30,10 +30,6 @@ impl Artifact for DockerArtifact {
         &self.name
     }
 
-    fn description(&self) -> &str {
-        "A docker image"
-    }
-
     async fn extract(&self) -> Result<MemoryFS> {
         let docker = Docker::connect_with_local_defaults()?;
         let (image, tag) = split_image_name_into_repo_and_tag(&self.image);

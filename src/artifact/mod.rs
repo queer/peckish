@@ -20,7 +20,6 @@ pub mod tarball;
 #[async_trait::async_trait]
 pub trait Artifact: Send + Sync {
     fn name(&self) -> &str;
-    fn description(&self) -> &str;
 
     /// Extract this artifact into a virtual filesystem. Used for manipulating
     /// the artifact's contents.
@@ -39,7 +38,7 @@ pub trait ArtifactProducer {
     /// Produce a new artifact, given a previous artifact.
     async fn produce(&self, previous: &dyn Artifact) -> Result<Self::Output>;
 
-    /// Inject this producer's changes into the memfs.
+    /// Inject this producer's custom changes into the memfs.
     async fn inject<'a>(&self, fs: &'a MemoryFS) -> Result<&'a MemoryFS> {
         for injection in self.injections() {
             debug!("applying injection {injection:?}");

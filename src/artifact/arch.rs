@@ -21,10 +21,6 @@ impl Artifact for ArchArtifact {
         &self.name
     }
 
-    fn description(&self) -> &str {
-        "an arch linux package"
-    }
-
     async fn extract(&self) -> Result<MemoryFS> {
         TarballArtifact {
             name: format!("{}-tarball-extractor", self.name),
