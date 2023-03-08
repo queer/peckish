@@ -1,3 +1,4 @@
+use std::os::unix::prelude::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::eyre;
@@ -79,7 +80,6 @@ impl MemFS {
     /// Allows an optional prefix to strip so that ex. temporary workdirs can be
     /// used as expected.
     // TODO: Preserve timestamps
-    // TODO: Preserve permissions
     // TODO: Preserve ownership
     // TODO: Other metadata?
     pub async fn copy_files_from_paths(
@@ -89,7 +89,14 @@ impl MemFS {
     ) -> Result<()> {
         for path in paths {
             let memfs_path = if let Some(ref view) = view_of {
-                path.strip_prefix(view).unwrap()
+                let path = path.strip_prefix(view)?;
+
+                // If the path is an empty string, replace it with just "/"
+                if path == Path::new("") {
+                    Path::new("/")
+                } else {
+                    path
+                }
             } else {
                 path
             };
@@ -109,6 +116,8 @@ impl MemFS {
     }
 
     async fn copy_file_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
+        use rsfs_tokio::unix_ext::PermissionsExt;
+
         debug!("creating file {path:?}");
         if let Some(memfs_parent) = memfs_path.parent() {
             self.fs.create_dir_all(memfs_parent).await?;
@@ -121,13 +130,23 @@ impl MemFS {
             .await
             .map_err(Fix::Io)?;
 
+        let mode = file.metadata().await?.permissions().mode();
+        let permissions = rsfs_tokio::mem::Permissions::from_mode(mode);
+        self.fs.set_permissions(memfs_path, permissions).await?;
+
         Ok(())
     }
 
     #[async_recursion::async_recursion]
     async fn copy_dir_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
-        debug!("creating dir {memfs_path:?}");
+        use rsfs_tokio::unix_ext::PermissionsExt;
+
         self.fs.create_dir_all(memfs_path).await?;
+
+        let host_dir = tokio::fs::metadata(&path).await?;
+        let mode = host_dir.permissions().mode();
+        let permissions = rsfs_tokio::mem::Permissions::from_mode(mode);
+        self.fs.set_permissions(memfs_path, permissions).await?;
 
         let mut files = tokio::fs::read_dir(path).await?;
 
