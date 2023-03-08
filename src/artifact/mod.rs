@@ -9,7 +9,7 @@ use rsfs_tokio::{FileType, GenFS, Metadata};
 use tokio::fs::read_link;
 
 use crate::util::config::Injection;
-use crate::util::{Fix, MemoryFS};
+use crate::util::{traverse_memfs, Fix, MemoryFS};
 
 pub mod arch;
 pub mod docker;
@@ -172,6 +172,19 @@ pub async fn determine_file_type_from_filesystem(path: &Path) -> Result<Internal
             }
         }
     }
+}
+
+pub async fn get_artifact_size(artifact: &dyn Artifact) -> Result<u64> {
+    let fs = artifact.extract().await?;
+    let paths = traverse_memfs(&fs, Path::new("/")).await?;
+    let mut size = 0u64;
+
+    for path in paths {
+        let metadata = fs.metadata(&path).await?;
+        size += metadata.len();
+    }
+
+    Ok(size)
 }
 
 #[cfg(test)]
