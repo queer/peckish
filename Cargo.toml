@@ -18,7 +18,7 @@ nyoom = "0.0.1"
 pretty_env_logger = "0.4.0"
 rand = "0.8.5"
 rsfs = { git = "https://github.com/queer/rsfs", rev = "3399680" }
-serde = { version = "1.0.152", features = ["derive"] }
+serde = { version = "1.0.153", features = ["derive"] }
 serde_derive = "1.0.152"
 serde_json = "1.0.94"
 serde_yaml = "0.9.19"
