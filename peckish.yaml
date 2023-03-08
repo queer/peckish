@@ -11,6 +11,11 @@ output:
   - name: "arch: peckish arch package"
     type: "arch"
     path: "peckish-arch.pkg.tar"
+    package_name: "peckish"
+    description: "peckish transforms software artifacts"
+    author: "amy"
+    # NOTE: arch versions seem to require the -# suffix
+    version: "0.0.1-1"
     injections:
     - type: "move"
       src: "/target/release/peckish"

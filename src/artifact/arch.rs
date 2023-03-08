@@ -86,10 +86,6 @@ impl ArtifactProducer for ArchProducer {
             path: PathBuf::from(".PKGINFO"),
             content: content.clone().into(),
         });
-        new_injections.push(Injection::Create {
-            path: PathBuf::from(".BUILDINFO"),
-            content: content.clone().into(),
-        });
 
         TarballProducer {
             name: format!("{}-tarball-producer", self.name),
