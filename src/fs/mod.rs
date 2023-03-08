@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use color_eyre::Result;
+use log::*;
 
 use crate::util::Fix;
 
@@ -25,7 +26,7 @@ impl TempDir {
 
 impl Drop for TempDir {
     fn drop(&mut self) {
-        println!("!!! DROPPING {:?}", self.path);
+        debug!("!!! DROPPING TEMP DIR {:?}", self.path);
         if self.path.exists() {
             std::fs::remove_dir_all(&self.path).unwrap();
         }
