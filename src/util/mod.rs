@@ -6,9 +6,9 @@ use rsfs_tokio::{DirEntry, GenFS, Metadata};
 use thiserror::Error;
 use tokio_stream::StreamExt;
 
-pub mod config;
+use crate::fs::MemFS;
 
-pub type MemoryFS = rsfs_tokio::mem::unix::FS;
+pub mod config;
 
 #[derive(Error, Debug)]
 pub enum Fix {
@@ -20,7 +20,8 @@ pub enum Fix {
 }
 
 #[async_recursion::async_recursion]
-pub async fn traverse_memfs(fs: &MemoryFS, root_path: &Path) -> Result<Vec<PathBuf>> {
+pub async fn traverse_memfs(memfs: &MemFS, root_path: &Path) -> Result<Vec<PathBuf>> {
+    let fs = memfs.as_ref();
     let mut paths = Vec::new();
     debug!("traversing memfs from {root_path:?}");
 
@@ -31,7 +32,7 @@ pub async fn traverse_memfs(fs: &MemoryFS, root_path: &Path) -> Result<Vec<PathB
 
             #[allow(clippy::if_same_then_else)]
             if metadata.is_dir() {
-                let mut sub_paths = traverse_memfs(fs, &entry.path()).await?;
+                let mut sub_paths = traverse_memfs(memfs, &entry.path()).await?;
                 paths.append(&mut sub_paths);
             } else if metadata.is_file() {
                 paths.push(entry.path());

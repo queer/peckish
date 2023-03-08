@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
 
 use color_eyre::eyre::eyre;
@@ -8,11 +7,11 @@ use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 
-use crate::fs::TempDir;
+use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
-use crate::util::{traverse_memfs, Fix, MemoryFS};
+use crate::util::{traverse_memfs, Fix};
 
-use super::{Artifact, ArtifactProducer, InternalFileType};
+use super::{Artifact, ArtifactProducer};
 
 #[derive(Debug, Clone)]
 pub struct TarballArtifact {
@@ -26,8 +25,8 @@ impl Artifact for TarballArtifact {
         &self.name
     }
 
-    async fn extract(&self) -> Result<MemoryFS> {
-        let fs = MemoryFS::new();
+    async fn extract(&self) -> Result<MemFS> {
+        let fs = MemFS::new();
 
         // Unpack TAR to a temporary archive, then copy it to the memory
         // filesystem.
@@ -41,20 +40,16 @@ impl Artifact for TarballArtifact {
             tmp.path_view()
         );
         archive.unpack(&tmp).await.map_err(Fix::Io)?;
-        let walk_results = nyoom::walk(tmp.as_ref(), |_path, _| ())?;
-        let paths = walk_results
-            .paths
-            .iter()
-            .map(|e| {
-                let path = e.key().clone();
-                let memfs_path = path.strip_prefix(&tmp).unwrap().to_path_buf();
-                (path, memfs_path)
-            })
-            .filter(|(_, memfs_path)| !memfs_path.as_os_str().is_empty())
-            .collect::<HashMap<_, _>>();
+        let mut walk_results = tokio::fs::read_dir(tmp.path_view()).await?;
+        let mut paths = vec![];
+        while let Some(path) = walk_results.next_entry().await? {
+            paths.push(path.path());
+        }
 
         debug!("copying {} paths to memfs!", paths.len());
-        super::copy_files_from_paths_to_memfs(&paths, &fs).await?;
+
+        fs.copy_files_from_paths(&paths, Some(tmp.path_view()))
+            .await?;
 
         Ok(fs)
     }
@@ -80,9 +75,9 @@ impl ArtifactProducer for TarballProducer {
     }
 
     async fn produce(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
-        let fs = previous.extract().await?;
-        let fs = self.inject(&fs).await?;
-        let paths = traverse_memfs(fs, &PathBuf::from("/")).await?;
+        let memfs = previous.extract().await?;
+        let memfs = self.inject(&memfs).await?;
+        let paths = traverse_memfs(memfs, &PathBuf::from("/")).await?;
 
         let file = File::create(&self.path).await.map_err(Fix::Io)?;
         let mut archive_builder = tokio_tar::Builder::new(file);
@@ -94,7 +89,8 @@ impl ArtifactProducer for TarballProducer {
             let mut header = Header::new_gnu();
             header.set_path(path).map_err(Fix::Io)?;
 
-            let file_type = super::determine_file_type_from_memfs(fs, path).await?;
+            let file_type = memfs.determine_file_type(path).await?;
+            let fs = memfs.as_ref();
             if file_type == InternalFileType::Dir {
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);

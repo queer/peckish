@@ -3,8 +3,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use color_eyre::Result;
 
+use crate::fs::MemFS;
 use crate::util::config::Injection;
-use crate::util::MemoryFS;
 
 use super::tarball::{TarballArtifact, TarballProducer};
 use super::{get_artifact_size, Artifact, ArtifactProducer};
@@ -21,7 +21,7 @@ impl Artifact for ArchArtifact {
         &self.name
     }
 
-    async fn extract(&self) -> Result<MemoryFS> {
+    async fn extract(&self) -> Result<MemFS> {
         TarballArtifact {
             name: format!("{}-tarball-extractor", self.name),
             path: self.path.clone(),

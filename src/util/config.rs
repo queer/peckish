@@ -12,8 +12,7 @@ use crate::artifact::arch::{ArchArtifact, ArchProducer};
 use crate::artifact::docker::{DockerArtifact, DockerProducer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
-
-use super::MemoryFS;
+use crate::fs::MemFS;
 
 #[derive(Debug)]
 pub struct PeckishConfig {
@@ -203,7 +202,8 @@ pub enum Injection {
 }
 
 impl Injection {
-    pub async fn inject(&self, fs: &MemoryFS) -> Result<()> {
+    pub async fn inject(&self, fs: &MemFS) -> Result<()> {
+        let fs = fs.as_ref();
         match self {
             Injection::Move { src, dest } => {
                 debug!("Moving {:?} to {:?}", src, dest);

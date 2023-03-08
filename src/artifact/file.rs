@@ -4,10 +4,11 @@ use color_eyre::Result;
 use log::*;
 use rsfs_tokio::GenFS;
 
+use crate::fs::{InternalFileType, MemFS};
 use crate::util::config::Injection;
-use crate::util::{is_in_tmp_dir, traverse_memfs, Fix, MemoryFS};
+use crate::util::{is_in_tmp_dir, traverse_memfs, Fix};
 
-use super::{copy_files_from_paths_to_memfs, Artifact, ArtifactProducer, InternalFileType};
+use super::{Artifact, ArtifactProducer};
 
 #[derive(Debug, Clone)]
 pub struct FileArtifact {
@@ -21,16 +22,12 @@ impl Artifact for FileArtifact {
         &self.name
     }
 
-    async fn extract(&self) -> Result<MemoryFS> {
-        let fs = MemoryFS::new();
+    async fn extract(&self) -> Result<MemFS> {
+        let fs = MemFS::new();
 
         debug!("copying {} paths to memfs!", self.paths.len());
 
-        copy_files_from_paths_to_memfs(
-            &self.paths.iter().map(|p| (p.clone(), p.clone())).collect(),
-            &fs,
-        )
-        .await?;
+        fs.copy_files_from_paths(&self.paths, None).await?;
 
         Ok(fs)
     }
@@ -56,9 +53,9 @@ impl ArtifactProducer for FileProducer {
     }
 
     async fn produce(&self, previous: &dyn Artifact) -> Result<FileArtifact> {
-        let fs = previous.extract().await?;
-        let fs = self.inject(&fs).await?;
-        let paths = traverse_memfs(fs, &PathBuf::from("/")).await?;
+        let memfs = previous.extract().await?;
+        let memfs = self.inject(&memfs).await?;
+        let paths = traverse_memfs(memfs, &PathBuf::from("/")).await?;
         debug!("traversed memfs, found {} paths", paths.len());
 
         for path in &paths {
@@ -79,9 +76,10 @@ impl ArtifactProducer for FileProducer {
                 tokio::fs::create_dir_all(parent).await.map_err(Fix::Io)?;
             }
 
-            let file_type = super::determine_file_type_from_memfs(fs, path).await?;
+            let file_type = memfs.determine_file_type(path).await?;
             debug!("{path:?} is {file_type:?}");
 
+            let fs = memfs.as_ref();
             if file_type == InternalFileType::File {
                 debug!("writing file to {full_path:?}");
                 let mut file = tokio::fs::File::create(full_path).await?;

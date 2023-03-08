@@ -14,7 +14,6 @@ futures-util = "0.3.26"
 hyper = "0.14.24"
 indoc = "2.0.1"
 log = "0.4.17"
-nyoom = "0.0.1"
 pretty_env_logger = "0.4.0"
 rand = "0.8.5"
 rsfs-tokio = { git = "https://github.com/queer/rsfs-tokio", rev = "d4b378a" }

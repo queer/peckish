@@ -1,6 +1,3 @@
-use std::collections::HashMap;
-use std::path::PathBuf;
-
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use color_eyre::Result;
@@ -11,10 +8,8 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_stream::StreamExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
-use crate::artifact::copy_files_from_paths_to_memfs;
-use crate::fs::TempDir;
+use crate::fs::{MemFS, TempDir};
 use crate::util::config::Injection;
-use crate::util::MemoryFS;
 
 use super::tarball::{TarballArtifact, TarballProducer};
 use super::{Artifact, ArtifactProducer};
@@ -31,7 +26,7 @@ impl Artifact for DockerArtifact {
         &self.name
     }
 
-    async fn extract(&self) -> Result<MemoryFS> {
+    async fn extract(&self) -> Result<MemFS> {
         let docker = Docker::connect_with_local_defaults()?;
         let (image, tag) = split_image_name_into_repo_and_tag(&self.image);
 
@@ -73,12 +68,13 @@ impl Artifact for DockerArtifact {
         // Docker exports a tarball of tarballs of layers
 
         // Extract the tarball into memory
-        let basic_tar_fs = TarballArtifact {
+        let basic_tar_memfs = TarballArtifact {
             name: self.name.clone(),
             path: export_path,
         }
         .extract()
         .await?;
+        let basic_tar_fs = basic_tar_memfs.as_ref();
 
         tokio::fs::remove_dir_all(&tmp).await?;
 
@@ -113,13 +109,13 @@ impl Artifact for DockerArtifact {
         // We don't reuse the file artifact here because we need to control how
         // the file paths are computed.
 
-        let fs = MemoryFS::new();
+        let fs = MemFS::new();
 
         debug!("copying docker layers to memfs!");
 
-        let mut memfs_paths = HashMap::new();
-        memfs_paths.insert(tmp.path_view(), PathBuf::from("/"));
-        copy_files_from_paths_to_memfs(&memfs_paths, &fs).await?;
+        let memfs_paths = vec![tmp.path_view()];
+        fs.copy_files_from_paths(&memfs_paths, Some(tmp.path_view()))
+            .await?;
 
         Ok(fs)
     }
@@ -219,6 +215,7 @@ mod tests {
         };
         {
             let fs = artifact.extract().await?;
+            let fs = fs.as_ref();
             assert!(fs.open_file(Path::new("/bin/sh")).await.is_ok());
         }
 
