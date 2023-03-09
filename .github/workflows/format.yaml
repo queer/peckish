@@ -24,6 +24,7 @@ jobs:
       with:
         toolchain: "${{ matrix.version }}"
         override: true
+        components: "rustfmt"
     - uses: "Swatinem/rust-cache@v1"
       with:
         key: "format"
