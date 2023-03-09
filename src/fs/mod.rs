@@ -1,10 +1,10 @@
-use std::os::unix::prelude::PermissionsExt;
+use std::os::unix::prelude::{MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use log::*;
-use rsfs_tokio::unix_ext::GenFSExt;
+use rsfs_tokio::unix_ext::{FSMetadataExt, GenFSExt};
 use rsfs_tokio::{FileType, GenFS, Metadata};
 use tokio::fs::read_link;
 
@@ -79,9 +79,7 @@ impl MemFS {
     /// Takes in a mapping of host paths -> memfs paths and a memfs.
     /// Allows an optional prefix to strip so that ex. temporary workdirs can be
     /// used as expected.
-    // TODO: Preserve timestamps
-    // TODO: Preserve ownership
-    // TODO: Other metadata?
+    // TODO: What about xattrs?
     pub async fn copy_files_from_paths(
         &self,
         paths: &Vec<PathBuf>,
@@ -134,6 +132,14 @@ impl MemFS {
         let permissions = rsfs_tokio::mem::Permissions::from_mode(mode);
         self.fs.set_permissions(memfs_path, permissions).await?;
 
+        let mem_file = self.fs.open_file(memfs_path).await?;
+        let host_file = tokio::fs::metadata(path).await?;
+        let uid = host_file.uid();
+        let gid = host_file.gid();
+        mem_file.chown(uid, gid).await?;
+
+        mem_file.touch_utime().await?;
+
         Ok(())
     }
 
@@ -147,6 +153,7 @@ impl MemFS {
         let mode = host_dir.permissions().mode();
         let permissions = rsfs_tokio::mem::Permissions::from_mode(mode);
         self.fs.set_permissions(memfs_path, permissions).await?;
+        // TODO: Update chown/utime
 
         let mut files = tokio::fs::read_dir(path).await?;
 
@@ -226,4 +233,42 @@ pub enum InternalFileType {
     Dir,
     File,
     Symlink,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use color_eyre::Result;
+
+    #[tokio::test]
+    async fn test_utime_works() -> Result<()> {
+        let memfs = MemFS::new();
+        let path = Path::new("/test");
+
+        let file = memfs.fs.create_file(path).await?;
+        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+        file.touch_utime().await?;
+
+        let metadata = memfs.fs.metadata(path).await?;
+        let utime = metadata.modified().unwrap();
+        assert!(utime.elapsed().unwrap().as_secs() < 1);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_ownership_update_works() -> Result<()> {
+        let memfs = MemFS::new();
+        let path = Path::new("/test");
+
+        let file = memfs.fs.create_file(path).await?;
+        file.chown(420, 69).await?;
+
+        let metadata = memfs.fs.metadata(path).await?;
+        assert_eq!(metadata.uid()?, 420);
+        assert_eq!(metadata.gid()?, 69);
+
+        Ok(())
+    }
 }

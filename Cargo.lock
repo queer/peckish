@@ -935,7 +935,7 @@ checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
 [[package]]
 name = "rsfs-tokio"
 version = "0.5.0"
-source = "git+https://github.com/queer/rsfs-tokio?rev=d4b378a#d4b378aec52c1bad65b247b5ed0cde77ca363e78"
+source = "git+https://github.com/queer/rsfs-tokio?rev=ca068b9#ca068b9251888c3dfbd2c3241354b75249e84df5"
 dependencies = [
  "async-stream",
  "async-trait",
