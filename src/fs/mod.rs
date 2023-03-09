@@ -77,8 +77,14 @@ impl MemFS {
 
     /// Copies files from the host filesystem to a memory filesystem
     /// Takes in a mapping of host paths -> memfs paths and a memfs.
-    /// Allows an optional prefix to strip so that ex. temporary workdirs can be
-    /// used as expected.
+    /// Allows an optional prefix to strip so that ex. temporary workdirs can
+    /// be used as expected.
+    ///
+    /// * `paths`: A list of paths to copy from the host filesystem to the
+    ///            memory filesystem.
+    /// * `view_of`: An optional path that the paths are relative to. If
+    ///              provided, the paths will be copied to the memory
+    ///              filesystem with the view path stripped from the beginning.
     // TODO: What about xattrs?
     pub async fn copy_files_from_paths(
         &self,
@@ -153,7 +159,9 @@ impl MemFS {
         let mode = host_dir.permissions().mode();
         let permissions = rsfs_tokio::mem::Permissions::from_mode(mode);
         self.fs.set_permissions(memfs_path, permissions).await?;
-        // TODO: Update chown/utime
+        self.fs
+            .set_ownership(memfs_path, host_dir.uid(), host_dir.gid())
+            .await?;
 
         let mut files = tokio::fs::read_dir(path).await?;
 
