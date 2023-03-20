@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.70"
-async-recursion = "1.0.2"
+async-recursion = "1.0.4"
 async-trait = "0.1.66"
 bollard = "0.14.0"
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
