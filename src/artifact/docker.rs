@@ -51,19 +51,15 @@ impl Artifact for DockerArtifact {
         let mut export = docker.export_image(&self.image);
         let export_name = format!("{}.tar", self.name);
         let export_path = tmp.path_view().join(&export_name);
-        let export_path_clone = export_path.clone();
-        let join_handle = tokio::spawn(async move {
-            tokio::fs::create_dir_all(export_path_clone.parent().unwrap())
-                .await
-                .unwrap();
-            let mut file = tokio::fs::File::create(export_path_clone).await.unwrap();
-            while let Some(chunk) = export.next().await {
-                let chunk = chunk.unwrap();
-                file.write_all(&chunk).await.unwrap();
-                file.sync_all().await.unwrap();
-            }
-        });
-        join_handle.await?;
+        tokio::fs::create_dir_all(export_path.parent().unwrap())
+            .await
+            .unwrap();
+        let mut file = tokio::fs::File::create(&export_path).await.unwrap();
+        while let Some(chunk) = export.next().await {
+            let chunk = chunk.unwrap();
+            file.write_all(&chunk).await.unwrap();
+            file.sync_all().await.unwrap();
+        }
 
         // Docker exports a tarball of tarballs of layers
 
