@@ -18,6 +18,7 @@ impl Pipeline {
             ConfiguredArtifact::Tarball(tarball) => Box::new(tarball),
             ConfiguredArtifact::Docker(docker) => Box::new(docker),
             ConfiguredArtifact::Arch(arch) => Box::new(arch),
+            ConfiguredArtifact::Deb(deb) => Box::new(deb),
         };
 
         for (i, producer) in config.output.iter().enumerate() {
@@ -37,6 +38,10 @@ impl Pipeline {
 
                 ConfiguredProducer::Arch(arch) => {
                     Box::new(arch.produce(last_artifact.as_ref()).await?)
+                }
+
+                ConfiguredProducer::Deb(deb) => {
+                    Box::new(deb.produce(last_artifact.as_ref()).await?)
                 }
             }
         }

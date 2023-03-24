@@ -9,6 +9,7 @@ use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::artifact::arch::{ArchArtifact, ArchProducer};
+use crate::artifact::deb::{DebArtifact, DebProducer};
 use crate::artifact::docker::{DockerArtifact, DockerProducer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
@@ -49,6 +50,7 @@ enum InputArtifact {
     Tarball { name: String, path: PathBuf },
     Docker { name: String, image: String },
     Arch { name: String, path: PathBuf },
+    Deb { name: String, path: PathBuf },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -67,8 +69,13 @@ impl Into<ConfiguredArtifact> for InputArtifact {
             InputArtifact::Docker { name, image } => {
                 ConfiguredArtifact::Docker(DockerArtifact { name, image })
             }
+
             InputArtifact::Arch { name, path } => {
                 ConfiguredArtifact::Arch(ArchArtifact { name, path })
+            }
+
+            InputArtifact::Deb { name, path } => {
+                ConfiguredArtifact::Deb(DebArtifact { name, path })
             }
         }
     }
@@ -105,6 +112,29 @@ enum OutputProducer {
         #[serde(default)]
         injections: Vec<Injection>,
     },
+    Deb {
+        name: String,
+        path: PathBuf,
+        package_name: String,
+        description: String,
+        version: String,
+        author: String,
+        #[serde(default = "detect_deb_arch")]
+        arch: String,
+        #[serde(default)]
+        injections: Vec<Injection>,
+    },
+}
+
+fn detect_deb_arch() -> String {
+    if cfg!(target_arch = "x86_64") {
+        "amd64".into()
+    } else if cfg!(target_arch = "aarch64") {
+        "arm64".into()
+    } else {
+        "unknown native architecture! please specify the `arch` field and/or report this error!"
+            .into()
+    }
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -159,6 +189,26 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 path: path.clone(),
                 injections: injections.clone(),
             }),
+
+            OutputProducer::Deb {
+                name,
+                path,
+                package_name,
+                description,
+                version,
+                author,
+                arch,
+                injections,
+            } => ConfiguredProducer::Deb(DebProducer {
+                name: name.clone(),
+                package_name: package_name.clone(),
+                package_desc: description.clone(),
+                package_ver: version.clone(),
+                package_author: author.clone(),
+                package_arch: arch.clone(),
+                path: path.clone(),
+                injections: injections.clone(),
+            }),
         }
     }
 }
@@ -169,6 +219,7 @@ pub enum ConfiguredArtifact {
     Tarball(TarballArtifact),
     Docker(DockerArtifact),
     Arch(ArchArtifact),
+    Deb(DebArtifact),
 }
 
 #[derive(Debug, Clone)]
@@ -177,6 +228,7 @@ pub enum ConfiguredProducer {
     Tarball(TarballProducer),
     Docker(DockerProducer),
     Arch(ArchProducer),
+    Deb(DebProducer),
 }
 
 impl ConfiguredProducer {
@@ -186,6 +238,7 @@ impl ConfiguredProducer {
             ConfiguredProducer::Tarball(producer) => &producer.name,
             ConfiguredProducer::Docker(producer) => &producer.name,
             ConfiguredProducer::Arch(producer) => &producer.name,
+            ConfiguredProducer::Deb(producer) => &producer.name,
         }
     }
 }
