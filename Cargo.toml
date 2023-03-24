@@ -4,26 +4,26 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.69"
-async-recursion = "1.0.2"
-async-trait = "0.1.66"
+anyhow = "1.0.70"
+async-recursion = "1.0.4"
+async-trait = "0.1.67"
 bollard = "0.14.0"
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 ctor = "0.1.26"
 deb-rust = "0.1.2"
-futures-util = "0.3.26"
-hyper = "0.14.24"
+futures-util = "0.3.27"
+hyper = "0.14.25"
 indoc = "2.0.1"
 log = "0.4.17"
 pretty_env_logger = "0.4.0"
 rand = "0.8.5"
 rsfs-tokio = { git = "https://github.com/queer/rsfs-tokio", rev = "55efcfa" }
-serde = { version = "1.0.153", features = ["derive"] }
+serde = { version = "1.0.158", features = ["derive"] }
 serde_derive = "1.0.152"
 serde_json = "1.0.94"
 serde_yaml = "0.9.19"
 tar = "0.4.38"
-thiserror = "1.0.39"
+thiserror = "1.0.40"
 tokio = { version = "1.26.0", features = ["full"] }
 tokio-stream = "0.1.12"
 tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
