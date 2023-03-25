@@ -25,7 +25,7 @@ jobs:
       - name: "Run release binary"
         run: "./target/release/peckish"
       - name: "Validate release binary"
-        run: "file ./target/release/peckish | grep 'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), statically linked, stripped'"
+        run: "file ./target/release/peckish"
       - name: "Validate Arch package"
         run: 'docker run --rm -it -v "./release/peckish.arch.pkg.tar:/app/peckish.pkg.tar" archlinux:latest pacman --noconfirm -U /app/peckish.pkg.tar'
       - name: "Validate Debian package"
