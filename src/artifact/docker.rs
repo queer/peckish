@@ -192,7 +192,7 @@ impl ArtifactProducer for DockerProducer {
             // chdir to preserve directory structure more-easily
             // TODO: chdir hack, can we do better?
             let pwd = std::env::current_dir()?;
-            std::env::set_current_dir(&tmp.path_view())?;
+            std::env::set_current_dir(tmp.path_view())?;
 
             let tarball = TarballProducer {
                 name: self.name.clone(),
