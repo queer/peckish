@@ -26,7 +26,7 @@ jobs:
         with:
           command: "build"
       - name: "Run release binary"
-        run: "./target/debug/peckish"
+        run: "env RUST_LOG=debug ./target/debug/peckish"
       - name: "Validate release binary"
         if: "success() || failure()"
         run: "file release/peckish/peckish | grep -q 'ELF 64-bit LSB pie executable, x86-64'"
