@@ -83,6 +83,10 @@ impl ArtifactProducer for ArchProducer {
             content: content.clone().into(),
         });
 
+        if let Some(parent) = self.path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
         TarballProducer {
             name: format!("{}-tarball-producer", self.name),
             path: self.path.clone(),

@@ -853,6 +853,7 @@ dependencies = [
  "indoc",
  "log",
  "md5",
+ "nix",
  "pretty_env_logger",
  "rand",
  "rsfs-tokio",

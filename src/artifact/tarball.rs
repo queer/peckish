@@ -79,6 +79,10 @@ impl ArtifactProducer for TarballProducer {
         let memfs = self.inject(&memfs).await?;
         let paths = traverse_memfs(memfs, &PathBuf::from("/")).await?;
 
+        if let Some(parent) = self.path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
         let file = File::create(&self.path).await.map_err(Fix::Io)?;
         let mut archive_builder = tokio_tar::Builder::new(file);
         archive_builder.follow_symlinks(false);

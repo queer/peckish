@@ -187,6 +187,10 @@ impl ArtifactProducer for DebProducer {
         let mut debian_binary_file = File::create(&debian_binary).await?;
         debian_binary_file.write_all(b"2.0\n").await?;
 
+        if let Some(parent) = self.path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
         // Create .deb ar archive from debian-binary, control.tar, and data.tar
         let mut deb_builder = ar::Builder::new(std::fs::File::create(&self.path)?);
 

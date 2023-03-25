@@ -9,10 +9,11 @@ input:
 output:
   - name: "tarball: peckish release binary"
     type: "tarball"
-    path: "./peckish-release-binary.tar"
+    path: "./release/peckish.tar"
+
   - name: "arch: peckish arch package"
     type: "arch"
-    path: "peckish-arch.pkg.tar"
+    path: "./release/peckish.arch.pkg.tar"
     package_name: "peckish"
     description: "peckish transforms software artifacts"
     author: "amy"
@@ -21,9 +22,10 @@ output:
       - type: "move"
         src: "/target/release/peckish"
         dest: "/usr/bin/peckish"
+
   - name: "deb: peckish debian package"
     type: "deb"
-    path: "peckish-deb.deb"
+    path: "./release/peckish.deb"
     package_name: "peckish"
     description: "peckish transforms software artifacts"
     control: "./metadata/debian-control"
@@ -31,3 +33,11 @@ output:
       - type: "move"
         src: "/target/release/peckish"
         dest: "/usr/bin/peckish"
+
+  - name: "file: peckish release binary"
+    type: "file"
+    path: "./release/peckish"
+    injections:
+      - type: "move"
+        src: "/target/release/peckish"
+        dest: "/peckish"

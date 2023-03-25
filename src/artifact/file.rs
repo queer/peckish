@@ -1,3 +1,4 @@
+use std::os::unix::prelude::PermissionsExt;
 use std::path::PathBuf;
 
 use color_eyre::Result;
@@ -58,7 +59,14 @@ impl ArtifactProducer for FileProducer {
         let paths = traverse_memfs(memfs, &PathBuf::from("/")).await?;
         debug!("traversed memfs, found {} paths", paths.len());
 
+        if let Some(parent) = self.path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
         for path in &paths {
+            use rsfs_tokio::unix_ext::PermissionsExt;
+            use rsfs_tokio::{File, Metadata};
+
             debug!("processing path: {path:?}");
             let mut full_path = PathBuf::from("/");
             full_path.push(&self.path);
@@ -82,14 +90,49 @@ impl ArtifactProducer for FileProducer {
             let fs = memfs.as_ref();
             if file_type == InternalFileType::File {
                 debug!("writing file to {full_path:?}");
-                let mut file = tokio::fs::File::create(full_path).await?;
+                let mut file = tokio::fs::File::create(&full_path).await?;
                 let mut file_handle = fs.open_file(path).await?;
                 tokio::io::copy(&mut file_handle, &mut file).await?;
+
+                // Set permissions
+                file.set_permissions(std::fs::Permissions::from_mode(
+                    file_handle.metadata().await?.permissions().mode(),
+                ))
+                .await?;
+
+                // Set ownership
+                let metadata = file_handle.metadata().await?;
+                let uid = metadata.uid()?;
+                let gid = metadata.gid()?;
+
+                nix::unistd::chown(
+                    full_path.to_str().unwrap(),
+                    Some(nix::unistd::Uid::from_raw(uid)),
+                    Some(nix::unistd::Gid::from_raw(gid)),
+                )?;
             } else if file_type == InternalFileType::Dir {
                 debug!("creating dir {full_path:?}");
-                tokio::fs::create_dir_all(full_path)
+                tokio::fs::create_dir_all(&full_path)
                     .await
                     .map_err(Fix::Io)?;
+
+                // Set permissions
+                let metadata = fs.metadata(path).await?;
+                let permissions = metadata.permissions();
+                tokio::fs::set_permissions(
+                    &full_path,
+                    std::fs::Permissions::from_mode(permissions.mode()),
+                )
+                .await?;
+
+                // Set ownership
+                let uid = metadata.uid()?;
+                let gid = metadata.gid()?;
+                nix::unistd::chown(
+                    full_path.to_str().unwrap(),
+                    Some(nix::unistd::Uid::from_raw(uid)),
+                    Some(nix::unistd::Gid::from_raw(gid)),
+                )?;
             } else if file_type == InternalFileType::Symlink {
                 let symlink_target = fs.read_link(path).await?;
                 debug!("creating symlink {full_path:?} -> {symlink_target:?}");
