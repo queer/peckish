@@ -1,3 +1,5 @@
+pipeline: false
+
 input:
   name: "rust: peckish release binary"
   type: "file"
@@ -14,9 +16,18 @@ output:
     package_name: "peckish"
     description: "peckish transforms software artifacts"
     author: "amy"
-    # NOTE: arch versions seem to require the -# suffix
     version: "0.0.1-1"
     injections:
-    - type: "move"
-      src: "/target/release/peckish"
-      dest: "/usr/bin/peckish"
+      - type: "move"
+        src: "/target/release/peckish"
+        dest: "/usr/bin/peckish"
+  - name: "deb: peckish debian package"
+    type: "deb"
+    path: "peckish-deb.deb"
+    package_name: "peckish"
+    description: "peckish transforms software artifacts"
+    control: "./metadata/debian-control"
+    injections:
+      - type: "move"
+        src: "/target/release/peckish"
+        dest: "/usr/bin/peckish"

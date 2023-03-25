@@ -4,40 +4,51 @@ use log::*;
 use crate::artifact::{Artifact, ArtifactProducer};
 use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig};
 
-pub struct Pipeline;
+pub struct Pipeline {
+    pipeline: bool,
+}
 
 impl Pipeline {
-    pub fn new() -> Self {
-        Self
+    pub fn new(pipeline: bool) -> Self {
+        Self { pipeline }
     }
 
     pub async fn run(&self, config: PeckishConfig) -> Result<()> {
         info!("running pipeline with {} steps!", config.output.len());
-        let mut last_artifact: Box<dyn Artifact> = match config.input {
+        let mut input_artifact: Box<dyn Artifact> = match config.input {
             ConfiguredArtifact::File(file) => Box::new(file),
             ConfiguredArtifact::Tarball(tarball) => Box::new(tarball),
             ConfiguredArtifact::Docker(docker) => Box::new(docker),
             ConfiguredArtifact::Arch(arch) => Box::new(arch),
+            ConfiguredArtifact::Deb(deb) => Box::new(deb),
         };
 
         for (i, producer) in config.output.iter().enumerate() {
             info!("step {}: {}", i + 1, producer.name());
-            last_artifact = match producer {
+            let next_artifact: Box<dyn Artifact> = match producer {
                 ConfiguredProducer::File(file) => {
-                    Box::new(file.produce(last_artifact.as_ref()).await?)
+                    Box::new(file.produce(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Tarball(tarball) => {
-                    Box::new(tarball.produce(last_artifact.as_ref()).await?)
+                    Box::new(tarball.produce(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Docker(docker) => {
-                    Box::new(docker.produce(last_artifact.as_ref()).await?)
+                    Box::new(docker.produce(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Arch(arch) => {
-                    Box::new(arch.produce(last_artifact.as_ref()).await?)
+                    Box::new(arch.produce(input_artifact.as_ref()).await?)
                 }
+
+                ConfiguredProducer::Deb(deb) => {
+                    Box::new(deb.produce(input_artifact.as_ref()).await?)
+                }
+            };
+
+            if self.pipeline {
+                input_artifact = next_artifact;
             }
         }
 
@@ -69,6 +80,7 @@ mod tests {
         let tar = tmp.path_view().join("cargo.toml.tar");
 
         let config = PeckishConfig {
+            pipeline: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -80,7 +92,7 @@ mod tests {
             })],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(true);
         assert!(pipeline.run(config).await.is_ok());
 
         Ok(())
@@ -93,6 +105,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
+            pipeline: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -114,7 +127,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(true);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(!tmp.path_view().join("Cargo.toml").exists());
@@ -129,6 +142,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
+            pipeline: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -150,7 +164,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(true);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -165,6 +179,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
+            pipeline: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -186,7 +201,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(true);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").is_symlink());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -201,6 +216,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
+            pipeline: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -221,7 +237,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(true);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -236,6 +252,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
+            pipeline: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -256,7 +273,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(true);
         pipeline.run(config).await?;
         assert!(!tmp.path_view().join("Cargo.toml").exists());
 
@@ -270,6 +287,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
+            pipeline: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -291,7 +309,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(true);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());

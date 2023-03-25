@@ -9,6 +9,7 @@ use crate::util::config::Injection;
 use crate::util::traverse_memfs;
 
 pub mod arch;
+pub mod deb;
 pub mod docker;
 pub mod file;
 pub mod tarball;

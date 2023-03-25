@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
 
     let config = PeckishConfig::load(Some("./peckish.yaml".into())).await?;
 
-    Pipeline::new().run(config).await?;
+    Pipeline::new(false).run(config).await?;
 
     Ok(())
 }

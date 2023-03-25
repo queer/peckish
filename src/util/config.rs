@@ -9,6 +9,7 @@ use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::artifact::arch::{ArchArtifact, ArchProducer};
+use crate::artifact::deb::{DebArtifact, DebProducer};
 use crate::artifact::docker::{DockerArtifact, DockerProducer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
@@ -18,6 +19,7 @@ use crate::fs::MemFS;
 pub struct PeckishConfig {
     pub input: ConfiguredArtifact,
     pub output: Vec<ConfiguredProducer>,
+    pub pipeline: bool,
 }
 
 impl PeckishConfig {
@@ -32,12 +34,15 @@ impl PeckishConfig {
         Ok(Self {
             input: config.input.into(),
             output: config.output.iter().map(|o| o.into()).collect(),
+            pipeline: config.pipeline,
         })
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalConfig {
+    #[serde(default)]
+    pipeline: bool,
     input: InputArtifact,
     output: Vec<OutputProducer>,
 }
@@ -49,6 +54,7 @@ enum InputArtifact {
     Tarball { name: String, path: PathBuf },
     Docker { name: String, image: String },
     Arch { name: String, path: PathBuf },
+    Deb { name: String, path: PathBuf },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -67,8 +73,13 @@ impl Into<ConfiguredArtifact> for InputArtifact {
             InputArtifact::Docker { name, image } => {
                 ConfiguredArtifact::Docker(DockerArtifact { name, image })
             }
+
             InputArtifact::Arch { name, path } => {
                 ConfiguredArtifact::Arch(ArchArtifact { name, path })
+            }
+
+            InputArtifact::Deb { name, path } => {
+                ConfiguredArtifact::Deb(DebArtifact { name, path })
             }
         }
     }
@@ -83,18 +94,21 @@ enum OutputProducer {
         #[serde(default)]
         injections: Vec<Injection>,
     },
+
     Tarball {
         name: String,
         path: PathBuf,
         #[serde(default)]
         injections: Vec<Injection>,
     },
+
     Docker {
         name: String,
         image: String,
         #[serde(default)]
         injections: Vec<Injection>,
     },
+
     Arch {
         name: String,
         path: PathBuf,
@@ -102,6 +116,18 @@ enum OutputProducer {
         description: String,
         version: String,
         author: String,
+        #[serde(default)]
+        injections: Vec<Injection>,
+    },
+
+    Deb {
+        name: String,
+        path: PathBuf,
+        #[serde(default)]
+        prerm: Option<PathBuf>,
+        #[serde(default)]
+        postinst: Option<PathBuf>,
+        control: PathBuf,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -159,6 +185,22 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 path: path.clone(),
                 injections: injections.clone(),
             }),
+
+            OutputProducer::Deb {
+                name,
+                path,
+                prerm,
+                postinst,
+                control,
+                injections,
+            } => ConfiguredProducer::Deb(DebProducer {
+                name: name.clone(),
+                path: path.clone(),
+                prerm: prerm.clone(),
+                postinst: postinst.clone(),
+                control: control.clone(),
+                injections: injections.clone(),
+            }),
         }
     }
 }
@@ -169,6 +211,7 @@ pub enum ConfiguredArtifact {
     Tarball(TarballArtifact),
     Docker(DockerArtifact),
     Arch(ArchArtifact),
+    Deb(DebArtifact),
 }
 
 #[derive(Debug, Clone)]
@@ -177,6 +220,7 @@ pub enum ConfiguredProducer {
     Tarball(TarballProducer),
     Docker(DockerProducer),
     Arch(ArchProducer),
+    Deb(DebProducer),
 }
 
 impl ConfiguredProducer {
@@ -186,6 +230,7 @@ impl ConfiguredProducer {
             ConfiguredProducer::Tarball(producer) => &producer.name,
             ConfiguredProducer::Docker(producer) => &producer.name,
             ConfiguredProducer::Arch(producer) => &producer.name,
+            ConfiguredProducer::Deb(producer) => &producer.name,
         }
     }
 }
