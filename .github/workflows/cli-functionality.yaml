@@ -31,10 +31,10 @@ jobs:
         run: "file release/peckish/peckish | grep -q 'ELF 64-bit LSB pie executable, x86-64'"
       - name: "Validate Arch package"
         if: "always()"
-        run: 'docker run --rm -it -v "./release/peckish.arch.pkg.tar:/app/peckish.pkg.tar" archlinux:latest pacman --noconfirm -U /app/peckish.pkg.tar'
+        run: 'docker run --rm -i -v "./release/peckish.arch.pkg.tar:/app/peckish.pkg.tar" archlinux:latest pacman --noconfirm -U /app/peckish.pkg.tar'
       - name: "Validate Debian package"
         if: "always()"
-        run: 'docker run --rm -it -v "./release/peckish.deb:/app/peckish.deb" debian:latest dpkg -i /app/peckish.deb'
+        run: 'docker run --rm -i -v "./release/peckish.deb:/app/peckish.deb" debian:latest dpkg -i /app/peckish.deb'
       - name: "Validate tarball"
         if: "always()"
         run: "tar t -vf ./release/peckish.tar"
