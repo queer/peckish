@@ -20,11 +20,10 @@ jobs:
       - uses: "Swatinem/rust-cache@v2"
         with:
           key: "format"
-      - name: "Release build"
+      - name: "Build!"
         uses: "actions-rs/cargo@v1"
         with:
           command: "build"
-          args: "--release"
       - name: "Run release binary"
         run: "./target/release/peckish"
       - name: "Validate release binary"
