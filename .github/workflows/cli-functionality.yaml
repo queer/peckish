@@ -21,12 +21,14 @@ jobs:
         if: "always()"
         with:
           key: "cli-functionality"
-      - name: "Build!"
+          cache-on-failure: true
+      - name: "Build release binary!"
         uses: "actions-rs/cargo@v1"
         with:
           command: "build"
+          args: "--release"
       - name: "Run release binary"
-        run: "env RUST_LOG=debug ./target/debug/peckish"
+        run: "env RUST_LOG=debug ./target/release/peckish"
       - name: "Validate release binary"
         if: "success() || failure()"
         run: "file release/peckish/peckish | grep -q 'ELF 64-bit LSB pie executable, x86-64'"
