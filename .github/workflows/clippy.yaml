@@ -2,14 +2,14 @@ name: "Run clippy lints"
 on:
   push:
     branches:
-    - "mistress"
+      - "mistress"
     paths:
-    - "**.rs"
+      - "**.rs"
   pull_request:
     branches:
-    - "mistress"
+      - "mistress"
     paths:
-    - "**.rs"
+      - "**.rs"
 
 jobs:
   run-clippy:
@@ -18,15 +18,15 @@ jobs:
         version: ["stable", "1.66"]
     runs-on: "ubuntu-latest"
     steps:
-    - uses: "actions/checkout@v2"
-    - name: "Install latest stable Rust"
-      uses: "actions-rs/toolchain@v1"
-      with:
-        toolchain: "${{ matrix.version }}"
-        override: true
-        components: "clippy"
-    - uses: "Swatinem/rust-cache@v1"
-      with:
-        key: "clippy"
-    - name: "Run clippy"
-      run: "cargo clippy --all-targets --all-features -- -D warnings"
+      - uses: "actions/checkout@v2"
+      - name: "Install latest stable Rust"
+        uses: "actions-rs/toolchain@v1"
+        with:
+          toolchain: "${{ matrix.version }}"
+          override: true
+          components: "clippy"
+      - uses: "Swatinem/rust-cache@v2"
+        with:
+          key: "clippy"
+      - name: "Run clippy"
+        run: "cargo clippy --all-targets --all-features -- -D warnings"

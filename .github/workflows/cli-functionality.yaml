@@ -17,6 +17,9 @@ jobs:
         with:
           toolchain: "stable"
           override: true
+      - uses: "Swatinem/rust-cache@v2"
+        with:
+          key: "format"
       - name: "Release build"
         uses: "actions-rs/cargo@v1"
         with:

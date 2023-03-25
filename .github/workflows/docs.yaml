@@ -2,14 +2,14 @@ name: "Build docs"
 on:
   push:
     branches:
-    - "mistress"
+      - "mistress"
     paths:
-    - "**.rs"
+      - "**.rs"
   pull_request:
     branches:
-    - "mistress"
+      - "mistress"
     paths:
-    - "**.rs"
+      - "**.rs"
 
 jobs:
   run-clippy:
@@ -19,14 +19,14 @@ jobs:
     if: "github.actor != 'dependabot'"
     runs-on: "ubuntu-latest"
     steps:
-    - uses: "actions/checkout@v2"
-    - name: "Install latest stable Rust"
-      uses: "actions-rs/toolchain@v1"
-      with:
-        toolchain: "${{ matrix.version }}"
-        override: true
-    - uses: "Swatinem/rust-cache@v1"
-      with:
-        key: "doc"
-    - name: "Run cargo doc"
-      run: "cargo doc --workspace --all-features --examples --no-deps --locked"
+      - uses: "actions/checkout@v2"
+      - name: "Install latest stable Rust"
+        uses: "actions-rs/toolchain@v1"
+        with:
+          toolchain: "${{ matrix.version }}"
+          override: true
+      - uses: "Swatinem/rust-cache@v2"
+        with:
+          key: "doc"
+      - name: "Run cargo doc"
+        run: "cargo doc --workspace --all-features --examples --no-deps --locked"

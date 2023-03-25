@@ -2,14 +2,14 @@ name: "Run all tests"
 on:
   push:
     branches:
-    - "mistress"
+      - "mistress"
     paths:
-    - "**.rs"
+      - "**.rs"
   pull_request:
     branches:
-    - "mistress"
+      - "mistress"
     paths:
-    - "**.rs"
+      - "**.rs"
 
 jobs:
   run-tests:
@@ -18,14 +18,14 @@ jobs:
         version: ["stable", "nightly", "1.66"]
     runs-on: "ubuntu-latest"
     steps:
-    - uses: "actions/checkout@v2"
-    - name: "Install latest stable Rust"
-      uses: "actions-rs/toolchain@v1"
-      with:
-        toolchain: "${{ matrix.version }}"
-        override: true
-    - uses: "Swatinem/rust-cache@v1"
-      with:
-        key: "test"
-    - name: "Run tests"
-      run: "cargo test"
+      - uses: "actions/checkout@v2"
+      - name: "Install latest stable Rust"
+        uses: "actions-rs/toolchain@v1"
+        with:
+          toolchain: "${{ matrix.version }}"
+          override: true
+      - uses: "Swatinem/rust-cache@v2"
+        with:
+          key: "test"
+      - name: "Run tests"
+        run: "cargo test"
