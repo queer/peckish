@@ -1,4 +1,4 @@
-name: "Run all tests"
+name: "Validate CLI functionality"
 on:
   push:
     branches:
