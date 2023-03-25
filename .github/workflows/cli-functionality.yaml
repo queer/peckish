@@ -18,23 +18,24 @@ jobs:
           toolchain: "stable"
           override: true
       - uses: "Swatinem/rust-cache@v2"
+        if: "always()"
         with:
-          key: "format"
+          key: "cli-functionality"
       - name: "Build!"
         uses: "actions-rs/cargo@v1"
         with:
           command: "build"
       - name: "Run release binary"
-        run: "./target/release/peckish"
+        run: "./target/debug/peckish"
       - name: "Validate release binary"
-        if: "always()"
+        if: "success() || failure()"
         run: "file release/peckish/peckish | grep -q 'ELF 64-bit LSB pie executable, x86-64'"
       - name: "Validate Arch package"
-        if: "always()"
-        run: 'docker run --rm -i -v "./release/peckish.arch.pkg.tar:/app/peckish.pkg.tar" archlinux:latest pacman --noconfirm -U /app/peckish.pkg.tar'
+        if: "success() || failure()"
+        run: 'docker run --rm -i -v "$(pwd)/release/peckish.arch.pkg.tar:/app/peckish.pkg.tar" archlinux:latest pacman --noconfirm -U /app/peckish.pkg.tar'
       - name: "Validate Debian package"
-        if: "always()"
-        run: 'docker run --rm -i -v "./release/peckish.deb:/app/peckish.deb" debian:latest dpkg -i /app/peckish.deb'
+        if: "success() || failure()"
+        run: 'docker run --rm -i -v "$(pwd)/release/peckish.deb:/app/peckish.deb" debian:latest dpkg -i /app/peckish.deb'
       - name: "Validate tarball"
-        if: "always()"
+        if: "success() || failure()"
         run: "tar t -vf ./release/peckish.tar"
