@@ -41,3 +41,6 @@ jobs:
       - name: "Validate tarball"
         if: "success() || failure()"
         run: "tar t -vf ./release/peckish.tar"
+      - name: "Validate Docker image"
+        if: "success() || failure()"
+        run: "docker run --rm queer/peckish:latest which peckish"

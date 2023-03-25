@@ -105,6 +105,9 @@ enum OutputProducer {
     Docker {
         name: String,
         image: String,
+        base_image: Option<String>,
+        #[serde(default)]
+        entrypoint: Option<Vec<String>>,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -161,10 +164,14 @@ impl Into<ConfiguredProducer> for &OutputProducer {
             OutputProducer::Docker {
                 name,
                 image,
+                base_image,
+                entrypoint,
                 injections,
             } => ConfiguredProducer::Docker(DockerProducer {
                 name: name.clone(),
                 image: image.clone(),
+                base_image: base_image.clone(),
+                entrypoint: entrypoint.clone(),
                 injections: injections.clone(),
             }),
 
@@ -251,27 +258,33 @@ impl Injection {
         let fs = fs.as_ref();
         match self {
             Injection::Move { src, dest } => {
-                debug!("Moving {:?} to {:?}", src, dest);
+                debug!("moving {:?} to {:?}", src, dest);
                 if let Some(parent) = dest.parent() {
                     fs.create_dir_all(parent).await?;
+                    debug!("created parent: {parent:?}");
                 }
+
                 fs.rename(src, dest).await?;
             }
+
             Injection::Copy { src, dest } => {
-                debug!("Copying {:?} to {:?}", src, dest);
+                debug!("copying {:?} to {:?}", src, dest);
                 fs.copy(src, dest).await?;
             }
+
             Injection::Symlink { src, dest } => {
-                debug!("Symlinking {:?} to {:?}", src, dest);
+                debug!("symlinking {:?} to {:?}", src, dest);
                 fs.symlink(src, dest).await?;
             }
+
             Injection::Touch { path } => {
-                debug!("Touching {:?}", path);
+                debug!("touching {:?}", path);
                 fs.create_dir_all(path.parent().unwrap()).await?;
                 fs.create_file(path).await?;
             }
+
             Injection::Delete { path } => {
-                debug!("Deleting {:?}", path);
+                debug!("deleting {:?}", path);
                 let metadata = fs.metadata(path).await?;
                 if metadata.is_dir() {
                     fs.remove_dir_all(path).await?;
@@ -279,8 +292,9 @@ impl Injection {
                     fs.remove_file(path).await?;
                 }
             }
+
             Injection::Create { path, content } => {
-                debug!("Creating {:?} with content {:?}", path, content);
+                debug!("creating {:?} with content {:?}", path, content);
                 fs.create_dir_all(path.parent().unwrap()).await?;
                 let mut file = fs.create_file(path).await?;
                 file.write_all(content).await?;

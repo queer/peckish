@@ -41,3 +41,13 @@ output:
       - type: "move"
         src: "/target/release/peckish"
         dest: "/peckish"
+
+  - name: "docker: peckish docker image"
+    type: "docker"
+    image: "queer/peckish:latest"
+    base_image: "ubuntu:jammy"
+    entrypoint: ["/usr/bin/peckish"]
+    injections:
+      - type: "move"
+        src: "/target/release/peckish"
+        dest: "/usr/bin/peckish"

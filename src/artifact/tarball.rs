@@ -91,7 +91,8 @@ impl ArtifactProducer for TarballProducer {
             debug!("tarball producing path: {path:?}");
             let path = path.strip_prefix("/")?;
 
-            let mut header = Header::new_gnu();
+            // We use ustar headers because long paths get weird w/ gnu
+            let mut header = Header::new_ustar();
             header.set_path(path).map_err(Fix::Io)?;
 
             let file_type = memfs.determine_file_type(path).await?;
@@ -102,6 +103,8 @@ impl ArtifactProducer for TarballProducer {
                 header.set_size(0);
                 header.set_mode(metadata.permissions().mode());
                 header.set_cksum();
+
+                debug!("copy dir {path:?} with perms: {:o}", header.mode()?);
 
                 let empty: &[u8] = &[];
                 archive_builder.append(&header, empty).await?;
@@ -117,6 +120,8 @@ impl ArtifactProducer for TarballProducer {
                 header.set_mode(stream.metadata().await?.permissions().mode());
                 header.set_cksum();
 
+                debug!("copy file {path:?} with perms: {:o}", header.mode()?);
+
                 archive_builder
                     .append_data(&mut header, path, data.as_slice())
                     .await
@@ -129,6 +134,8 @@ impl ArtifactProducer for TarballProducer {
                 header.set_link_name(link.to_str().unwrap())?;
                 header.set_size(empty.len() as u64);
                 header.set_cksum();
+
+                debug!("copy symlink {path:?}");
 
                 archive_builder.append(&header, empty).await?;
             } else {

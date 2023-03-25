@@ -9,7 +9,7 @@ ar = "0.9.0"
 async-compression = { version = "0.3.15", features = ["flate2", "gzip", "tokio"] }
 async-recursion = "1.0.4"
 async-trait = "0.1.67"
-bollard = "0.14.0"
+bollard = { git = "https://github.com/queer/bollard", rev = "628400c" }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 ctor = "0.1.26"
 futures-util = "0.3.27"
@@ -18,6 +18,7 @@ indoc = "2.0.1"
 log = "0.4.17"
 md5 = "0.7.0"
 nix = "0.26.2"
+nyoom = "0.0.1"
 pretty_env_logger = "0.4.0"
 rand = "0.8.5"
 rsfs-tokio = { git = "https://github.com/queer/rsfs-tokio", rev = "55efcfa" }
@@ -31,3 +32,4 @@ tokio = { version = "1.26.0", features = ["full"] }
 tokio-stream = "0.1.12"
 tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
 tokio-util = { version = "0.7.7", features = ["codec"] }
+urlencoding = "2.1.2"

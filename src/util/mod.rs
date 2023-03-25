@@ -55,8 +55,7 @@ pub fn test_init() {
     // std::env::set_var("RUST_LOG", "DEBUG");
     std::env::set_var("RUST_BACKTRACE", "full");
     std::panic::catch_unwind(|| {
-        // TODO: This logs a crash but it works
-        color_eyre::install().unwrap();
+        if color_eyre::install().is_ok() {}
         pretty_env_logger::init();
     });
 }

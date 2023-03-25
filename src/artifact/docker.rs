@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use color_eyre::Result;
@@ -8,6 +10,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_stream::StreamExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 
+use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::fs::{MemFS, TempDir};
 use crate::util::config::Injection;
 
@@ -42,7 +45,7 @@ impl Artifact for DockerArtifact {
         );
         while let Some(info) = pull.next().await {
             let info = info?;
-            info!("pulling {:?}: {:?}", info.id, info.progress);
+            info!("pulling {:?}: {:?}", image, info.progress);
         }
 
         // Export image to a TAR file
@@ -121,6 +124,8 @@ impl Artifact for DockerArtifact {
 pub struct DockerProducer {
     pub name: String,
     pub image: String,
+    pub base_image: Option<String>,
+    pub entrypoint: Option<Vec<String>>,
     pub injections: Vec<Injection>,
 }
 
@@ -140,21 +145,98 @@ impl ArtifactProducer for DockerProducer {
         // Produce a tarball artifact from the previous artifact
         let tmp = TempDir::new().await?;
         let tarball_path = tmp.path_view().join("image.tar");
-        let tarball = TarballProducer {
-            name: self.name.clone(),
-            path: tarball_path,
-            injections: self.injections.clone(),
-        }
-        .produce(previous)
-        .await?;
+
+        let tarball = if let Some(base_image) = &self.base_image {
+            // If we have a base image, we need to build a new image on top of it
+            // by importing the tarball into Docker and then exporting it again.
+            // This is because Docker doesn't support importing a tarball of
+            // layers directly.
+
+            let tmp = TempDir::new().await?;
+
+            {
+                // FileProducer extract Docker artifact of self.base_image into tmp
+                debug!(
+                    "extracting base image {base_image} to {:?}",
+                    tmp.path_view()
+                );
+                FileProducer {
+                    name: self.name.clone(),
+                    path: tmp.path_view(),
+                    injections: vec![],
+                }
+                .produce(&DockerArtifact {
+                    name: self.name.clone(),
+                    image: base_image.clone(),
+                })
+                .await?;
+            }
+
+            {
+                // FileProducer extract previous artifact into tmp
+                debug!(
+                    "extracting previous artifact {} to {:?}",
+                    previous.name(),
+                    tmp.path_view()
+                );
+                FileProducer {
+                    name: self.name.clone(),
+                    path: tmp.path_view(),
+                    injections: vec![],
+                }
+                .produce(previous)
+                .await?;
+            }
+
+            // TarballProducer tarball tmp into tarball_path
+            // chdir to preserve directory structure more-easily
+            // TODO: chdir hack, can we do better?
+            let pwd = std::env::current_dir()?;
+            std::env::set_current_dir(&tmp.path_view())?;
+
+            let tarball = TarballProducer {
+                name: self.name.clone(),
+                path: tarball_path.clone(),
+                injections: self.injections.clone(),
+            }
+            .produce(&FileArtifact {
+                name: self.name.clone(),
+                paths: vec![PathBuf::from(".")],
+            })
+            .await?;
+
+            std::env::set_current_dir(pwd)?;
+
+            tarball
+        } else {
+            // Otherwise, we can just import the tarball directly into Docker
+            TarballProducer {
+                name: self.name.clone(),
+                path: tarball_path.clone(),
+                injections: self.injections.clone(),
+            }
+            .produce(previous)
+            .await?
+        };
 
         // Import the tarball into Docker
         let (image, tag) = split_image_name_into_repo_and_tag(&self.image);
         let docker = Docker::connect_with_local_defaults()?;
+        let docker_cmd = {
+            if let Some(docker_cmd) = self.entrypoint.clone() {
+                let docker_cmd = format!("CMD {}", serde_json::to_string(&docker_cmd)?);
+                debug!("docker_cmd = {docker_cmd}");
+                Some(docker_cmd)
+            } else {
+                None
+            }
+        };
+        debug!("docker_cmd = {docker_cmd:?}");
         let options = CreateImageOptions {
-            from_src: "-",
-            repo: image,
-            tag,
+            from_src: "-".to_string(),
+            repo: image.into(),
+            changes: docker_cmd,
+            tag: tag.into(),
             ..Default::default()
         };
 
@@ -219,6 +301,8 @@ mod tests {
         let producer = DockerProducer {
             name: "docker image producer".into(),
             image: new_image.clone(),
+            base_image: None,
+            entrypoint: None,
             injections: vec![],
         };
 
