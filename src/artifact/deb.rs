@@ -118,6 +118,7 @@ impl ArtifactProducer for DebProducer {
         let tmp = TempDir::new().await?;
 
         // Create data.tar from previous artifact in tmp using TarballProducer
+        debug!("producing data.tar from previous artifact...");
         let data_tar = tmp.path_view().join("data.tar");
         let _tar_artifact = TarballProducer {
             name: "data.tar".to_string(),
@@ -128,6 +129,7 @@ impl ArtifactProducer for DebProducer {
         .await?;
 
         // Create control.tar from control file in tmp
+        debug!("producing control.tar...");
         let control_tar = tmp.path_view().join("control.tar");
         let mut control_tar_builder = tokio_tar::Builder::new(File::create(&control_tar).await?);
 
@@ -135,17 +137,23 @@ impl ArtifactProducer for DebProducer {
         control_tar_builder
             .append_path_with_name(&self.control, "control")
             .await?;
+        debug!(
+            "wrote control file {} to control.tar",
+            self.control.display()
+        );
 
         // Write self.prerm and self.postinst into control.tar if they exist
         if let Some(prerm) = &self.prerm {
             control_tar_builder
                 .append_path_with_name(prerm, "prerm")
                 .await?;
+            debug!("wrote prerm file {} to control.tar", prerm.display());
         }
         if let Some(postinst) = &self.postinst {
             control_tar_builder
                 .append_path_with_name(postinst, "postinst")
                 .await?;
+            debug!("wrote postinst file {} to control.tar", postinst.display());
         }
 
         // Compute the md5sums of every file in the memfs
@@ -160,6 +168,7 @@ impl ArtifactProducer for DebProducer {
                 file.read_to_end(&mut buf).await?;
                 let md5sum = md5::compute(buf);
                 let md5sum = format!("{:x}", md5sum);
+                debug!("md5sum of {}: {}", path.display(), md5sum);
                 md5sums.push((path, md5sum));
             }
         }
@@ -171,16 +180,22 @@ impl ArtifactProducer for DebProducer {
             .collect::<Vec<_>>()
             .join("\n");
 
+        debug!("computed md5sums:\n{}", md5sums);
+
+        let mut md5_header = tokio_tar::Header::new_gnu();
+        md5_header.set_size(md5sums.len() as u64);
+        md5_header.set_entry_type(tokio_tar::EntryType::Regular);
+        md5_header.set_mode(0o644);
+        md5_header.set_cksum();
+
         control_tar_builder
-            .append_data(
-                &mut tokio_tar::Header::new_gnu(),
-                "md5sums",
-                &mut md5sums.as_bytes(),
-            )
+            .append_data(&mut md5_header, "md5sums", &mut md5sums.as_bytes())
             .await?;
+        debug!("wrote md5sums to control.tar");
 
         // Finish control.tar
         control_tar_builder.finish().await?;
+        debug!("finished control.tar");
 
         // Create debian-binary in tmp
         let debian_binary = tmp.path_view().join("debian-binary");
@@ -192,11 +207,14 @@ impl ArtifactProducer for DebProducer {
         }
 
         // Create .deb ar archive from debian-binary, control.tar, and data.tar
+        debug!("building final .deb...");
         let mut deb_builder = ar::Builder::new(std::fs::File::create(&self.path)?);
 
         deb_builder.append_path(&debian_binary)?;
         deb_builder.append_path(&control_tar)?;
         deb_builder.append_path(&data_tar)?;
+
+        debug!("done!");
 
         Ok(DebArtifact {
             name: self.name.clone(),

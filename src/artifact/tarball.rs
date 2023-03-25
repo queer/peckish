@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use color_eyre::eyre::eyre;
 use color_eyre::Result;
 use log::*;
-use rsfs_tokio::GenFS;
+use rsfs_tokio::unix_ext::PermissionsExt;
+use rsfs_tokio::{GenFS, Metadata};
 use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 
@@ -96,19 +97,24 @@ impl ArtifactProducer for TarballProducer {
             let file_type = memfs.determine_file_type(path).await?;
             let fs = memfs.as_ref();
             if file_type == InternalFileType::Dir {
+                let metadata = fs.metadata(path).await?;
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
+                header.set_mode(metadata.permissions().mode());
                 header.set_cksum();
 
                 let empty: &[u8] = &[];
                 archive_builder.append(&header, empty).await?;
             } else if file_type == InternalFileType::File {
+                use rsfs_tokio::File;
+
                 let mut data = Vec::new();
                 let mut stream = fs.open_file(path).await?;
                 tokio::io::copy(&mut stream, &mut data).await?;
 
                 header.set_entry_type(EntryType::Regular);
                 header.set_size(data.len() as u64);
+                header.set_mode(stream.metadata().await?.permissions().mode());
                 header.set_cksum();
 
                 archive_builder
