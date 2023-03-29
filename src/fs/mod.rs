@@ -12,7 +12,6 @@ use crate::util::Fix;
 
 pub type InMemoryUnixFS = rsfs_tokio::mem::unix::FS;
 
-#[derive(Clone)]
 pub struct TempDir {
     path: PathBuf,
 }
