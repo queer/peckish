@@ -12,7 +12,7 @@ async-trait = "0.1.67"
 bollard = { git = "https://github.com/queer/bollard", rev = "628400c" }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 ctor = "0.1.26"
-futures-util = "0.3.27"
+futures-util = "0.3.28"
 hyper = "0.14.25"
 indoc = "2.0.1"
 log = "0.4.17"
