@@ -18,10 +18,8 @@ use super::{Artifact, ArtifactProducer};
 
 /// A Debian package. This is a **non-compressed** ar archive.
 ///
-/// ## Caveats
-///
-/// - Currently only supports gzip-compressed data archives inside the deb
-/// - Control files are currently discarded; this will change in the future
+/// TODO: Preserve control files
+/// TODO: Decompress more than just gzip
 #[derive(Debug, Clone)]
 pub struct DebArtifact {
     pub name: String,
@@ -103,7 +101,8 @@ impl DebArtifact {
 /// ## Caveats
 ///
 /// - The data and control archives are **not** compressed
-/// - Not all control file features are supported
+///
+/// TODO: Support all control file features
 #[derive(Debug, Clone)]
 pub struct DebProducer {
     pub name: String,
