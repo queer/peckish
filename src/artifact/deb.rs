@@ -16,6 +16,12 @@ use crate::util::traverse_memfs;
 
 use super::{Artifact, ArtifactProducer};
 
+/// A Debian package. This is a **non-compressed** ar archive.
+///
+/// ## Caveats
+///
+/// - Currently only supports gzip-compressed data archives inside the deb
+/// - Control files are currently discarded; this will change in the future
 #[derive(Debug, Clone)]
 pub struct DebArtifact {
     pub name: String,
@@ -92,6 +98,12 @@ impl DebArtifact {
     }
 }
 
+/// A Debian package producer. This is a **non-compressed** ar archive.
+///
+/// ## Caveats
+///
+/// - The data and control archives are **not** compressed
+/// - Not all control file features are supported
 #[derive(Debug, Clone)]
 pub struct DebProducer {
     pub name: String,
