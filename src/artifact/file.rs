@@ -15,6 +15,7 @@ use super::{Artifact, ArtifactProducer};
 pub struct FileArtifact {
     pub name: String,
     pub paths: Vec<PathBuf>,
+    pub strip_path_prefixes: Option<bool>,
 }
 
 #[async_trait::async_trait]
@@ -28,7 +29,14 @@ impl Artifact for FileArtifact {
 
         debug!("copying {} paths to memfs!", self.paths.len());
 
-        fs.copy_files_from_paths(&self.paths, None).await?;
+        if let Some(true) = self.strip_path_prefixes {
+            for path in &self.paths {
+                fs.copy_files_from_paths(&vec![path.clone()], Some(path.clone()))
+                    .await?;
+            }
+        } else {
+            fs.copy_files_from_paths(&self.paths, None).await?;
+        }
 
         Ok(fs)
     }
@@ -152,6 +160,7 @@ impl ArtifactProducer for FileProducer {
         Ok(FileArtifact {
             name: self.path.to_string_lossy().to_string(),
             paths,
+            strip_path_prefixes: Some(true),
         })
     }
 }

@@ -52,7 +52,6 @@ impl DebArtifact {
     ) -> Result<()> {
         while let Some(entry) = archive.next_entry() {
             let mut ar_entry = entry?;
-            // TODO: THIS IS UNSAFE PLEASE HANDLE NON-UTF8 CORRECTLY
             let path = String::from_utf8_lossy(ar_entry.header().identifier()).to_string();
             if path == "data.tar.gz" {
                 use async_compression::tokio::bufread::GzipDecoder;

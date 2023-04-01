@@ -81,6 +81,7 @@ mod tests {
         let file_artifact = file::FileArtifact {
             name: "Cargo.toml".into(),
             paths: vec![PathBuf::from("Cargo.toml")],
+            strip_path_prefixes: None,
         };
 
         let tarball_producer = tarball::TarballProducer {

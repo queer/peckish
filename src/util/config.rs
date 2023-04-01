@@ -50,11 +50,28 @@ struct InternalConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum InputArtifact {
-    File { name: String, paths: Vec<PathBuf> },
-    Tarball { name: String, path: PathBuf },
-    Docker { name: String, image: String },
-    Arch { name: String, path: PathBuf },
-    Deb { name: String, path: PathBuf },
+    File {
+        name: String,
+        paths: Vec<PathBuf>,
+        #[serde(default)]
+        strip_path_prefixes: Option<bool>,
+    },
+    Tarball {
+        name: String,
+        path: PathBuf,
+    },
+    Docker {
+        name: String,
+        image: String,
+    },
+    Arch {
+        name: String,
+        path: PathBuf,
+    },
+    Deb {
+        name: String,
+        path: PathBuf,
+    },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -62,9 +79,15 @@ enum InputArtifact {
 impl Into<ConfiguredArtifact> for InputArtifact {
     fn into(self) -> ConfiguredArtifact {
         match self {
-            InputArtifact::File { name, paths } => {
-                ConfiguredArtifact::File(FileArtifact { name, paths })
-            }
+            InputArtifact::File {
+                name,
+                paths,
+                strip_path_prefixes,
+            } => ConfiguredArtifact::File(FileArtifact {
+                name,
+                paths,
+                strip_path_prefixes,
+            }),
 
             InputArtifact::Tarball { name, path } => {
                 ConfiguredArtifact::Tarball(TarballArtifact { name, path })

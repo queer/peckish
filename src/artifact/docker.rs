@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use color_eyre::Result;
@@ -188,26 +186,17 @@ impl ArtifactProducer for DockerProducer {
                 .await?;
             }
 
-            // TarballProducer tarball tmp into tarball_path
-            // chdir to preserve directory structure more-easily
-            // TODO: chdir hack, can we do better?
-            let pwd = std::env::current_dir()?;
-            std::env::set_current_dir(tmp.path_view())?;
-
-            let tarball = TarballProducer {
+            TarballProducer {
                 name: self.name.clone(),
                 path: tarball_path.clone(),
                 injections: self.injections.clone(),
             }
             .produce(&FileArtifact {
                 name: self.name.clone(),
-                paths: vec![PathBuf::from(".")],
+                paths: vec![tmp.path_view()],
+                strip_path_prefixes: Some(true),
             })
-            .await?;
-
-            std::env::set_current_dir(pwd)?;
-
-            tarball
+            .await?
         } else {
             // Otherwise, we can just import the tarball directly into Docker
             TarballProducer {

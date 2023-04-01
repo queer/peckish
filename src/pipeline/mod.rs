@@ -84,6 +84,7 @@ mod tests {
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
+                strip_path_prefixes: None,
             }),
             output: vec![ConfiguredProducer::Tarball(TarballProducer {
                 name: "cargo dot toml output".into(),
@@ -109,6 +110,7 @@ mod tests {
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
+                strip_path_prefixes: None,
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -146,6 +148,7 @@ mod tests {
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
+                strip_path_prefixes: None,
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -183,6 +186,7 @@ mod tests {
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
+                strip_path_prefixes: None,
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -220,6 +224,7 @@ mod tests {
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
+                strip_path_prefixes: None,
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -256,6 +261,7 @@ mod tests {
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
+                strip_path_prefixes: None,
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -291,6 +297,7 @@ mod tests {
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
+                strip_path_prefixes: None,
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
