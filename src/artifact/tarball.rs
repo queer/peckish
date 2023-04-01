@@ -14,6 +14,8 @@ use crate::util::{traverse_memfs, Fix};
 
 use super::{Artifact, ArtifactProducer};
 
+/// A tarball on the filesystem at the given path. Compression is **not**
+/// supported.
 #[derive(Debug, Clone)]
 pub struct TarballArtifact {
     pub name: String,
@@ -56,6 +58,11 @@ impl Artifact for TarballArtifact {
     }
 }
 
+/// Produces a tarball at the given path on the filesystem.
+///
+/// ## Caveats
+///
+/// - Compression is not supported
 #[derive(Debug, Clone)]
 pub struct TarballProducer {
     pub name: String,
