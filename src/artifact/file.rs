@@ -11,10 +11,18 @@ use crate::util::{is_in_tmp_dir, traverse_memfs, Fix};
 
 use super::{Artifact, ArtifactProducer};
 
+/// A path or set of paths on the filesystem.
 #[derive(Debug, Clone)]
 pub struct FileArtifact {
     pub name: String,
     pub paths: Vec<PathBuf>,
+    /// Whether or not the contents of a path should be stripped of itself as a
+    /// prefix. For example:
+    ///
+    /// ```text
+    /// /a/b/c -> /c
+    /// /a/b/c/d/e/... -> /...
+    /// ```
     pub strip_path_prefixes: Option<bool>,
 }
 
@@ -31,7 +39,14 @@ impl Artifact for FileArtifact {
 
         if let Some(true) = self.strip_path_prefixes {
             for path in &self.paths {
-                fs.copy_files_from_paths(&vec![path.clone()], Some(path.clone()))
+                let prefix = if path.is_dir() {
+                    path
+                } else if let Some(parent) = path.parent() {
+                    parent
+                } else {
+                    path
+                };
+                fs.copy_files_from_paths(&vec![path.clone()], Some(prefix.into()))
                     .await?;
             }
         } else {
@@ -42,6 +57,7 @@ impl Artifact for FileArtifact {
     }
 }
 
+/// Produces a set of files at the given path on the filesystem.
 #[derive(Debug, Clone)]
 pub struct FileProducer {
     pub name: String,
