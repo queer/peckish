@@ -7,6 +7,7 @@ use rsfs_tokio::unix_ext::GenFSExt;
 use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio_tar::Header;
 
 use crate::artifact::tarball::TarballProducer;
 use crate::fs::{InternalFileType, MemFS, TempDir};
@@ -98,8 +99,13 @@ pub struct DebProducer {
     pub path: PathBuf,
     pub prerm: Option<PathBuf>,
     pub postinst: Option<PathBuf>,
-    pub control: PathBuf,
     pub injections: Vec<Injection>,
+    pub package_name: String,
+    pub package_maintainer: String,
+    pub package_architecture: String,
+    pub package_version: String,
+    pub package_depends: String,
+    pub package_description: String,
 }
 
 #[async_trait::async_trait]
@@ -134,13 +140,28 @@ impl ArtifactProducer for DebProducer {
         let mut control_tar_builder = tokio_tar::Builder::new(File::create(&control_tar).await?);
 
         // Write self.control into control.tar as /control
+        let mut control_header = Header::new_gnu();
+        control_header.set_entry_type(tokio_tar::EntryType::file());
+        let control_data = indoc::formatdoc! {r#"
+            Package: {name}
+            Maintainer: {maintainer}
+            Architecture: {architecture}
+            Version: {version}
+            Depends: {depends}
+            Description: {description}
+        "#,
+            name = self.package_name,
+            maintainer = self.package_maintainer,
+            architecture = self.package_architecture,
+            version = self.package_version,
+            depends = self.package_depends,
+            description = self.package_description,
+        };
+        control_header.set_size(control_data.len() as u64);
+        control_header.set_cksum();
         control_tar_builder
-            .append_path_with_name(&self.control, "control")
+            .append_data(&mut control_header, "control", control_data.as_bytes())
             .await?;
-        debug!(
-            "wrote control file {} to control.tar",
-            self.control.display()
-        );
 
         // Write self.prerm and self.postinst into control.tar if they exist
         if let Some(prerm) = &self.prerm {
