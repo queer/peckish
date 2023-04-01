@@ -142,6 +142,7 @@ enum OutputProducer {
         description: String,
         version: String,
         author: String,
+        arch: String,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -211,6 +212,7 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 description,
                 version,
                 author,
+                arch,
                 injections,
             } => ConfiguredProducer::Arch(ArchProducer {
                 name: name.clone(),
@@ -218,6 +220,7 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 package_desc: description.clone(),
                 package_ver: version.clone(),
                 package_author: author.clone(),
+                package_arch: arch.clone(),
                 path: path.clone(),
                 injections: injections.clone(),
             }),

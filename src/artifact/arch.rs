@@ -9,9 +9,13 @@ use crate::util::config::Injection;
 use super::tarball::{TarballArtifact, TarballProducer};
 use super::{get_artifact_size, Artifact, ArtifactProducer};
 
+/// An Arch Linux package. This is a **non-compressed** tarball file with a
+/// `.pkg.tar` extension and a `.PKGINFO` file in the root.
 #[derive(Debug, Clone)]
 pub struct ArchArtifact {
+    /// The name of the artifact. Used for ex. logging.
     pub name: String,
+    /// The path to the artifact.
     pub path: PathBuf,
 }
 
@@ -31,6 +35,11 @@ impl Artifact for ArchArtifact {
     }
 }
 
+/// An [`ArtifactProducer`] that produces an Arch Linux package. This is a
+/// **non-compressed** tarball file with a `.pkg.tar` extension and a
+/// `.PKGINFO` file in the root. The `.PKGINFO` file is generated from the
+/// `package_*` fields on the struct. The size of the package is calculated
+/// from the previous artifact's memfs.
 #[derive(Debug, Clone)]
 pub struct ArchProducer {
     pub name: String,
@@ -38,6 +47,7 @@ pub struct ArchProducer {
     pub package_ver: String,
     pub package_desc: String,
     pub package_author: String,
+    pub package_arch: String,
     pub path: PathBuf,
     pub injections: Vec<Injection>,
 }
@@ -66,7 +76,7 @@ impl ArtifactProducer for ArchProducer {
             builddate = {time}
             packager = {author}
             size = {size}
-            arch = x86_64
+            arch = {arch}
             provides = {name}
         "#,
             name = self.package_name,
@@ -74,7 +84,8 @@ impl ArtifactProducer for ArchProducer {
             author = self.package_author,
             size = size,
             desc = self.package_desc,
-            version = self.package_ver
+            version = self.package_ver,
+            arch = self.package_arch,
         };
 
         let mut new_injections = self.injections.clone();
