@@ -15,6 +15,14 @@ use crate::util::config::Injection;
 use super::tarball::{TarballArtifact, TarballProducer};
 use super::{Artifact, ArtifactProducer};
 
+/// A Docker image.
+///
+/// ## Caveats
+///
+/// - Will currently always attempt to pull the provided image if needed
+/// - Will only unpack the first set of layers in a Docker image
+///
+/// TODO: Preserve image config
 #[derive(Debug, Clone)]
 pub struct DockerArtifact {
     pub name: String,
@@ -118,6 +126,15 @@ impl Artifact for DockerArtifact {
     }
 }
 
+/// Create a Docker image with the given name from an artifact, optionally
+/// building the final image from another base image.
+///
+/// ## Caveats
+///
+/// - Will currently always attempt to pull the base image
+/// - Does not support changes other than setting the `CMD`
+///
+/// TODO: Rename `entrypoint` -> `cmd`
 #[derive(Debug, Clone)]
 pub struct DockerProducer {
     pub name: String,
