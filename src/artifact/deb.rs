@@ -103,6 +103,7 @@ impl DebArtifact {
 /// - The data and control archives are **not** compressed
 ///
 /// TODO: Support all control file features
+/// TODO: Validate control file
 #[derive(Debug, Clone)]
 pub struct DebProducer {
     pub name: String,

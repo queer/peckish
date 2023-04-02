@@ -40,6 +40,10 @@ impl Artifact for ArchArtifact {
 /// `.PKGINFO` file in the root. The `.PKGINFO` file is generated from the
 /// `package_*` fields on the struct. The size of the package is calculated
 /// from the previous artifact's memfs.
+///
+/// TODO: Validate architectures
+/// TODO: Validate version numbers
+/// TODO: Validate package names
 #[derive(Debug, Clone)]
 pub struct ArchProducer {
     pub name: String,
