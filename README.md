@@ -27,3 +27,41 @@ output:
 
   # ...
 ```
+
+### library
+
+```rust
+// high(-ish) level
+let config = PeckishConfig {
+    pipeline: false,
+    input: ConfiguredArtifact::File(FileArtifact {
+        name: "my files".into(),
+        paths: vec!["...".into()],
+        strip_path_prefixes: None,
+    }),
+    output: vec![ConfiguredProducer::Tarball(TarballProducer {
+        name: "tarball for whatever".into(),
+        path: PathBuf::from("..."), // or otherwise
+        injections: vec![],
+    })],
+};
+
+let pipeline = Pipeline::new(true);
+pipeline.run().await?;
+
+// lower-level
+
+let input = FileArtifact {
+    name: "my files".into(),
+    paths: vec!["...".into()],
+    strip_path_prefixes: None,
+};
+
+let output = TarballProducer {
+    name: "tarball for whatever".into(),
+    path: PathBuf::from("..."), // or otherwise
+    injections: vec![],
+}
+.produce(&input)
+.await?;
+```
