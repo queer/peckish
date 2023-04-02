@@ -1,3 +1,4 @@
+use clap::Parser;
 use color_eyre::Result;
 use log::*;
 
@@ -9,6 +10,17 @@ mod fs;
 mod pipeline;
 mod util;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
+#[derive(clap::Parser)]
+#[command(
+    name = "peckish",
+    display_name = "peckish",
+    about = "peckish repackages software artifacts!",
+    version = VERSION,
+)]
+struct Input {}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     if std::env::var("RUST_LOG").is_err() {
@@ -17,6 +29,8 @@ async fn main() -> Result<()> {
 
     color_eyre::install()?;
     pretty_env_logger::init();
+
+    let _args = Input::parse();
 
     debug!("starting peckish");
 

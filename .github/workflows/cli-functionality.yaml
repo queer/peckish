@@ -43,4 +43,4 @@ jobs:
         run: "tar t -vf ./release/peckish.tar"
       - name: "Validate Docker image"
         if: "success() || failure()"
-        run: "docker run --rm queer/peckish:latest which peckish"
+        run: "docker run --rm queer/peckish:latest peckish --version"
