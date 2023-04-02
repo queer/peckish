@@ -1,3 +1,22 @@
+//! peckish is a tool for converting between different software artifact
+//! formats.
+//!
+//! ## how?
+//!
+//! The core abstraction is an in-memory filesystem. peckish takes in a given
+//! artifact as input, converts it to an in-memory filesystem, manipulates it,
+//! and then exports it as another artifact. This is done with the [`Artifact`]
+//! and [`ArtifactProducer`] traits. The [`Pipeline`] struct is used to
+//! construct a chain of artifacts to convert from one to another.
+//!
+//! ## supported formats
+//!
+//! - Arch packages
+//! - Debian packages
+//! - Docker images
+//! - Normal files
+//! - Tarballs
+
 pub mod artifact;
 mod fs;
 pub mod pipeline;

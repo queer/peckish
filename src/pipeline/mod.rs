@@ -4,7 +4,11 @@ use log::*;
 use crate::artifact::{Artifact, ArtifactProducer};
 use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig};
 
+/// A pipeline that can run a given config. This is the main entrypoint for
+/// running a peckish config.
 pub struct Pipeline {
+    /// Whether or not the previous step's output should be passed to the next
+    /// step as its input.
     pipeline: bool,
 }
 
