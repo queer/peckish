@@ -18,6 +18,7 @@ output:
     description: "peckish transforms software artifacts"
     author: "amy"
     version: "0.0.1-1"
+    arch: "x86_64"
     injections:
       - type: "move"
         src: "/target/release/peckish"
@@ -27,11 +28,11 @@ output:
     type: "deb"
     path: "./release/peckish.deb"
     package_name: "peckish"
-    package_maintainer: "amy"
-    package_architecture: "amd64"
-    package_version: "0.0.1-1"
-    package_depends: "libc6"
-    package_description: "peckish transforms software artifacts"
+    maintainer: "amy"
+    arch: "amd64"
+    version: "0.0.1-1"
+    depends: "libc6"
+    description: "peckish transforms software artifacts"
 
     injections:
       - type: "move"
