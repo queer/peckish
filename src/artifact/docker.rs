@@ -2,6 +2,7 @@ use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use color_eyre::Result;
 use log::*;
+use regex::Regex;
 use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -13,7 +14,7 @@ use crate::fs::{MemFS, TempDir};
 use crate::util::config::Injection;
 
 use super::tarball::{TarballArtifact, TarballProducer};
-use super::{Artifact, ArtifactProducer};
+use super::{Artifact, ArtifactProducer, SelfValidation};
 
 /// A Docker image.
 ///
@@ -123,6 +124,13 @@ impl Artifact for DockerArtifact {
             .await?;
 
         Ok(fs)
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for DockerArtifact {
+    async fn validate(&self) -> Result<()> {
+        Ok(())
     }
 }
 
@@ -266,6 +274,44 @@ impl ArtifactProducer for DockerProducer {
             name: self.name.clone(),
             image: self.image.clone(),
         })
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for DockerProducer {
+    async fn validate(&self) -> Result<()> {
+        // validate self.image format
+
+        let docker_image_name_with_tag_and_repo_regex =
+            Regex::new(r"^(?P<repo>[a-z0-9]+(?:[._-][a-z0-9]+)*/)?(?P<name>[a-z0-9]+(?:[._-][a-z0-9]+)*):(?P<tag>[a-z0-9]+(?:[._-][a-z0-9]+)*)$")
+                .unwrap();
+
+        let mut errors = vec![];
+
+        if !docker_image_name_with_tag_and_repo_regex.is_match(&self.image) {
+            errors.push(format!(
+                "Docker image name with tag is invalid: {}, must match {docker_image_name_with_tag_and_repo_regex}",
+                self.image
+            ));
+        }
+
+        if let Some(base_image) = &self.base_image {
+            if !docker_image_name_with_tag_and_repo_regex.is_match(base_image) {
+                errors.push(format!(
+                    "Docker base image name with tag is invalid: {}, must match {docker_image_name_with_tag_and_repo_regex}",
+                    base_image
+                ));
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(eyre::eyre!(
+                "Docker producer is invalid:\n{}",
+                errors.join("\n")
+            ));
+        }
+
+        Ok(())
     }
 }
 

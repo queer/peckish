@@ -13,6 +13,7 @@ bollard = { git = "https://github.com/queer/bollard", rev = "628400c" }
 clap = { version = "4.2.1", features = ["derive"] }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 ctor = "0.1.26"
+eyre = "0.6.8"
 futures-util = "0.3.28"
 hyper = "0.14.25"
 indoc = "2.0.1"
@@ -22,6 +23,7 @@ nix = "0.26.2"
 nyoom = "0.0.1"
 pretty_env_logger = "0.4.0"
 rand = "0.8.5"
+regex = "1.7.3"
 rsfs-tokio = { git = "https://github.com/queer/rsfs-tokio", rev = "55efcfa" }
 serde = { version = "1.0.159", features = ["derive"] }
 serde_derive = "1.0.152"

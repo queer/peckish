@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use color_eyre::Result;
 use futures_util::TryStreamExt;
 use log::*;
+use regex::Regex;
 use rsfs_tokio::unix_ext::GenFSExt;
 use rsfs_tokio::GenFS;
 use tokio::fs::File;
@@ -14,7 +15,7 @@ use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
 use crate::util::traverse_memfs;
 
-use super::{Artifact, ArtifactProducer};
+use super::{Artifact, ArtifactProducer, SelfValidation};
 
 /// A Debian package. This is a **non-compressed** ar archive.
 ///
@@ -96,6 +97,75 @@ impl DebArtifact {
     }
 }
 
+#[async_trait::async_trait]
+impl SelfValidation for DebArtifact {
+    async fn validate(&self) -> Result<()> {
+        let mut errors = vec![];
+
+        if !self.path.exists() {
+            errors.push(format!("deb artifact does not exist: {:#?}", self.path));
+        }
+
+        if !self.path.ends_with(".deb") {
+            errors.push(format!(
+                "deb artifact does not end with .deb: {:#?}",
+                self.path
+            ));
+        }
+
+        // validate that file is an ar archive of:
+        // /debian-binary
+        // /control.tar.gz
+        // /data.tar.gz
+        let mut archive = ar::Archive::new(std::fs::File::open(&self.path)?);
+        let mut found_debian_binary = false;
+        let mut found_control_tar_gz = false;
+        let mut found_data_tar_gz = false;
+
+        while let Some(entry) = archive.next_entry() {
+            let ar_entry = entry?;
+            let path = String::from_utf8_lossy(ar_entry.header().identifier()).to_string();
+            if path == "debian-binary" {
+                found_debian_binary = true;
+            } else if path == "control.tar.gz" {
+                found_control_tar_gz = true;
+            } else if path == "data.tar.gz" {
+                found_data_tar_gz = true;
+            }
+        }
+
+        if !found_debian_binary {
+            errors.push(format!(
+                "deb artifact does not contain debian-binary: {:#?}",
+                self.path
+            ));
+        }
+
+        if !found_control_tar_gz {
+            errors.push(format!(
+                "deb artifact does not contain control.tar.gz: {:#?}",
+                self.path
+            ));
+        }
+
+        if !found_data_tar_gz {
+            errors.push(format!(
+                "deb artifact does not contain data.tar.gz: {:#?}",
+                self.path
+            ));
+        }
+
+        if !errors.is_empty() {
+            return Err(eyre::eyre!(
+                "Debian artifact is invalid:\n{}",
+                errors.join("\n")
+            ));
+        }
+
+        Ok(())
+    }
+}
+
 /// A Debian package producer. This is a **non-compressed** ar archive.
 ///
 /// ## Caveats
@@ -103,7 +173,6 @@ impl DebArtifact {
 /// - The data and control archives are **not** compressed
 ///
 /// TODO: Support all control file features
-/// TODO: Validate control file
 #[derive(Debug, Clone)]
 pub struct DebProducer {
     pub name: String,
@@ -252,5 +321,63 @@ impl ArtifactProducer for DebProducer {
             name: self.name.clone(),
             path: self.path.clone(),
         })
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for DebProducer {
+    async fn validate(&self) -> Result<()> {
+        let package_name_regex = Regex::new(r"^[a-z0-9][a-z0-9+-\.]+$")?;
+        let package_maintainer_regex = Regex::new(r"^[^<]+( <[^>]+>)?$")?;
+        let package_version_regex = Regex::new(r"^[a-z0-9][a-z0-9+._-]*(-\d+)$")?;
+
+        let mut errors = vec![];
+
+        if !package_name_regex.is_match(&self.package_name) {
+            errors.push(format!(
+                "package name {} is invalid, must match {package_name_regex}",
+                self.package_name,
+            ));
+        }
+
+        if !package_maintainer_regex.is_match(&self.package_maintainer) {
+            errors.push(format!(
+                "package maintainer {} is invalid, must match {package_maintainer_regex}",
+                self.package_maintainer,
+            ));
+        }
+
+        if !package_version_regex.is_match(&self.package_version) {
+            errors.push(format!(
+                "package version {} is invalid, must match {package_version_regex}",
+                self.package_version,
+            ));
+        }
+
+        if self.package_description.is_empty() {
+            errors.push("package description must not be empty".to_string());
+        }
+
+        // validate architecture against all known debian architectures
+        let valid_architectures = vec![
+            "amd64", "arm64", "armel", "armhf", "i386", "mips", "mips64el", "mipsel", "ppc64el",
+            "s390x", "sh4", "sh4eb", "sparc", "sparc64",
+        ];
+
+        if !valid_architectures.contains(&self.package_architecture.as_str()) {
+            errors.push(format!(
+                "package architecture {} is invalid, must be one of {valid_architectures:?}",
+                self.package_architecture
+            ));
+        }
+
+        if !errors.is_empty() {
+            return Err(eyre::eyre!(
+                "Debian producer is invalid:\n{}",
+                errors.join("\n")
+            ));
+        }
+
+        Ok(())
     }
 }

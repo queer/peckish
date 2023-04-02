@@ -9,7 +9,7 @@ use crate::fs::{InternalFileType, MemFS};
 use crate::util::config::Injection;
 use crate::util::{is_in_tmp_dir, traverse_memfs, Fix};
 
-use super::{Artifact, ArtifactProducer};
+use super::{Artifact, ArtifactProducer, SelfValidation};
 
 /// A path or set of paths on the filesystem.
 #[derive(Debug, Clone)]
@@ -54,6 +54,30 @@ impl Artifact for FileArtifact {
         }
 
         Ok(fs)
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for FileArtifact {
+    async fn validate(&self) -> Result<()> {
+        let mut errors = vec![];
+
+        for path in &self.paths {
+            if !path.exists() {
+                errors.push(format!("path does not exist: {path:?}"));
+            } else if !path.is_file() && !path.is_dir() {
+                errors.push(format!("path is not a file or directory: {path:?}"));
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(eyre::eyre!(
+                "File artifact not valid:\n{}",
+                errors.join("\n")
+            ));
+        }
+
+        Ok(())
     }
 }
 
@@ -178,5 +202,27 @@ impl ArtifactProducer for FileProducer {
             paths,
             strip_path_prefixes: Some(true),
         })
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for FileProducer {
+    async fn validate(&self) -> Result<()> {
+        let mut errors = vec![];
+
+        if !self.path.exists() {
+            errors.push(format!("path does not exist: {:?}", self.path));
+        } else if !self.path.is_file() && !self.path.is_dir() {
+            errors.push(format!("path is not a file or directory: {:?}", self.path));
+        }
+
+        if !errors.is_empty() {
+            return Err(eyre::eyre!(
+                "File producer not valid:\n{}",
+                errors.join("\n")
+            ));
+        }
+
+        Ok(())
     }
 }

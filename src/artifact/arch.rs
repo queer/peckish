@@ -2,12 +2,15 @@ use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use color_eyre::Result;
+use regex::Regex;
+use tokio::fs::File;
+use tokio_stream::StreamExt;
 
 use crate::fs::MemFS;
 use crate::util::config::Injection;
 
 use super::tarball::{TarballArtifact, TarballProducer};
-use super::{get_artifact_size, Artifact, ArtifactProducer};
+use super::{get_artifact_size, Artifact, ArtifactProducer, SelfValidation};
 
 /// An Arch Linux package. This is a **non-compressed** tarball file with a
 /// `.pkg.tar` extension and a `.PKGINFO` file in the root.
@@ -32,6 +35,57 @@ impl Artifact for ArchArtifact {
         }
         .extract()
         .await
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for ArchArtifact {
+    async fn validate(&self) -> Result<()> {
+        let mut errors = vec![];
+
+        if !self.path.exists() {
+            errors.push(format!("{} does not exist", self.path.display()));
+        }
+
+        if !self.path.is_file() {
+            errors.push(format!("{} is not a file", self.path.display()));
+        }
+
+        if !self.path.ends_with(".pkg.tar") {
+            errors.push(format!(
+                "{} does not end with .pkg.tar",
+                self.path.display()
+            ));
+        }
+
+        // Validate that the .PKGINFO file exists in the tarball
+        let mut tarball = tokio_tar::Archive::new(File::open(&self.path).await?);
+        let mut pkginfo_exists = false;
+
+        let mut entries = tarball.entries()?;
+        while let Some(gz_entry) = entries.try_next().await? {
+            let path = gz_entry.path()?;
+            if path.ends_with(".PKGINFO") {
+                pkginfo_exists = true;
+                break;
+            }
+        }
+
+        if !pkginfo_exists {
+            errors.push(format!(
+                "{} does not contain a .PKGINFO file",
+                self.path.display()
+            ));
+        }
+
+        if !errors.is_empty() {
+            Err(eyre::eyre!(
+                "Arch artifact is invalid:\n{}",
+                errors.join("\n")
+            ))?;
+        }
+
+        Ok(())
     }
 }
 
@@ -113,5 +167,60 @@ impl ArtifactProducer for ArchProducer {
             name: self.name.clone(),
             path: tarball.path,
         })
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for ArchProducer {
+    async fn validate(&self) -> Result<()> {
+        let mut errors = vec![];
+
+        // Validate any package starting with a letter, followed by any letter,
+        // number, hyphen, or underscore, ending with a letter or number.
+        let package_name_regex = Regex::new(r"^[a-z]([a-z0-9_-]*[a-z0-9])?$")?;
+
+        // Validate more/less every version number people are likely to use,
+        // and ensure it ends with the Arch-specific versioning number at the
+        // end.
+        let package_version_regex = Regex::new(r"^[a-z0-9][a-z0-9+._-]*(-\d+)$")?;
+
+        if !package_name_regex.is_match(&self.package_name) {
+            errors.push(format!(
+                "package name `{}` is invalid, must match {package_name_regex}",
+                self.package_name
+            ));
+        }
+
+        if !package_version_regex.is_match(&self.package_ver) {
+            errors.push(format!(
+                "package version `{}` is invalid, must match {package_version_regex}",
+                self.package_ver
+            ));
+        }
+
+        if self.package_desc.is_empty() {
+            errors.push("package description is empty".to_string());
+        }
+
+        if self.package_author.is_empty() {
+            errors.push("package author is empty".to_string());
+        }
+
+        // https://wiki.archlinux.org/title/Arch_package_guidelines#Architectures
+        if self.package_arch != "any" && self.package_arch != "x86_64" {
+            errors.push(format!(
+                "package architecture `{}` is invalid, must be one of: x86_64, any",
+                self.package_arch
+            ));
+        }
+
+        if !errors.is_empty() {
+            Err(eyre::eyre!(
+                "Arch producer is invalid:\n{}",
+                errors.join("\n")
+            ))?;
+        }
+
+        Ok(())
     }
 }

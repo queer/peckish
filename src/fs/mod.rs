@@ -1,8 +1,8 @@
 use std::os::unix::prelude::{MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
-use color_eyre::eyre::eyre;
 use color_eyre::Result;
+use eyre::eyre;
 use log::*;
 use rsfs_tokio::unix_ext::{FSMetadataExt, GenFSExt};
 use rsfs_tokio::{FileType, GenFS, Metadata};

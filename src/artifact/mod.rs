@@ -16,7 +16,7 @@ pub mod tarball;
 
 /// An artifact is the result of some build process.
 #[async_trait::async_trait]
-pub trait Artifact: Send + Sync {
+pub trait Artifact: Send + Sync + SelfValidation {
     fn name(&self) -> &str;
 
     /// Extract this artifact into a virtual filesystem. Used for manipulating
@@ -26,7 +26,7 @@ pub trait Artifact: Send + Sync {
 
 /// An artifact producer takes in the previous artifact and produces a new one.
 #[async_trait::async_trait]
-pub trait ArtifactProducer {
+pub trait ArtifactProducer: SelfValidation {
     type Output: Artifact;
 
     fn name(&self) -> &str;
@@ -45,6 +45,17 @@ pub trait ArtifactProducer {
 
         Ok(fs)
     }
+}
+
+/// Self-validation for structs! Because all structs should feel good about
+/// themselves :D
+///
+/// But seriously, this is to let [`Artifact`] and [`ArtifactProducer`] be able
+/// to do some self-validation of the values they've been configured with,
+/// before they just run wild.
+#[async_trait::async_trait]
+pub trait SelfValidation {
+    async fn validate(&self) -> Result<()>;
 }
 
 pub async fn get_artifact_size(artifact: &dyn Artifact) -> Result<u64> {

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use color_eyre::eyre::eyre;
 use color_eyre::Result;
+use eyre::eyre;
 use log::*;
 use rsfs_tokio::unix_ext::PermissionsExt;
 use rsfs_tokio::{GenFS, Metadata};
@@ -12,7 +12,7 @@ use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
 use crate::util::{traverse_memfs, Fix};
 
-use super::{Artifact, ArtifactProducer};
+use super::{Artifact, ArtifactProducer, SelfValidation};
 
 /// A tarball on the filesystem at the given path. Compression is **not**
 /// supported.
@@ -55,6 +55,27 @@ impl Artifact for TarballArtifact {
             .await?;
 
         Ok(fs)
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for TarballArtifact {
+    async fn validate(&self) -> Result<()> {
+        let mut errors = vec![];
+
+        if !self.path.exists() {
+            errors.push(format!("path does not exist: {:?}", self.path));
+        }
+
+        if !self.path.is_file() {
+            errors.push(format!("path is not a file: {:?}", self.path));
+        }
+
+        if !errors.is_empty() {
+            return Err(eyre!("Tarball artifact not valid:\n{}", errors.join("\n")));
+        }
+
+        Ok(())
     }
 }
 
@@ -156,5 +177,28 @@ impl ArtifactProducer for TarballProducer {
             name: self.path.to_string_lossy().to_string(),
             path: self.path.clone(),
         })
+    }
+}
+
+#[async_trait::async_trait]
+impl SelfValidation for TarballProducer {
+    async fn validate(&self) -> Result<()> {
+        let mut errors = vec![];
+
+        if let Some(parent) = self.path.parent() {
+            if !parent.exists() {
+                errors.push(format!("path parent does not exist: {:?}", parent));
+            }
+
+            if !parent.is_dir() {
+                errors.push(format!("path parent is not a directory: {:?}", parent));
+            }
+        }
+
+        if !errors.is_empty() {
+            return Err(eyre!("Tarball producer not valid:\n{}", errors.join("\n")));
+        }
+
+        Ok(())
     }
 }
