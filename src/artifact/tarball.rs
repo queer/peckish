@@ -183,20 +183,8 @@ impl ArtifactProducer for TarballProducer {
 #[async_trait::async_trait]
 impl SelfValidation for TarballProducer {
     async fn validate(&self) -> Result<()> {
-        let mut errors = vec![];
-
         if let Some(parent) = self.path.parent() {
-            if !parent.exists() {
-                errors.push(format!("path parent does not exist: {:?}", parent));
-            }
-
-            if !parent.is_dir() {
-                errors.push(format!("path parent is not a directory: {:?}", parent));
-            }
-        }
-
-        if !errors.is_empty() {
-            return Err(eyre!("Tarball producer not valid:\n{}", errors.join("\n")));
+            tokio::fs::create_dir_all(parent).await?;
         }
 
         Ok(())

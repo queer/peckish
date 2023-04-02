@@ -169,6 +169,10 @@ impl ArtifactProducer for ArchProducer {
 #[async_trait::async_trait]
 impl SelfValidation for ArchProducer {
     async fn validate(&self) -> Result<()> {
+        if let Some(parent) = self.path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
         let mut errors = vec![];
 
         // Validate any package starting with a letter, followed by any letter,

@@ -208,20 +208,7 @@ impl ArtifactProducer for FileProducer {
 #[async_trait::async_trait]
 impl SelfValidation for FileProducer {
     async fn validate(&self) -> Result<()> {
-        let mut errors = vec![];
-
-        if !self.path.exists() {
-            errors.push(format!("path does not exist: {:?}", self.path));
-        } else if !self.path.is_file() && !self.path.is_dir() {
-            errors.push(format!("path is not a file or directory: {:?}", self.path));
-        }
-
-        if !errors.is_empty() {
-            return Err(eyre::eyre!(
-                "File producer not valid:\n{}",
-                errors.join("\n")
-            ));
-        }
+        tokio::fs::create_dir_all(&self.path).await?;
 
         Ok(())
     }

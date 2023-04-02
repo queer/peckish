@@ -327,6 +327,10 @@ impl ArtifactProducer for DebProducer {
 #[async_trait::async_trait]
 impl SelfValidation for DebProducer {
     async fn validate(&self) -> Result<()> {
+        if let Some(parent) = self.path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
         let package_name_regex = Regex::new(r"^[a-z0-9][a-z0-9+-\.]+$")?;
         let package_maintainer_regex = Regex::new(r"^[^<]+( <[^>]+>)?$")?;
         let package_version_regex = Regex::new(r"^[a-z0-9][a-z0-9+._-]*(-\d+)$")?;
