@@ -142,7 +142,9 @@ impl ArtifactProducer for FileProducer {
 
     async fn produce(&self, previous: &dyn Artifact) -> Result<FileArtifact> {
         let memfs = previous.extract().await?;
+        debug!("injecting memfs");
         let memfs = self.inject(&memfs).await?;
+        debug!("traversing memfs");
         let paths = traverse_memfs(memfs, &PathBuf::from("/")).await?;
         debug!("traversed memfs, found {} paths", paths.len());
 
@@ -192,6 +194,7 @@ impl ArtifactProducer for FileProducer {
                 let uid = metadata.uid()?;
                 let gid = metadata.gid()?;
 
+                debug!("chown {full_path:?} to {uid}:{gid}");
                 nix::unistd::chown(
                     full_path.to_str().unwrap(),
                     Some(nix::unistd::Uid::from_raw(uid)),
@@ -211,15 +214,6 @@ impl ArtifactProducer for FileProducer {
                     std::fs::Permissions::from_mode(permissions.mode()),
                 )
                 .await?;
-
-                // Set ownership
-                let uid = metadata.uid()?;
-                let gid = metadata.gid()?;
-                nix::unistd::chown(
-                    full_path.to_str().unwrap(),
-                    Some(nix::unistd::Uid::from_raw(uid)),
-                    Some(nix::unistd::Gid::from_raw(gid)),
-                )?;
             } else if file_type == InternalFileType::Symlink {
                 let symlink_target = fs.read_link(path).await?;
                 debug!("creating symlink {full_path:?} -> {symlink_target:?}");
