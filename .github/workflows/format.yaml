@@ -12,7 +12,7 @@ on:
       - "**.rs"
 
 jobs:
-  run-tests:
+  check-formatting:
     strategy:
       matrix:
         version: ["stable", "nightly", "1.66"]

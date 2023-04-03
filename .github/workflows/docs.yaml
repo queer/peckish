@@ -12,7 +12,7 @@ on:
       - "**.rs"
 
 jobs:
-  run-clippy:
+  build-docs:
     strategy:
       matrix:
         version: ["stable", "1.66", "nightly"]
