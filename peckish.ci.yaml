@@ -10,6 +10,10 @@ output:
   - name: "tarball: peckish release binary"
     type: "tarball"
     path: "./release/peckish.tar"
+    injections:
+      - type: "move"
+        src: "/target/x86_64-unknown-linux-musl/release/peckish"
+        dest: "/peckish"
 
   - name: "arch: peckish arch package"
     type: "arch"
