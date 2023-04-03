@@ -20,7 +20,6 @@ indoc = "2.0.1"
 log = "0.4.17"
 md5 = "0.7.0"
 nix = "0.26.2"
-nyoom = "0.0.1"
 pretty_env_logger = "0.4.0"
 rand = "0.8.5"
 regex = "1.7.3"
@@ -34,4 +33,3 @@ tokio = { version = "1.27.0", features = ["full"] }
 tokio-stream = "0.1.12"
 tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
 tokio-util = { version = "0.7.7", features = ["codec"] }
-urlencoding = "2.1.2"
