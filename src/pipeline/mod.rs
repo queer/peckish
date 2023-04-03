@@ -57,6 +57,8 @@ impl Pipeline {
                 }
             };
 
+            next_artifact.validate().await?;
+
             if config.pipeline {
                 input_artifact = next_artifact.try_clone()?;
             }

@@ -110,11 +110,12 @@ impl SelfValidation for DebArtifact {
             errors.push(format!("deb artifact does not exist: {:#?}", self.path));
         }
 
-        if !self.path.ends_with(".deb") {
-            errors.push(format!(
-                "deb artifact does not end with .deb: {:#?}",
-                self.path
-            ));
+        if let Some(file_name) = self.path.file_name() {
+            if !file_name.to_string_lossy().to_string().ends_with(".deb") {
+                errors.push(format!("{} does not end with .deb", self.path.display(),));
+            }
+        } else {
+            errors.push(format!("{} does not have a file name", self.path.display()));
         }
 
         // validate that file is an ar archive of:
@@ -131,9 +132,9 @@ impl SelfValidation for DebArtifact {
             let path = String::from_utf8_lossy(ar_entry.header().identifier()).to_string();
             if path == "debian-binary" {
                 found_debian_binary = true;
-            } else if path == "control.tar.gz" {
+            } else if path.contains("control.tar") {
                 found_control_tar_gz = true;
-            } else if path == "data.tar.gz" {
+            } else if path.contains("data.tar") {
                 found_data_tar_gz = true;
             }
         }
@@ -147,14 +148,14 @@ impl SelfValidation for DebArtifact {
 
         if !found_control_tar_gz {
             errors.push(format!(
-                "deb artifact does not contain control.tar.gz: {:#?}",
+                "deb artifact does not contain control.tar: {:#?}",
                 self.path
             ));
         }
 
         if !found_data_tar_gz {
             errors.push(format!(
-                "deb artifact does not contain data.tar.gz: {:#?}",
+                "deb artifact does not contain data.tar: {:#?}",
                 self.path
             ));
         }

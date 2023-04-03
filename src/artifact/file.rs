@@ -165,6 +165,7 @@ impl ArtifactProducer for FileProducer {
             tokio::fs::create_dir_all(parent).await?;
         }
 
+        let mut output_paths = vec![];
         for path in &paths {
             use rsfs_tokio::unix_ext::PermissionsExt;
             use rsfs_tokio::{File, Metadata};
@@ -182,6 +183,12 @@ impl ArtifactProducer for FileProducer {
                 full_path.strip_prefix("/")?.to_path_buf()
             };
             debug!("full_path = {full_path:?}");
+            output_paths.push(
+                full_path
+                    .strip_prefix("/")
+                    .unwrap_or(&full_path)
+                    .to_path_buf(),
+            );
             if let Some(parent) = full_path.parent() {
                 tokio::fs::create_dir_all(parent).await.map_err(Fix::Io)?;
             }
@@ -236,16 +243,11 @@ impl ArtifactProducer for FileProducer {
             }
         }
 
-        let paths: Vec<PathBuf> = paths
-            .iter()
-            .map(|p| p.strip_prefix("/").unwrap().to_path_buf())
-            .collect();
-
-        debug!("collected {} paths", paths.len());
+        debug!("collected {} paths", output_paths.len());
 
         Ok(FileArtifact {
             name: self.path.to_string_lossy().to_string(),
-            paths,
+            paths: output_paths,
             strip_path_prefixes: Some(true),
         })
     }

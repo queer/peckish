@@ -55,11 +55,19 @@ impl SelfValidation for ArchArtifact {
             errors.push(format!("{} is not a file", self.path.display()));
         }
 
-        if !self.path.ends_with(".pkg.tar") {
-            errors.push(format!(
-                "{} does not end with .pkg.tar",
-                self.path.display()
-            ));
+        if let Some(file_name) = self.path.file_name() {
+            if !file_name
+                .to_string_lossy()
+                .to_string()
+                .ends_with(".pkg.tar")
+            {
+                errors.push(format!(
+                    "{} does not end with .pkg.tar",
+                    self.path.display(),
+                ));
+            }
+        } else {
+            errors.push(format!("{} does not have a file name", self.path.display()));
         }
 
         // Validate that the .PKGINFO file exists in the tarball
