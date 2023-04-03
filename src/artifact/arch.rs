@@ -112,10 +112,10 @@ impl SelfBuilder for ArchArtifactBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(ArchArtifact {
-            name: self.name,
-            path: self.path,
+            name: self.name.clone(),
+            path: self.path.clone(),
         })
     }
 }
@@ -321,16 +321,16 @@ impl SelfBuilder for ArchProducerBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(ArchProducer {
-            name: self.name,
-            package_name: self.package_name,
-            package_ver: self.package_ver,
-            package_desc: self.package_desc,
-            package_author: self.package_author,
-            package_arch: self.package_arch,
-            path: self.path,
-            injections: self.injections,
+            name: self.name.clone(),
+            package_name: self.package_name.clone(),
+            package_ver: self.package_ver.clone(),
+            package_desc: self.package_desc.clone(),
+            package_author: self.package_author.clone(),
+            package_arch: self.package_arch.clone(),
+            path: self.path.clone(),
+            injections: self.injections.clone(),
         })
     }
 }

@@ -157,10 +157,10 @@ impl SelfBuilder for DockerArtifactBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(DockerArtifact {
-            name: self.name,
-            image: self.image,
+            name: self.name.clone(),
+            image: self.image.clone(),
         })
     }
 }
@@ -390,13 +390,13 @@ impl SelfBuilder for DockerProducerBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(DockerProducer {
-            name: self.name,
-            image: self.image,
-            base_image: self.base_image,
-            entrypoint: self.entrypoint,
-            injections: self.injections,
+            name: self.name.clone(),
+            image: self.image.clone(),
+            base_image: self.base_image.clone(),
+            entrypoint: self.entrypoint.clone(),
+            injections: self.injections.clone(),
         })
     }
 }

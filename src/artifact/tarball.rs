@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 use color_eyre::Result;
 use eyre::eyre;
@@ -102,10 +103,10 @@ impl SelfBuilder for TarballArtifactBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(TarballArtifact {
-            name: self.name,
-            path: self.path,
+            name: self.name.clone(),
+            path: self.path.clone(),
         })
     }
 }
@@ -156,11 +157,19 @@ impl ArtifactProducer for TarballProducer {
 
             let file_type = memfs.determine_file_type(path).await?;
             let fs = memfs.as_ref();
+            let metadata = fs.metadata(path).await?;
             if file_type == InternalFileType::Dir {
-                let metadata = fs.metadata(path).await?;
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
                 header.set_mode(metadata.permissions().mode());
+                header.set_mtime(
+                    metadata
+                        .modified()?
+                        .duration_since(SystemTime::UNIX_EPOCH)?
+                        .as_secs(),
+                );
+                header.set_uid(metadata.uid()? as u64);
+                header.set_gid(metadata.gid()? as u64);
                 header.set_cksum();
 
                 debug!("copy dir {path:?} with perms: {:o}", header.mode()?);
@@ -177,6 +186,14 @@ impl ArtifactProducer for TarballProducer {
                 header.set_entry_type(EntryType::Regular);
                 header.set_size(data.len() as u64);
                 header.set_mode(stream.metadata().await?.permissions().mode());
+                header.set_mtime(
+                    metadata
+                        .modified()?
+                        .duration_since(SystemTime::UNIX_EPOCH)?
+                        .as_secs(),
+                );
+                header.set_uid(metadata.uid()? as u64);
+                header.set_gid(metadata.gid()? as u64);
                 header.set_cksum();
 
                 debug!("copy file {path:?} with perms: {:o}", header.mode()?);
@@ -192,6 +209,14 @@ impl ArtifactProducer for TarballProducer {
                 header.set_entry_type(EntryType::Symlink);
                 header.set_link_name(link.to_str().unwrap())?;
                 header.set_size(empty.len() as u64);
+                header.set_mtime(
+                    metadata
+                        .modified()?
+                        .duration_since(SystemTime::UNIX_EPOCH)?
+                        .as_secs(),
+                );
+                header.set_uid(metadata.uid()? as u64);
+                header.set_gid(metadata.gid()? as u64);
                 header.set_cksum();
 
                 debug!("copy symlink {path:?}");
@@ -252,11 +277,11 @@ impl SelfBuilder for TarballProducerBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(TarballProducer {
-            name: self.name,
-            path: self.path,
-            injections: self.injections,
+            name: self.name.clone(),
+            path: self.path.clone(),
+            injections: self.injections.clone(),
         })
     }
 }

@@ -189,10 +189,10 @@ impl SelfBuilder for DebArtifactBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(DebArtifact {
-            name: self.name,
-            path: self.path,
+            name: self.name.clone(),
+            path: self.path.clone(),
         })
     }
 }
@@ -503,19 +503,19 @@ impl SelfBuilder for DebProducerBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(DebProducer {
-            name: self.name,
-            path: self.path,
-            prerm: self.prerm,
-            postinst: self.postinst,
-            injections: self.injections,
-            package_name: self.package_name,
-            package_maintainer: self.package_maintainer,
-            package_architecture: self.package_architecture,
-            package_version: self.package_version,
-            package_depends: self.package_depends,
-            package_description: self.package_description,
+            name: self.name.clone(),
+            path: self.path.clone(),
+            prerm: self.prerm.clone(),
+            postinst: self.postinst.clone(),
+            injections: self.injections.clone(),
+            package_name: self.package_name.clone(),
+            package_maintainer: self.package_maintainer.clone(),
+            package_architecture: self.package_architecture.clone(),
+            package_version: self.package_version.clone(),
+            package_depends: self.package_depends.clone(),
+            package_description: self.package_description.clone(),
         })
     }
 }

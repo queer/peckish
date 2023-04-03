@@ -63,7 +63,7 @@ pub trait SelfBuilder {
 
     fn new(name: String) -> Self;
 
-    fn build(self) -> Result<Self::Output>;
+    fn build(&self) -> Result<Self::Output>;
 }
 
 pub async fn get_artifact_size(artifact: &dyn Artifact) -> Result<u64> {

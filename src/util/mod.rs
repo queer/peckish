@@ -33,6 +33,7 @@ pub async fn traverse_memfs(memfs: &MemFS, root_path: &Path) -> Result<Vec<PathB
             #[allow(clippy::if_same_then_else)]
             if metadata.is_dir() {
                 let mut sub_paths = traverse_memfs(memfs, &entry.path()).await?;
+                paths.push(entry.path());
                 paths.append(&mut sub_paths);
             } else if metadata.is_file() {
                 paths.push(entry.path());

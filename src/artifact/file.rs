@@ -111,10 +111,10 @@ impl SelfBuilder for FileArtifactBuilder {
         }
     }
 
-    fn build(self) -> Result<Self::Output> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(FileArtifact {
-            name: self.name,
-            paths: self.paths,
+            name: self.name.clone(),
+            paths: self.paths.clone(),
             strip_path_prefixes: self.strip_path_prefixes,
         })
     }
@@ -283,11 +283,11 @@ impl SelfBuilder for FileProducerBuilder {
         }
     }
 
-    fn build(self) -> Result<FileProducer> {
+    fn build(&self) -> Result<Self::Output> {
         Ok(FileProducer {
-            name: self.name,
-            path: self.path,
-            injections: self.injections,
+            name: self.name.clone(),
+            path: self.path.clone(),
+            injections: self.injections.clone(),
         })
     }
 }
