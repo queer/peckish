@@ -217,6 +217,7 @@ impl ArtifactProducer for DockerProducer {
                 FileProducer {
                     name: self.name.clone(),
                     path: tmp.path_view(),
+                    preserve_empty_directories: Some(true),
                     injections: vec![],
                 }
                 .produce(&DockerArtifact {
@@ -236,6 +237,7 @@ impl ArtifactProducer for DockerProducer {
                 FileProducer {
                     name: self.name.clone(),
                     path: tmp.path_view(),
+                    preserve_empty_directories: Some(true),
                     injections: vec![],
                 }
                 .produce(previous)
@@ -251,6 +253,7 @@ impl ArtifactProducer for DockerProducer {
                 name: self.name.clone(),
                 paths: vec![tmp.path_view()],
                 strip_path_prefixes: Some(true),
+                preserve_empty_directories: Some(true),
             })
             .await?
         } else {

@@ -68,7 +68,7 @@ pub trait SelfBuilder {
 
 pub async fn get_artifact_size(artifact: &dyn Artifact) -> Result<u64> {
     let memfs = artifact.extract().await?;
-    let paths = traverse_memfs(&memfs, Path::new("/")).await?;
+    let paths = traverse_memfs(&memfs, Path::new("/"), Some(false)).await?;
     let mut size = 0u64;
 
     let fs = memfs.as_ref();
@@ -101,6 +101,7 @@ mod tests {
             name: "Cargo.toml".into(),
             paths: vec![PathBuf::from("Cargo.toml")],
             strip_path_prefixes: None,
+            preserve_empty_directories: None,
         };
 
         let tarball_producer = tarball::TarballProducer {
@@ -119,6 +120,7 @@ mod tests {
             name: "test-file-producer".into(),
             path: "test".into(),
             injections: vec![],
+            preserve_empty_directories: None,
         };
 
         let file_artifact = file_producer.produce(&tarball_artifact).await?;

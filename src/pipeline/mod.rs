@@ -94,6 +94,7 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
+                preserve_empty_directories: Some(true),
             }),
             output: vec![ConfiguredProducer::Tarball(TarballProducer {
                 name: "cargo dot toml output".into(),
@@ -120,6 +121,7 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
+                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -133,6 +135,7 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
+                    preserve_empty_directories: Some(true),
                     injections: vec![],
                 }),
             ],
@@ -158,6 +161,7 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
+                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -171,6 +175,7 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
+                    preserve_empty_directories: Some(true),
                     injections: vec![],
                 }),
             ],
@@ -196,6 +201,7 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
+                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -209,6 +215,7 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
+                    preserve_empty_directories: Some(true),
                     injections: vec![],
                 }),
             ],
@@ -234,6 +241,7 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
+                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -246,6 +254,7 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
+                    preserve_empty_directories: Some(true),
                     injections: vec![],
                 }),
             ],
@@ -271,6 +280,7 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
+                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -283,6 +293,7 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
+                    preserve_empty_directories: Some(true),
                     injections: vec![],
                 }),
             ],
@@ -307,6 +318,7 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
+                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -320,6 +332,7 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
+                    preserve_empty_directories: Some(true),
                     injections: vec![],
                 }),
             ],

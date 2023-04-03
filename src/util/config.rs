@@ -56,6 +56,8 @@ enum InputArtifact {
         paths: Vec<PathBuf>,
         #[serde(default)]
         strip_path_prefixes: Option<bool>,
+        #[serde(default)]
+        preserve_empty_directories: Option<bool>,
     },
     Tarball {
         name: String,
@@ -84,10 +86,12 @@ impl Into<ConfiguredArtifact> for InputArtifact {
                 name,
                 paths,
                 strip_path_prefixes,
+                preserve_empty_directories,
             } => ConfiguredArtifact::File(FileArtifact {
                 name,
                 paths,
                 strip_path_prefixes,
+                preserve_empty_directories,
             }),
 
             InputArtifact::Tarball { name, path } => {
@@ -115,6 +119,8 @@ enum OutputProducer {
     File {
         name: String,
         path: PathBuf,
+        #[serde(default)]
+        preserve_empty_directories: Option<bool>,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -175,10 +181,12 @@ impl Into<ConfiguredProducer> for &OutputProducer {
             OutputProducer::File {
                 name,
                 path,
+                preserve_empty_directories,
                 injections,
             } => ConfiguredProducer::File(FileProducer {
                 name: name.clone(),
                 path: path.clone(),
+                preserve_empty_directories: *preserve_empty_directories,
                 injections: injections.clone(),
             }),
 

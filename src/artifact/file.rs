@@ -24,6 +24,8 @@ pub struct FileArtifact {
     /// /a/b/c/d/e/... -> /...
     /// ```
     pub strip_path_prefixes: Option<bool>,
+    /// Whether or not empty directories should be present in the output.
+    pub preserve_empty_directories: Option<bool>,
 }
 
 #[async_trait::async_trait]
@@ -82,9 +84,10 @@ impl SelfValidation for FileArtifact {
 }
 
 pub struct FileArtifactBuilder {
-    pub name: String,
-    pub paths: Vec<PathBuf>,
-    pub strip_path_prefixes: Option<bool>,
+    name: String,
+    paths: Vec<PathBuf>,
+    strip_path_prefixes: Option<bool>,
+    preserve_empty_directories: Option<bool>,
 }
 
 #[allow(unused)]
@@ -98,6 +101,11 @@ impl FileArtifactBuilder {
         self.strip_path_prefixes = Some(strip);
         self
     }
+
+    pub fn preserve_empty_directories(&mut self, preserve: bool) -> &mut Self {
+        self.preserve_empty_directories = Some(preserve);
+        self
+    }
 }
 
 impl SelfBuilder for FileArtifactBuilder {
@@ -108,6 +116,7 @@ impl SelfBuilder for FileArtifactBuilder {
             name,
             paths: vec![],
             strip_path_prefixes: None,
+            preserve_empty_directories: None,
         }
     }
 
@@ -116,6 +125,7 @@ impl SelfBuilder for FileArtifactBuilder {
             name: self.name.clone(),
             paths: self.paths.clone(),
             strip_path_prefixes: self.strip_path_prefixes,
+            preserve_empty_directories: self.preserve_empty_directories,
         })
     }
 }
@@ -125,6 +135,7 @@ impl SelfBuilder for FileArtifactBuilder {
 pub struct FileProducer {
     pub name: String,
     pub path: PathBuf,
+    pub preserve_empty_directories: Option<bool>,
     pub injections: Vec<Injection>,
 }
 
@@ -145,7 +156,8 @@ impl ArtifactProducer for FileProducer {
         debug!("injecting memfs");
         let memfs = self.inject(&memfs).await?;
         debug!("traversing memfs");
-        let paths = traverse_memfs(memfs, &PathBuf::from("/")).await?;
+        let paths =
+            traverse_memfs(memfs, &PathBuf::from("/"), self.preserve_empty_directories).await?;
         debug!("traversed memfs, found {} paths", paths.len());
 
         if let Some(parent) = self.path.parent() {
@@ -234,6 +246,7 @@ impl ArtifactProducer for FileProducer {
             name: self.path.to_string_lossy().to_string(),
             paths,
             strip_path_prefixes: Some(true),
+            preserve_empty_directories: Some(true),
         })
     }
 }
@@ -250,6 +263,7 @@ impl SelfValidation for FileProducer {
 pub struct FileProducerBuilder {
     name: String,
     path: PathBuf,
+    preserve_empty_directories: Option<bool>,
     injections: Vec<Injection>,
 }
 
@@ -257,6 +271,11 @@ pub struct FileProducerBuilder {
 impl FileProducerBuilder {
     pub fn path(mut self, path: PathBuf) -> Self {
         self.path = path;
+        self
+    }
+
+    pub fn preserve_empty_directories(mut self, preserve_empty_directories: bool) -> Self {
+        self.preserve_empty_directories = Some(preserve_empty_directories);
         self
     }
 
@@ -273,6 +292,7 @@ impl SelfBuilder for FileProducerBuilder {
         Self {
             name,
             path: PathBuf::from("/"),
+            preserve_empty_directories: None,
             injections: vec![],
         }
     }
@@ -281,6 +301,7 @@ impl SelfBuilder for FileProducerBuilder {
         Ok(FileProducer {
             name: self.name.clone(),
             path: self.path.clone(),
+            preserve_empty_directories: self.preserve_empty_directories,
             injections: self.injections.clone(),
         })
     }

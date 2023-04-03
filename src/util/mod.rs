@@ -20,7 +20,11 @@ pub enum Fix {
 }
 
 #[async_recursion::async_recursion]
-pub async fn traverse_memfs(memfs: &MemFS, root_path: &Path) -> Result<Vec<PathBuf>> {
+pub async fn traverse_memfs(
+    memfs: &MemFS,
+    root_path: &Path,
+    push_directory_entries: Option<bool>,
+) -> Result<Vec<PathBuf>> {
     let fs = memfs.as_ref();
     let mut paths = Vec::new();
     debug!("traversing memfs from {root_path:?}");
@@ -32,8 +36,11 @@ pub async fn traverse_memfs(memfs: &MemFS, root_path: &Path) -> Result<Vec<PathB
 
             #[allow(clippy::if_same_then_else)]
             if metadata.is_dir() {
-                let mut sub_paths = traverse_memfs(memfs, &entry.path()).await?;
-                paths.push(entry.path());
+                let mut sub_paths =
+                    traverse_memfs(memfs, &entry.path(), push_directory_entries).await?;
+                if let Some(true) = push_directory_entries {
+                    paths.push(entry.path());
+                }
                 paths.append(&mut sub_paths);
             } else if metadata.is_file() {
                 paths.push(entry.path());

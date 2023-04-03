@@ -138,7 +138,7 @@ impl ArtifactProducer for TarballProducer {
     async fn produce(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
         let memfs = previous.extract().await?;
         let memfs = self.inject(&memfs).await?;
-        let paths = traverse_memfs(memfs, &PathBuf::from("/")).await?;
+        let paths = traverse_memfs(memfs, &PathBuf::from("/"), Some(true)).await?;
 
         if let Some(parent) = self.path.parent() {
             tokio::fs::create_dir_all(parent).await?;

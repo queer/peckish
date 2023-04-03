@@ -292,7 +292,7 @@ impl ArtifactProducer for DebProducer {
         let mut md5sums = vec![];
         let memfs = previous.extract().await?;
         let memfs = self.inject(&memfs).await?;
-        let paths = traverse_memfs(memfs, &PathBuf::from("/")).await?;
+        let paths = traverse_memfs(memfs, &PathBuf::from("/"), None).await?;
         for path in paths {
             if memfs.determine_file_type(&path).await? == InternalFileType::File {
                 let mut file = memfs.as_ref().open_file(&path).await?;
