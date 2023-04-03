@@ -32,22 +32,24 @@ output:
 
 ```rust
 // pipelines
+let file_artifact = ...;
+
+let tarball_producer = ...;
+
+let debian_producer = ...;
+
 let config = PeckishConfig {
+    input: ConfiguredArtifact::File(file_artifact),
+    output: vec![
+        ConfiguredProducer::Tarball(tarball_producer),
+        ConfiguredProducer::Deb(debian_producer),
+    ],
     pipeline: false,
-    input: ConfiguredArtifact::File(FileArtifact {
-        name: "my files".into(),
-        paths: vec!["...".into()],
-        strip_path_prefixes: None,
-    }),
-    output: vec![ConfiguredProducer::Tarball(TarballProducer {
-        name: "tarball for whatever".into(),
-        path: PathBuf::from("..."), // or otherwise
-        injections: vec![],
-    })],
 };
 
-let pipeline = Pipeline::new(true);
-pipeline.run().await?;
+let pipeline = Pipeline::new();
+let out = pipeline.run(config).await?;
+println!("produced {} artifacts", out.len());
 
 // artifacts
 use peckish::prelude::builder::*;
