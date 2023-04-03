@@ -24,6 +24,7 @@ jobs:
         with:
           toolchain: "${{ matrix.version }}"
           override: true
+          profile: "minimal"
       - uses: "Swatinem/rust-cache@v2"
         with:
           key: "test"

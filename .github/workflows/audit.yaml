@@ -26,6 +26,7 @@ jobs:
         with:
           toolchain: "${{ matrix.version }}"
           override: true
+          profile: "minimal"
       - name: "Install cargo-audit"
         run: "cargo install cargo-audit"
       - uses: "Swatinem/rust-cache@v2"
