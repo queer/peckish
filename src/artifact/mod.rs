@@ -22,6 +22,9 @@ pub trait Artifact: Send + Sync + SelfValidation {
     /// Extract this artifact into a virtual filesystem. Used for manipulating
     /// the artifact's contents.
     async fn extract(&self) -> Result<MemFS>;
+
+    /// We can't require `Clone` bounds because then it's not object-safe.
+    fn try_clone(&self) -> Result<Box<dyn Artifact>>;
 }
 
 /// An artifact producer takes in the previous artifact and produces a new one.
@@ -61,7 +64,7 @@ pub trait SelfValidation {
 pub trait SelfBuilder {
     type Output;
 
-    fn new(name: String) -> Self;
+    fn new<S: Into<String>>(name: S) -> Self;
 
     fn build(&self) -> Result<Self::Output>;
 }
@@ -101,7 +104,6 @@ mod tests {
             name: "Cargo.toml".into(),
             paths: vec![PathBuf::from("Cargo.toml")],
             strip_path_prefixes: None,
-            preserve_empty_directories: None,
         };
 
         let tarball_producer = tarball::TarballProducer {

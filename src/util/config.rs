@@ -56,8 +56,6 @@ enum InputArtifact {
         paths: Vec<PathBuf>,
         #[serde(default)]
         strip_path_prefixes: Option<bool>,
-        #[serde(default)]
-        preserve_empty_directories: Option<bool>,
     },
     Tarball {
         name: String,
@@ -86,12 +84,10 @@ impl Into<ConfiguredArtifact> for InputArtifact {
                 name,
                 paths,
                 strip_path_prefixes,
-                preserve_empty_directories,
             } => ConfiguredArtifact::File(FileArtifact {
                 name,
                 paths,
                 strip_path_prefixes,
-                preserve_empty_directories,
             }),
 
             InputArtifact::Tarball { name, path } => {

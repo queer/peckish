@@ -125,6 +125,10 @@ impl Artifact for DockerArtifact {
 
         Ok(fs)
     }
+
+    fn try_clone(&self) -> Result<Box<dyn Artifact>> {
+        Ok(Box::new(self.clone()))
+    }
 }
 
 #[async_trait::async_trait]
@@ -141,8 +145,8 @@ pub struct DockerArtifactBuilder {
 
 #[allow(unused)]
 impl DockerArtifactBuilder {
-    pub fn image(mut self, image: String) -> Self {
-        self.image = image;
+    pub fn image<S: Into<String>>(mut self, image: S) -> Self {
+        self.image = image.into();
         self
     }
 }
@@ -150,9 +154,9 @@ impl DockerArtifactBuilder {
 impl SelfBuilder for DockerArtifactBuilder {
     type Output = DockerArtifact;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             image: "".into(),
         }
     }
@@ -253,7 +257,6 @@ impl ArtifactProducer for DockerProducer {
                 name: self.name.clone(),
                 paths: vec![tmp.path_view()],
                 strip_path_prefixes: Some(true),
-                preserve_empty_directories: Some(true),
             })
             .await?
         } else {
@@ -359,13 +362,13 @@ pub struct DockerProducerBuilder {
 
 #[allow(unused)]
 impl DockerProducerBuilder {
-    pub fn image(mut self, image: String) -> Self {
-        self.image = image;
+    pub fn image<S: Into<String>>(mut self, image: S) -> Self {
+        self.image = image.into();
         self
     }
 
-    pub fn base_image(mut self, base_image: String) -> Self {
-        self.base_image = Some(base_image);
+    pub fn base_image<S: Into<String>>(mut self, base_image: S) -> Self {
+        self.base_image = Some(base_image.into());
         self
     }
 
@@ -383,9 +386,9 @@ impl DockerProducerBuilder {
 impl SelfBuilder for DockerProducerBuilder {
     type Output = DockerProducer;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             image: "".into(),
             base_image: None,
             entrypoint: None,

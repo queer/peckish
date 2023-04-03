@@ -24,7 +24,6 @@ pub mod util;
 
 pub mod prelude {
     pub use crate::artifact::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
-    pub use crate::pipeline::Pipeline;
     pub use crate::util::config::{Injection, PeckishConfig};
 
     pub mod arch {
@@ -71,5 +70,10 @@ pub mod prelude {
         pub use crate::artifact::file::{FileArtifactBuilder, FileProducerBuilder};
         pub use crate::artifact::tarball::{TarballArtifactBuilder, TarballProducerBuilder};
         pub use crate::artifact::SelfBuilder;
+    }
+
+    pub mod pipeline {
+        pub use crate::pipeline::Pipeline;
+        pub use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig};
     }
 }

@@ -47,6 +47,10 @@ impl Artifact for DebArtifact {
 
         Ok(fs)
     }
+
+    fn try_clone(&self) -> Result<Box<dyn Artifact>> {
+        Ok(Box::new(self.clone()))
+    }
 }
 
 impl DebArtifact {
@@ -173,8 +177,8 @@ pub struct DebArtifactBuilder {
 
 #[allow(unused)]
 impl DebArtifactBuilder {
-    pub fn path(mut self, path: PathBuf) -> Self {
-        self.path = path;
+    pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        self.path = path.into();
         self
     }
 }
@@ -182,9 +186,9 @@ impl DebArtifactBuilder {
 impl SelfBuilder for DebArtifactBuilder {
     type Output = DebArtifact;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             path: PathBuf::new(),
         }
     }
@@ -433,18 +437,18 @@ pub struct DebProducerBuilder {
 
 #[allow(unused)]
 impl DebProducerBuilder {
-    pub fn path(mut self, path: PathBuf) -> Self {
-        self.path = path;
+    pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        self.path = path.into();
         self
     }
 
-    pub fn prerm(mut self, prerm: PathBuf) -> Self {
-        self.prerm = Some(prerm);
+    pub fn prerm<P: Into<PathBuf>>(mut self, prerm: P) -> Self {
+        self.prerm = Some(prerm.into());
         self
     }
 
-    pub fn postinst(mut self, postinst: PathBuf) -> Self {
-        self.postinst = Some(postinst);
+    pub fn postinst<P: Into<PathBuf>>(mut self, postinst: P) -> Self {
+        self.postinst = Some(postinst.into());
         self
     }
 
@@ -453,33 +457,33 @@ impl DebProducerBuilder {
         self
     }
 
-    pub fn package_name(mut self, package_name: String) -> Self {
-        self.package_name = package_name;
+    pub fn package_name<S: Into<String>>(mut self, package_name: S) -> Self {
+        self.package_name = package_name.into();
         self
     }
 
-    pub fn package_maintainer(mut self, package_maintainer: String) -> Self {
-        self.package_maintainer = package_maintainer;
+    pub fn package_maintainer<S: Into<String>>(mut self, package_maintainer: S) -> Self {
+        self.package_maintainer = package_maintainer.into();
         self
     }
 
-    pub fn package_architecture(mut self, package_architecture: String) -> Self {
-        self.package_architecture = package_architecture;
+    pub fn package_architecture<S: Into<String>>(mut self, package_architecture: S) -> Self {
+        self.package_architecture = package_architecture.into();
         self
     }
 
-    pub fn package_version(mut self, package_version: String) -> Self {
-        self.package_version = package_version;
+    pub fn package_version<S: Into<String>>(mut self, package_version: S) -> Self {
+        self.package_version = package_version.into();
         self
     }
 
-    pub fn package_depends(mut self, package_depends: String) -> Self {
-        self.package_depends = package_depends;
+    pub fn package_depends<S: Into<String>>(mut self, package_depends: S) -> Self {
+        self.package_depends = package_depends.into();
         self
     }
 
-    pub fn package_description(mut self, package_description: String) -> Self {
-        self.package_description = package_description;
+    pub fn package_description<S: Into<String>>(mut self, package_description: S) -> Self {
+        self.package_description = package_description.into();
         self
     }
 }
@@ -487,9 +491,9 @@ impl DebProducerBuilder {
 impl SelfBuilder for DebProducerBuilder {
     type Output = DebProducer;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             path: PathBuf::from("package.deb"),
             prerm: None,
             postinst: None,

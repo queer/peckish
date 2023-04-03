@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
 
     let config = PeckishConfig::load(args.config_file).await?;
 
-    Pipeline::new(false).run(config).await?;
+    Pipeline::new().run(config).await?;
 
     Ok(())
 }

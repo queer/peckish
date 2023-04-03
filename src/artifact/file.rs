@@ -24,8 +24,6 @@ pub struct FileArtifact {
     /// /a/b/c/d/e/... -> /...
     /// ```
     pub strip_path_prefixes: Option<bool>,
-    /// Whether or not empty directories should be present in the output.
-    pub preserve_empty_directories: Option<bool>,
 }
 
 #[async_trait::async_trait]
@@ -56,6 +54,10 @@ impl Artifact for FileArtifact {
         }
 
         Ok(fs)
+    }
+
+    fn try_clone(&self) -> Result<Box<dyn Artifact>> {
+        Ok(Box::new(self.clone()))
     }
 }
 
@@ -92,8 +94,8 @@ pub struct FileArtifactBuilder {
 
 #[allow(unused)]
 impl FileArtifactBuilder {
-    pub fn add_path(&mut self, path: PathBuf) -> &mut Self {
-        self.paths.push(path);
+    pub fn add_path<P: Into<PathBuf>>(&mut self, path: P) -> &mut Self {
+        self.paths.push(path.into());
         self
     }
 
@@ -111,9 +113,9 @@ impl FileArtifactBuilder {
 impl SelfBuilder for FileArtifactBuilder {
     type Output = FileArtifact;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             paths: vec![],
             strip_path_prefixes: None,
             preserve_empty_directories: None,
@@ -125,7 +127,6 @@ impl SelfBuilder for FileArtifactBuilder {
             name: self.name.clone(),
             paths: self.paths.clone(),
             strip_path_prefixes: self.strip_path_prefixes,
-            preserve_empty_directories: self.preserve_empty_directories,
         })
     }
 }
@@ -246,7 +247,6 @@ impl ArtifactProducer for FileProducer {
             name: self.path.to_string_lossy().to_string(),
             paths,
             strip_path_prefixes: Some(true),
-            preserve_empty_directories: Some(true),
         })
     }
 }
@@ -269,8 +269,8 @@ pub struct FileProducerBuilder {
 
 #[allow(unused)]
 impl FileProducerBuilder {
-    pub fn path(mut self, path: PathBuf) -> Self {
-        self.path = path;
+    pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        self.path = path.into();
         self
     }
 
@@ -288,9 +288,9 @@ impl FileProducerBuilder {
 impl SelfBuilder for FileProducerBuilder {
     type Output = FileProducer;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             path: PathBuf::from("/"),
             preserve_empty_directories: None,
             injections: vec![],

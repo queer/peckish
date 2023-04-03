@@ -7,12 +7,12 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
     pretty_env_logger::init();
 
-    let file_artifact = FileArtifactBuilder::new("example file artifact".into())
-        .add_path("./examples/a".into())
+    let file_artifact = FileArtifactBuilder::new("example file artifact")
+        .add_path("./examples/a")
         .build()?;
 
-    let tarball_producer = TarballProducerBuilder::new("example tarball producer".into())
-        .path("test.tar.gz".into())
+    let tarball_producer = TarballProducerBuilder::new("example tarball producer")
+        .path("test.tar.gz")
         .build()?;
 
     let tarball_artifact = tarball_producer.produce(&file_artifact).await?;

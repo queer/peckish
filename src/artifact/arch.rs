@@ -36,6 +36,10 @@ impl Artifact for ArchArtifact {
         .extract()
         .await
     }
+
+    fn try_clone(&self) -> Result<Box<dyn Artifact>> {
+        Ok(Box::new(self.clone()))
+    }
 }
 
 #[async_trait::async_trait]
@@ -96,8 +100,8 @@ pub struct ArchArtifactBuilder {
 
 #[allow(unused)]
 impl ArchArtifactBuilder {
-    pub fn path(mut self, path: PathBuf) -> Self {
-        self.path = path;
+    pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        self.path = path.into();
         self
     }
 }
@@ -105,9 +109,9 @@ impl ArchArtifactBuilder {
 impl SelfBuilder for ArchArtifactBuilder {
     type Output = ArchArtifact;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             path: PathBuf::new(),
         }
     }
@@ -269,33 +273,33 @@ pub struct ArchProducerBuilder {
 
 #[allow(unused)]
 impl ArchProducerBuilder {
-    pub fn package_name(mut self, package_name: String) -> Self {
-        self.package_name = package_name;
+    pub fn package_name<S: Into<String>>(mut self, package_name: S) -> Self {
+        self.package_name = package_name.into();
         self
     }
 
-    pub fn package_ver(mut self, package_ver: String) -> Self {
-        self.package_ver = package_ver;
+    pub fn package_ver<S: Into<String>>(mut self, package_ver: S) -> Self {
+        self.package_ver = package_ver.into();
         self
     }
 
-    pub fn package_desc(mut self, package_desc: String) -> Self {
-        self.package_desc = package_desc;
+    pub fn package_desc<S: Into<String>>(mut self, package_desc: S) -> Self {
+        self.package_desc = package_desc.into();
         self
     }
 
-    pub fn package_author(mut self, package_author: String) -> Self {
-        self.package_author = package_author;
+    pub fn package_author<S: Into<String>>(mut self, package_author: S) -> Self {
+        self.package_author = package_author.into();
         self
     }
 
-    pub fn package_arch(mut self, package_arch: String) -> Self {
-        self.package_arch = package_arch;
+    pub fn package_arch<S: Into<String>>(mut self, package_arch: S) -> Self {
+        self.package_arch = package_arch.into();
         self
     }
 
-    pub fn path(mut self, path: PathBuf) -> Self {
-        self.path = path;
+    pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        self.path = path.into();
         self
     }
 
@@ -308,9 +312,9 @@ impl ArchProducerBuilder {
 impl SelfBuilder for ArchProducerBuilder {
     type Output = ArchProducer;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             package_name: String::new(),
             package_ver: String::new(),
             package_desc: String::new(),

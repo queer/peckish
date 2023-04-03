@@ -57,6 +57,10 @@ impl Artifact for TarballArtifact {
 
         Ok(fs)
     }
+
+    fn try_clone(&self) -> Result<Box<dyn Artifact>> {
+        Ok(Box::new(self.clone()))
+    }
 }
 
 #[async_trait::async_trait]
@@ -87,8 +91,8 @@ pub struct TarballArtifactBuilder {
 
 #[allow(unused)]
 impl TarballArtifactBuilder {
-    pub fn path(mut self, path: PathBuf) -> Self {
-        self.path = path;
+    pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        self.path = path.into();
         self
     }
 }
@@ -96,9 +100,9 @@ impl TarballArtifactBuilder {
 impl SelfBuilder for TarballArtifactBuilder {
     type Output = TarballArtifact;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             path: PathBuf::from(""),
         }
     }
@@ -249,8 +253,8 @@ pub struct TarballProducerBuilder {
 
 #[allow(unused)]
 impl TarballProducerBuilder {
-    pub fn path(mut self, path: PathBuf) -> Self {
-        self.path = path;
+    pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        self.path = path.into();
         self
     }
 
@@ -263,9 +267,9 @@ impl TarballProducerBuilder {
 impl SelfBuilder for TarballProducerBuilder {
     type Output = TarballProducer;
 
-    fn new(name: String) -> Self {
+    fn new<S: Into<String>>(name: S) -> Self {
         Self {
-            name,
+            name: name.into(),
             path: PathBuf::from(""),
             injections: vec![],
         }

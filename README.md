@@ -4,22 +4,22 @@ peckish is a tool for repackaging software artifacts.
 
 ## usage
 
-Create a `peckish.yaml` file in the root of your project.
+Create a `peckish.yaml` file in the root of your project. Documentation of
+specific artifact types can be found in the `docs/` directory.
 
 ```yaml
 # whether to run as a pipeline, ie each artifact output is the input to the
 # next producer
-pipeline: bool
+pipeline: false
 
-# the artifact being used as input to the pipeline. look at the `InputArtifact`
-# enum for now.
+# the artifact being used as input to the pipeline.
 input:
-  name: string
-  type: string
-  # ...
+  name: "some file"
+  type: "file"
+  paths:
+  - "./path/to/file"
 
-# the producers being used as pipeline outputs. look at the `OutputProducer`
-# enum for now
+# the producers being used as pipeline outputs.
 output:
   - name: "tarball"
     type: "tarball"
@@ -31,7 +31,7 @@ output:
 ### library
 
 ```rust
-// high(-ish) level
+// pipelines
 let config = PeckishConfig {
     pipeline: false,
     input: ConfiguredArtifact::File(FileArtifact {
@@ -49,19 +49,17 @@ let config = PeckishConfig {
 let pipeline = Pipeline::new(true);
 pipeline.run().await?;
 
-// lower-level
+// artifacts
+use peckish::prelude::builder::*;
+use peckish::prelude::*;
 
-let input = FileArtifact {
-    name: "my files".into(),
-    paths: vec!["...".into()],
-    strip_path_prefixes: None,
-};
+let file_artifact = FileArtifactBuilder::new("example file artifact".into())
+    .add_path("./examples/a".into())
+    .build()?;
 
-let output = TarballProducer {
-    name: "tarball for whatever".into(),
-    path: PathBuf::from("..."), // or otherwise
-    injections: vec![],
-}
-.produce(&input)
-.await?;
+let tarball_producer = TarballProducerBuilder::new("example tarball producer".into())
+    .path("test.tar.gz".into())
+    .build()?;
+
+let tarball_artifact = tarball_producer.produce(&file_artifact).await?;
 ```

@@ -6,18 +6,15 @@ use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig}
 
 /// A pipeline that can run a given config. This is the main entrypoint for
 /// running a peckish config.
-pub struct Pipeline {
-    /// Whether or not the previous step's output should be passed to the next
-    /// step as its input.
-    pipeline: bool,
-}
+pub struct Pipeline {}
 
 impl Pipeline {
-    pub fn new(pipeline: bool) -> Self {
-        Self { pipeline }
+    #[allow(clippy::new_without_default)]
+    pub fn new() -> Self {
+        Self {}
     }
 
-    pub async fn run(&self, config: PeckishConfig) -> Result<()> {
+    pub async fn run(&self, config: PeckishConfig) -> Result<Vec<Box<dyn Artifact>>> {
         info!("running pipeline with {} steps!", config.output.len());
         let mut input_artifact: Box<dyn Artifact> = match config.input {
             ConfiguredArtifact::File(file) => Box::new(file),
@@ -26,6 +23,8 @@ impl Pipeline {
             ConfiguredArtifact::Arch(arch) => Box::new(arch),
             ConfiguredArtifact::Deb(deb) => Box::new(deb),
         };
+
+        let mut output_artifacts: Vec<Box<dyn Artifact>> = vec![];
 
         for (i, producer) in config.output.iter().enumerate() {
             info!("step {}: {}", i + 1, producer.name());
@@ -56,12 +55,20 @@ impl Pipeline {
                 }
             };
 
-            if self.pipeline {
-                input_artifact = next_artifact;
+            if config.pipeline {
+                input_artifact = next_artifact.try_clone()?;
             }
+
+            output_artifacts.push(next_artifact);
         }
 
-        Ok(())
+        let mut out = vec![];
+        for artifact in output_artifacts.iter() {
+            let artifact: Box<dyn Artifact> = artifact.try_clone()?;
+            out.push(artifact);
+        }
+
+        Ok(output_artifacts)
     }
 }
 
@@ -94,7 +101,6 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
-                preserve_empty_directories: Some(true),
             }),
             output: vec![ConfiguredProducer::Tarball(TarballProducer {
                 name: "cargo dot toml output".into(),
@@ -103,7 +109,7 @@ mod tests {
             })],
         };
 
-        let pipeline = Pipeline::new(true);
+        let pipeline = Pipeline::new();
         assert!(pipeline.run(config).await.is_ok());
 
         Ok(())
@@ -121,7 +127,6 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
-                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -135,13 +140,13 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: Some(true),
+                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
         };
 
-        let pipeline = Pipeline::new(true);
+        let pipeline = Pipeline::new();
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(!tmp.path_view().join("Cargo.toml").exists());
@@ -161,7 +166,6 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
-                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -175,13 +179,13 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: Some(true),
+                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
         };
 
-        let pipeline = Pipeline::new(true);
+        let pipeline = Pipeline::new();
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -201,7 +205,6 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
-                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -215,13 +218,13 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: Some(true),
+                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
         };
 
-        let pipeline = Pipeline::new(true);
+        let pipeline = Pipeline::new();
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").is_symlink());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -241,7 +244,6 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
-                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -254,13 +256,13 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: Some(true),
+                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
         };
 
-        let pipeline = Pipeline::new(true);
+        let pipeline = Pipeline::new();
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -280,7 +282,6 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
-                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -293,13 +294,13 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: Some(true),
+                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
         };
 
-        let pipeline = Pipeline::new(true);
+        let pipeline = Pipeline::new();
         pipeline.run(config).await?;
         assert!(!tmp.path_view().join("Cargo.toml").exists());
 
@@ -318,7 +319,6 @@ mod tests {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
                 strip_path_prefixes: None,
-                preserve_empty_directories: Some(true),
             }),
             output: vec![
                 ConfiguredProducer::Tarball(TarballProducer {
@@ -332,13 +332,13 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: Some(true),
+                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
         };
 
-        let pipeline = Pipeline::new(true);
+        let pipeline = Pipeline::new();
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());
