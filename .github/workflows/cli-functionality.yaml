@@ -17,6 +17,7 @@ jobs:
         with:
           toolchain: "stable"
           override: true
+          target: "x86_64-unknown-linux-musl"
       - uses: "Swatinem/rust-cache@v2"
         if: "always()"
         with:
@@ -26,18 +27,21 @@ jobs:
         uses: "actions-rs/cargo@v1"
         with:
           command: "build"
-          args: "--release"
+          args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Run release binary"
-        run: "env RUST_LOG=debug ./target/release/peckish"
+        run: "env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./peckish.ci.yaml"
       - name: "Validate release binary"
         if: "success() || failure()"
         run: "file release/peckish/peckish | grep -q 'ELF 64-bit LSB pie executable, x86-64'"
       - name: "Validate Arch package"
         if: "success() || failure()"
         run: 'docker run --rm -i -v "$(pwd)/release/peckish.arch.pkg.tar:/app/peckish.pkg.tar" archlinux:latest sh -c "pacman --noconfirm -U /app/peckish.pkg.tar && peckish --version"'
-      - name: "Validate Debian package"
+      - name: "Validate Debian package on Debian"
         if: "success() || failure()"
-        run: 'docker run --rm -i -v "$(pwd)/release/peckish.deb:/app/peckish.deb" debian:latest sh -c "apt-get update && apt-get install -y libc6 libc-bin && dpkg -i /app/peckish.deb && peckish --version"'
+        run: 'docker run --rm -i -v "$(pwd)/release/peckish.deb:/app/peckish.deb" debian:latest sh -c "dpkg -i /app/peckish.deb && peckish --version"'
+      - name: "Validate Debian package on Ubuntu"
+        if: "success() || failure()"
+        run: 'docker run --rm -i -v "$(pwd)/release/peckish.deb:/app/peckish.deb" ubuntu:latest sh -c "dpkg -i /app/peckish.deb && peckish --version"'
       - name: "Validate tarball"
         if: "success() || failure()"
         run: "tar t -vf ./release/peckish.tar"

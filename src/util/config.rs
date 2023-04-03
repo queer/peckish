@@ -24,7 +24,8 @@ pub struct PeckishConfig {
 
 impl PeckishConfig {
     pub async fn load(config: Option<String>) -> Result<Self> {
-        let config_file: PathBuf = config.unwrap_or_else(|| "peckish.yaml".into()).into();
+        let config_file: PathBuf = config.unwrap_or_else(|| "./peckish.yaml".into()).into();
+        info!("loading config from {}", config_file.display());
         let mut config_file = File::open(config_file).await?;
         let mut config_str = String::new();
         config_file.read_to_string(&mut config_str).await?;

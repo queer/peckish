@@ -33,3 +33,7 @@ tokio = { version = "1.27.0", features = ["full"] }
 tokio-stream = "0.1.12"
 tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
 tokio-util = { version = "0.7.7", features = ["codec"] }
+
+[profile.release]
+opt-level = 3
+lto = true

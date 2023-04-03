@@ -19,7 +19,10 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
     about = "peckish repackages software artifacts!",
     version = VERSION,
 )]
-struct Input {}
+struct Input {
+    #[arg(short = 'c', long = "config")]
+    config_file: Option<String>,
+}
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -30,11 +33,11 @@ async fn main() -> Result<()> {
     color_eyre::install()?;
     pretty_env_logger::init();
 
-    let _args = Input::parse();
+    let args = Input::parse();
 
     debug!("starting peckish");
 
-    let config = PeckishConfig::load(Some("./peckish.yaml".into())).await?;
+    let config = PeckishConfig::load(args.config_file).await?;
 
     Pipeline::new(false).run(config).await?;
 
