@@ -58,6 +58,14 @@ pub trait SelfValidation {
     async fn validate(&self) -> Result<()>;
 }
 
+pub trait SelfBuilder {
+    type Output;
+
+    fn new(name: String) -> Self;
+
+    fn build(self) -> Result<Self::Output>;
+}
+
 pub async fn get_artifact_size(artifact: &dyn Artifact) -> Result<u64> {
     let memfs = artifact.extract().await?;
     let paths = traverse_memfs(&memfs, Path::new("/")).await?;

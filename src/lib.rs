@@ -23,7 +23,7 @@ pub mod pipeline;
 pub mod util;
 
 pub mod prelude {
-    pub use crate::artifact::{Artifact, ArtifactProducer};
+    pub use crate::artifact::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
     pub use crate::pipeline::Pipeline;
     pub use crate::util::config::{Injection, PeckishConfig};
 
@@ -45,5 +45,31 @@ pub mod prelude {
 
     pub mod tarball {
         pub use crate::artifact::tarball::*;
+    }
+
+    pub mod artifact {
+        pub use crate::artifact::arch::ArchArtifact;
+        pub use crate::artifact::deb::DebArtifact;
+        pub use crate::artifact::docker::DockerArtifact;
+        pub use crate::artifact::file::FileArtifact;
+        pub use crate::artifact::get_artifact_size;
+        pub use crate::artifact::tarball::TarballArtifact;
+    }
+
+    pub mod producer {
+        pub use crate::artifact::arch::ArchProducer;
+        pub use crate::artifact::deb::DebProducer;
+        pub use crate::artifact::docker::DockerProducer;
+        pub use crate::artifact::file::FileProducer;
+        pub use crate::artifact::tarball::TarballProducer;
+    }
+
+    pub mod builder {
+        pub use crate::artifact::arch::{ArchArtifactBuilder, ArchProducerBuilder};
+        pub use crate::artifact::deb::{DebArtifactBuilder, DebProducerBuilder};
+        pub use crate::artifact::docker::{DockerArtifactBuilder, DockerProducerBuilder};
+        pub use crate::artifact::file::{FileArtifactBuilder, FileProducerBuilder};
+        pub use crate::artifact::tarball::{TarballArtifactBuilder, TarballProducerBuilder};
+        pub use crate::artifact::SelfBuilder;
     }
 }

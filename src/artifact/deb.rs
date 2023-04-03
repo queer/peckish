@@ -15,7 +15,7 @@ use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
 use crate::util::traverse_memfs;
 
-use super::{Artifact, ArtifactProducer, SelfValidation};
+use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// A Debian package. This is a **non-compressed** ar archive.
 ///
@@ -163,6 +163,37 @@ impl SelfValidation for DebArtifact {
         }
 
         Ok(())
+    }
+}
+
+pub struct DebArtifactBuilder {
+    name: String,
+    path: PathBuf,
+}
+
+#[allow(unused)]
+impl DebArtifactBuilder {
+    pub fn path(mut self, path: PathBuf) -> Self {
+        self.path = path;
+        self
+    }
+}
+
+impl SelfBuilder for DebArtifactBuilder {
+    type Output = DebArtifact;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            path: PathBuf::new(),
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(DebArtifact {
+            name: self.name,
+            path: self.path,
+        })
     }
 }
 
@@ -383,5 +414,108 @@ impl SelfValidation for DebProducer {
         }
 
         Ok(())
+    }
+}
+
+pub struct DebProducerBuilder {
+    name: String,
+    path: PathBuf,
+    prerm: Option<PathBuf>,
+    postinst: Option<PathBuf>,
+    injections: Vec<Injection>,
+    package_name: String,
+    package_maintainer: String,
+    package_architecture: String,
+    package_version: String,
+    package_depends: String,
+    package_description: String,
+}
+
+#[allow(unused)]
+impl DebProducerBuilder {
+    pub fn path(mut self, path: PathBuf) -> Self {
+        self.path = path;
+        self
+    }
+
+    pub fn prerm(mut self, prerm: PathBuf) -> Self {
+        self.prerm = Some(prerm);
+        self
+    }
+
+    pub fn postinst(mut self, postinst: PathBuf) -> Self {
+        self.postinst = Some(postinst);
+        self
+    }
+
+    pub fn inject(mut self, injection: Injection) -> Self {
+        self.injections.push(injection);
+        self
+    }
+
+    pub fn package_name(mut self, package_name: String) -> Self {
+        self.package_name = package_name;
+        self
+    }
+
+    pub fn package_maintainer(mut self, package_maintainer: String) -> Self {
+        self.package_maintainer = package_maintainer;
+        self
+    }
+
+    pub fn package_architecture(mut self, package_architecture: String) -> Self {
+        self.package_architecture = package_architecture;
+        self
+    }
+
+    pub fn package_version(mut self, package_version: String) -> Self {
+        self.package_version = package_version;
+        self
+    }
+
+    pub fn package_depends(mut self, package_depends: String) -> Self {
+        self.package_depends = package_depends;
+        self
+    }
+
+    pub fn package_description(mut self, package_description: String) -> Self {
+        self.package_description = package_description;
+        self
+    }
+}
+
+impl SelfBuilder for DebProducerBuilder {
+    type Output = DebProducer;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            path: PathBuf::from("package.deb"),
+            prerm: None,
+            postinst: None,
+            injections: vec![],
+            package_name: "".into(),
+            package_maintainer: "".into(),
+            package_architecture: "".into(),
+            package_version: "".into(),
+            package_depends: "".into(),
+            package_description: "".into(),
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(DebProducer {
+            name: self.name,
+            path: self.path,
+            prerm: self.prerm,
+            postinst: self.postinst,
+            injections: self.injections,
+            package_name: self.package_name,
+            package_maintainer: self.package_maintainer,
+            package_architecture: self.package_architecture,
+            package_version: self.package_version,
+            package_depends: self.package_depends,
+            package_description: self.package_description,
+        })
     }
 }

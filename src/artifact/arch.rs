@@ -10,7 +10,7 @@ use crate::fs::MemFS;
 use crate::util::config::Injection;
 
 use super::tarball::{TarballArtifact, TarballProducer};
-use super::{get_artifact_size, Artifact, ArtifactProducer, SelfValidation};
+use super::{get_artifact_size, Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// An Arch Linux package. This is a **non-compressed** tarball file with a
 /// `.pkg.tar` extension and a `.PKGINFO` file in the root.
@@ -86,6 +86,37 @@ impl SelfValidation for ArchArtifact {
         }
 
         Ok(())
+    }
+}
+
+pub struct ArchArtifactBuilder {
+    pub name: String,
+    pub path: PathBuf,
+}
+
+#[allow(unused)]
+impl ArchArtifactBuilder {
+    pub fn path(mut self, path: PathBuf) -> Self {
+        self.path = path;
+        self
+    }
+}
+
+impl SelfBuilder for ArchArtifactBuilder {
+    type Output = ArchArtifact;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            path: PathBuf::new(),
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(ArchArtifact {
+            name: self.name,
+            path: self.path,
+        })
     }
 }
 
@@ -222,5 +253,84 @@ impl SelfValidation for ArchProducer {
         }
 
         Ok(())
+    }
+}
+
+pub struct ArchProducerBuilder {
+    name: String,
+    package_name: String,
+    package_ver: String,
+    package_desc: String,
+    package_author: String,
+    package_arch: String,
+    path: PathBuf,
+    injections: Vec<Injection>,
+}
+
+#[allow(unused)]
+impl ArchProducerBuilder {
+    pub fn package_name(mut self, package_name: String) -> Self {
+        self.package_name = package_name;
+        self
+    }
+
+    pub fn package_ver(mut self, package_ver: String) -> Self {
+        self.package_ver = package_ver;
+        self
+    }
+
+    pub fn package_desc(mut self, package_desc: String) -> Self {
+        self.package_desc = package_desc;
+        self
+    }
+
+    pub fn package_author(mut self, package_author: String) -> Self {
+        self.package_author = package_author;
+        self
+    }
+
+    pub fn package_arch(mut self, package_arch: String) -> Self {
+        self.package_arch = package_arch;
+        self
+    }
+
+    pub fn path(mut self, path: PathBuf) -> Self {
+        self.path = path;
+        self
+    }
+
+    pub fn inject(mut self, injection: Injection) -> Self {
+        self.injections.push(injection);
+        self
+    }
+}
+
+impl SelfBuilder for ArchProducerBuilder {
+    type Output = ArchProducer;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            package_name: String::new(),
+            package_ver: String::new(),
+            package_desc: String::new(),
+            package_author: String::new(),
+            package_arch: String::new(),
+            path: PathBuf::new(),
+            injections: vec![],
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(ArchProducer {
+            name: self.name,
+            package_name: self.package_name,
+            package_ver: self.package_ver,
+            package_desc: self.package_desc,
+            package_author: self.package_author,
+            package_arch: self.package_arch,
+            path: self.path,
+            injections: self.injections,
+        })
     }
 }

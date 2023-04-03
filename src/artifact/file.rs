@@ -9,7 +9,7 @@ use crate::fs::{InternalFileType, MemFS};
 use crate::util::config::Injection;
 use crate::util::{is_in_tmp_dir, traverse_memfs, Fix};
 
-use super::{Artifact, ArtifactProducer, SelfValidation};
+use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// A path or set of paths on the filesystem.
 #[derive(Debug, Clone)]
@@ -78,6 +78,45 @@ impl SelfValidation for FileArtifact {
         }
 
         Ok(())
+    }
+}
+
+pub struct FileArtifactBuilder {
+    pub name: String,
+    pub paths: Vec<PathBuf>,
+    pub strip_path_prefixes: Option<bool>,
+}
+
+#[allow(unused)]
+impl FileArtifactBuilder {
+    pub fn add_path(&mut self, path: PathBuf) -> &mut Self {
+        self.paths.push(path);
+        self
+    }
+
+    pub fn strip_path_prefixes(&mut self, strip: bool) -> &mut Self {
+        self.strip_path_prefixes = Some(strip);
+        self
+    }
+}
+
+impl SelfBuilder for FileArtifactBuilder {
+    type Output = FileArtifact;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            paths: vec![],
+            strip_path_prefixes: None,
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(FileArtifact {
+            name: self.name,
+            paths: self.paths,
+            strip_path_prefixes: self.strip_path_prefixes,
+        })
     }
 }
 
@@ -211,5 +250,44 @@ impl SelfValidation for FileProducer {
         tokio::fs::create_dir_all(&self.path).await?;
 
         Ok(())
+    }
+}
+
+pub struct FileProducerBuilder {
+    name: String,
+    path: PathBuf,
+    injections: Vec<Injection>,
+}
+
+#[allow(unused)]
+impl FileProducerBuilder {
+    pub fn path(mut self, path: PathBuf) -> Self {
+        self.path = path;
+        self
+    }
+
+    pub fn inject(mut self, injection: Injection) -> Self {
+        self.injections.push(injection);
+        self
+    }
+}
+
+impl SelfBuilder for FileProducerBuilder {
+    type Output = FileProducer;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            path: PathBuf::from("/"),
+            injections: vec![],
+        }
+    }
+
+    fn build(self) -> Result<FileProducer> {
+        Ok(FileProducer {
+            name: self.name,
+            path: self.path,
+            injections: self.injections,
+        })
     }
 }

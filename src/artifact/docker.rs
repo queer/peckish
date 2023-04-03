@@ -14,7 +14,7 @@ use crate::fs::{MemFS, TempDir};
 use crate::util::config::Injection;
 
 use super::tarball::{TarballArtifact, TarballProducer};
-use super::{Artifact, ArtifactProducer, SelfValidation};
+use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// A Docker image.
 ///
@@ -131,6 +131,37 @@ impl Artifact for DockerArtifact {
 impl SelfValidation for DockerArtifact {
     async fn validate(&self) -> Result<()> {
         Ok(())
+    }
+}
+
+pub struct DockerArtifactBuilder {
+    pub name: String,
+    pub image: String,
+}
+
+#[allow(unused)]
+impl DockerArtifactBuilder {
+    pub fn image(mut self, image: String) -> Self {
+        self.image = image;
+        self
+    }
+}
+
+impl SelfBuilder for DockerArtifactBuilder {
+    type Output = DockerArtifact;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            image: "".into(),
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(DockerArtifact {
+            name: self.name,
+            image: self.image,
+        })
     }
 }
 
@@ -312,6 +343,61 @@ impl SelfValidation for DockerProducer {
         }
 
         Ok(())
+    }
+}
+
+pub struct DockerProducerBuilder {
+    name: String,
+    image: String,
+    base_image: Option<String>,
+    entrypoint: Option<Vec<String>>,
+    injections: Vec<Injection>,
+}
+
+#[allow(unused)]
+impl DockerProducerBuilder {
+    pub fn image(mut self, image: String) -> Self {
+        self.image = image;
+        self
+    }
+
+    pub fn base_image(mut self, base_image: String) -> Self {
+        self.base_image = Some(base_image);
+        self
+    }
+
+    pub fn entrypoint(mut self, entrypoint: Vec<String>) -> Self {
+        self.entrypoint = Some(entrypoint);
+        self
+    }
+
+    pub fn inject(mut self, injection: Injection) -> Self {
+        self.injections.push(injection);
+        self
+    }
+}
+
+impl SelfBuilder for DockerProducerBuilder {
+    type Output = DockerProducer;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            image: "".into(),
+            base_image: None,
+            entrypoint: None,
+            injections: vec![],
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(DockerProducer {
+            name: self.name,
+            image: self.image,
+            base_image: self.base_image,
+            entrypoint: self.entrypoint,
+            injections: self.injections,
+        })
     }
 }
 

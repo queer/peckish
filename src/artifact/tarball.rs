@@ -12,7 +12,7 @@ use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
 use crate::util::{traverse_memfs, Fix};
 
-use super::{Artifact, ArtifactProducer, SelfValidation};
+use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// A tarball on the filesystem at the given path. Compression is **not**
 /// supported.
@@ -76,6 +76,37 @@ impl SelfValidation for TarballArtifact {
         }
 
         Ok(())
+    }
+}
+
+pub struct TarballArtifactBuilder {
+    pub name: String,
+    pub path: PathBuf,
+}
+
+#[allow(unused)]
+impl TarballArtifactBuilder {
+    pub fn path(mut self, path: PathBuf) -> Self {
+        self.path = path;
+        self
+    }
+}
+
+impl SelfBuilder for TarballArtifactBuilder {
+    type Output = TarballArtifact;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            path: PathBuf::from(""),
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(TarballArtifact {
+            name: self.name,
+            path: self.path,
+        })
     }
 }
 
@@ -188,5 +219,44 @@ impl SelfValidation for TarballProducer {
         }
 
         Ok(())
+    }
+}
+
+pub struct TarballProducerBuilder {
+    name: String,
+    path: PathBuf,
+    injections: Vec<Injection>,
+}
+
+#[allow(unused)]
+impl TarballProducerBuilder {
+    pub fn path(mut self, path: PathBuf) -> Self {
+        self.path = path;
+        self
+    }
+
+    pub fn inject(mut self, injection: Injection) -> Self {
+        self.injections.push(injection);
+        self
+    }
+}
+
+impl SelfBuilder for TarballProducerBuilder {
+    type Output = TarballProducer;
+
+    fn new(name: String) -> Self {
+        Self {
+            name,
+            path: PathBuf::from(""),
+            injections: vec![],
+        }
+    }
+
+    fn build(self) -> Result<Self::Output> {
+        Ok(TarballProducer {
+            name: self.name,
+            path: self.path,
+            injections: self.injections,
+        })
     }
 }
