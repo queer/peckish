@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use color_eyre::Result;
+use eyre::Result;
 use log::*;
 use rsfs_tokio::{DirEntry, GenFS, Metadata};
 use thiserror::Error;

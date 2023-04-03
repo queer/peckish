@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use color_eyre::Result;
+use eyre::Result;
 use log::*;
 use rsfs_tokio::{GenFS, Metadata};
 
@@ -84,7 +84,7 @@ pub async fn get_artifact_size(artifact: &dyn Artifact) -> Result<u64> {
 mod tests {
     use std::path::PathBuf;
 
-    use color_eyre::Result;
+    use eyre::Result;
 
     use crate::util::Fix;
 

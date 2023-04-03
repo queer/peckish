@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use color_eyre::Result;
+use eyre::Result;
 use futures_util::TryStreamExt;
 use log::*;
 use regex::Regex;

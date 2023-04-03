@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 use std::time::SystemTime;
 
-use color_eyre::Result;
 use eyre::eyre;
+use eyre::Result;
 use log::*;
 use rsfs_tokio::unix_ext::PermissionsExt;
 use rsfs_tokio::{GenFS, Metadata};

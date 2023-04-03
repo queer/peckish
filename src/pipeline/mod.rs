@@ -1,4 +1,4 @@
-use color_eyre::Result;
+use eyre::Result;
 use log::*;
 
 use crate::artifact::{Artifact, ArtifactProducer, SelfValidation};
@@ -67,7 +67,7 @@ impl Pipeline {
 
 #[cfg(test)]
 mod tests {
-    use color_eyre::Result;
+    use eyre::Result;
     use tokio::fs::File;
     use tokio::io::AsyncReadExt;
 

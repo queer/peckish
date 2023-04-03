@@ -1,6 +1,6 @@
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
-use color_eyre::Result;
+use eyre::Result;
 use log::*;
 use regex::Regex;
 use rsfs_tokio::GenFS;
@@ -418,7 +418,7 @@ mod tests {
 
     use super::*;
 
-    use color_eyre::Result;
+    use eyre::Result;
     use rsfs_tokio::GenFS;
 
     #[ctor::ctor]

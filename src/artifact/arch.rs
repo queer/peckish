@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use color_eyre::Result;
+use eyre::Result;
 use regex::Regex;
 use tokio::fs::File;
 use tokio_stream::StreamExt;

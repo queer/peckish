@@ -1,8 +1,8 @@
 use std::os::unix::prelude::{MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
 
-use color_eyre::Result;
 use eyre::eyre;
+use eyre::Result;
 use log::*;
 use rsfs_tokio::unix_ext::{FSMetadataExt, GenFSExt};
 use rsfs_tokio::{FileType, GenFS, Metadata};
@@ -246,7 +246,7 @@ pub enum InternalFileType {
 mod tests {
     use super::*;
 
-    use color_eyre::Result;
+    use eyre::Result;
 
     #[tokio::test]
     async fn test_utime_works() -> Result<()> {

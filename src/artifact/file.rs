@@ -1,7 +1,7 @@
 use std::os::unix::prelude::PermissionsExt;
 use std::path::PathBuf;
 
-use color_eyre::Result;
+use eyre::Result;
 use log::*;
 use rsfs_tokio::GenFS;
 

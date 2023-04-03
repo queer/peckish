@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use color_eyre::Result;
+use eyre::Result;
 use log::*;
 use rsfs_tokio::unix_ext::GenFSExt;
 use rsfs_tokio::{GenFS, Metadata};
