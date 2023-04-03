@@ -156,9 +156,10 @@ impl ArtifactProducer for TarballProducer {
             header.set_path(path).map_err(Fix::Io)?;
 
             let file_type = memfs.determine_file_type(path).await?;
+            debug!("path is {file_type:?}");
             let fs = memfs.as_ref();
-            let metadata = fs.metadata(path).await?;
             if file_type == InternalFileType::Dir {
+                let metadata = fs.metadata(path).await?;
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
                 header.set_mode(metadata.permissions().mode());
@@ -177,6 +178,7 @@ impl ArtifactProducer for TarballProducer {
                 let empty: &[u8] = &[];
                 archive_builder.append(&header, empty).await?;
             } else if file_type == InternalFileType::File {
+                let metadata = fs.metadata(path).await?;
                 use rsfs_tokio::File;
 
                 let mut data = Vec::new();
@@ -209,14 +211,6 @@ impl ArtifactProducer for TarballProducer {
                 header.set_entry_type(EntryType::Symlink);
                 header.set_link_name(link.to_str().unwrap())?;
                 header.set_size(empty.len() as u64);
-                header.set_mtime(
-                    metadata
-                        .modified()?
-                        .duration_since(SystemTime::UNIX_EPOCH)?
-                        .as_secs(),
-                );
-                header.set_uid(metadata.uid()? as u64);
-                header.set_gid(metadata.gid()? as u64);
                 header.set_cksum();
 
                 debug!("copy symlink {path:?}");
