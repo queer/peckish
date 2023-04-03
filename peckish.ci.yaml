@@ -27,6 +27,8 @@ output:
       - type: "move"
         src: "/target/x86_64-unknown-linux-musl/release/peckish"
         dest: "/usr/bin/peckish"
+      - type: "delete"
+        path: "/target"
 
   - name: "deb: peckish debian package"
     type: "deb"

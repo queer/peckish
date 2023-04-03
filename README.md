@@ -1,6 +1,16 @@
 # peckish
 
-peckish is a tool for repackaging software artifacts.
+peckish (case-sensitive) is a tool for repackaging Linux software artifacts.
+
+For example, suppose you're an application developer. You just made something
+cool and want to distribute it. However, packaging is *hard*. Different package
+formats do things differently -- ex. Arch has `x86_64` and `any` as architectures,
+but Debian has over a dozen and calls x86_64 `amd64` -- and it's hard to
+remember all the specifics. This is compounded by having to figure out the
+appropriate CLI flags for each package format. How many people can write a
+valid `tar` command on the first try? :P
+
+##
 
 ## usage
 
@@ -32,6 +42,9 @@ output:
 
 ```rust
 // pipelines
+use peckish::prelude::pipeline::*;
+use peckish::prelude::*;
+
 let file_artifact = ...;
 
 let tarball_producer = ...;
