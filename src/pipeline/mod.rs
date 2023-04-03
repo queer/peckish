@@ -24,6 +24,8 @@ impl Pipeline {
             ConfiguredArtifact::Deb(deb) => Box::new(deb),
         };
 
+        input_artifact.validate().await?;
+
         let mut output_artifacts: Vec<Box<dyn Artifact>> = vec![];
 
         for (i, producer) in config.output.iter().enumerate() {
