@@ -10,8 +10,6 @@ remember all the specifics. This is compounded by having to figure out the
 appropriate CLI flags for each package format. How many people can write a
 valid `tar` command on the first try? :P
 
-##
-
 ## usage
 
 Create a `peckish.yaml` file in the root of your project. Documentation of
@@ -78,3 +76,19 @@ let tarball_producer = TarballProducerBuilder::new("example tarball producer".in
 
 let tarball_artifact = tarball_producer.produce(&file_artifact).await?;
 ```
+
+# license
+
+Copyright 2023-present amy null
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
