@@ -10,7 +10,8 @@ remember all the specifics. This is compounded by having to figure out the
 appropriate CLI flags for each package format. How many people can write a
 valid `tar` command on the first try? :P
 
-Some currently-sparse docs about the different producers can be found here:
+Some currently-sparse docs about the different artifacts and producers can be
+found here:
 
 https://github.com/queer/peckish/tree/mistress/docs
 
@@ -26,8 +27,7 @@ https://github.com/queer/peckish/tree/mistress/docs
 
 ## usage
 
-Create a `peckish.yaml` file in the root of your project. Documentation of
-specific artifact types can be found in the `docs/` directory.
+Create a `peckish.yaml` file in the root of your project.
 
 ```yaml
 # whether to run as a pipeline, ie each artifact output is the input to the
