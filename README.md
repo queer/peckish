@@ -10,6 +10,22 @@ remember all the specifics. This is compounded by having to figure out the
 appropriate CLI flags for each package format. How many people can write a
 [valid `tar` command](https://xkcd.com/1168/) on the first try? :P
 
+This problem is fairly common:
+
+> It seems more and more common, at least in the self-hosted community, to provide two methods of installations: Docker or a shell script installer. It seems that many new projects don’t even bother with a native package manager, such as dpkg or rpm, which makes me reluctant to use them.
+>
+> https://yotam.net/posts/the-audacity-of-piping-curl-to-bash/
+
+> It's easier to compile the linux kernel from scratch than it is to build a debian package from scratch.
+>
+> It's mind-blowing how complicated it is; at the end of the day it's just an archive. I hate having to do it.
+>
+> https://news.ycombinator.com/item?id=34787228
+
+> The impact of having frictionless package building cannot be understated. I'm publishing Arch Linux packages for all my applications because it takes just a few minutes to write up a PKGBUILD. Then one time, I tried providing a Debian package as well, but I gave up after several hours of trying to get through all the bureaucracy of the tooling.
+>
+> https://news.ycombinator.com/item?id=34923960
+
 Some currently-sparse docs about the different artifacts and producers can be
 found here:
 
