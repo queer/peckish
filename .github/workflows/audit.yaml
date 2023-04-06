@@ -15,16 +15,13 @@ on:
 
 jobs:
   run-cargo-audit:
-    strategy:
-      matrix:
-        version: ["stable", "1.66"]
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
       - name: "Install latest stable Rust"
         uses: "actions-rs/toolchain@v1"
         with:
-          toolchain: "${{ matrix.version }}"
+          toolchain: "stable"
           override: true
           profile: "minimal"
       - name: "Install cargo-audit"
