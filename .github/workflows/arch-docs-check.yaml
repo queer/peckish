@@ -1,0 +1,22 @@
+name: "Check Arch package docs"
+on:
+  push:
+    branches:
+      - "mistress"
+    paths:
+      - "src/artifact/arch.rs"
+  pull_request:
+    branches:
+      - "mistress"
+    paths:
+      - "src/artifact/arch.rs"
+
+jobs:
+  check-arch-docs:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "marocchino/sticky-pull-request-comment@v2"
+        with:
+          header: "Arch packages"
+          message: "Don't forget to update the Arch docs!"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

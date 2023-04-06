@@ -1,0 +1,22 @@
+name: "Check Debian package docs"
+on:
+  push:
+    branches:
+      - "mistress"
+    paths:
+      - "src/artifact/deb.rs"
+  pull_request:
+    branches:
+      - "mistress"
+    paths:
+      - "src/artifact/deb.rs"
+
+jobs:
+  check-debian-docs:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "marocchino/sticky-pull-request-comment@v2"
+        with:
+          header: "Debian packages"
+          message: "Don't forget to update the Debian docs!"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

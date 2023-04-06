@@ -1,0 +1,22 @@
+name: "Check tarball package docs"
+on:
+  push:
+    branches:
+      - "mistress"
+    paths:
+      - "src/artifact/tarball.rs"
+  pull_request:
+    branches:
+      - "mistress"
+    paths:
+      - "src/artifact/tarball.rs"
+
+jobs:
+  check-tarball-docs:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "marocchino/sticky-pull-request-comment@v2"
+        with:
+          header: "Tarball packages"
+          message: "Don't forget to update the tarball docs!"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

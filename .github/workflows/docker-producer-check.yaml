@@ -1,0 +1,22 @@
+name: "Check Docker package docs"
+on:
+  push:
+    branches:
+      - "mistress"
+    paths:
+      - "src/artifact/docker.rs"
+  pull_request:
+    branches:
+      - "mistress"
+    paths:
+      - "src/artifact/docker.rs"
+
+jobs:
+  check-docker-docs:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "marocchino/sticky-pull-request-comment@v2"
+        with:
+          header: "Docker packages"
+          message: "Don't forget to update the Docker docs!"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
