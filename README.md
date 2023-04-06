@@ -8,7 +8,7 @@ formats do things differently -- ex. Arch has `x86_64` and `any` as architecture
 but Debian has over a dozen and calls x86_64 `amd64` -- and it's hard to
 remember all the specifics. This is compounded by having to figure out the
 appropriate CLI flags for each package format. How many people can write a
-valid `tar` command on the first try? :P
+[valid `tar` command](https://xkcd.com/1168/) on the first try? :P
 
 Some currently-sparse docs about the different artifacts and producers can be
 found here:
