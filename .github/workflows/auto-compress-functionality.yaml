@@ -32,7 +32,7 @@ jobs:
           command: "build"
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Run release binary"
-        run: "env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.tar-compression.yaml"
+        run: "env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.autocompress.yaml"
       - name: "Validate tarball extraction"
         if: "success() || failure()"
         run: "ls -lah ./test_output_pls_ignore"
