@@ -3,9 +3,15 @@ on:
   push:
     branches:
       - "mistress"
+    paths:
+      - "**.rs"
+      - "**.yaml"
   pull_request:
     branches:
       - "mistress"
+    paths:
+      - "**.rs"
+      - "**.yaml"
 
 jobs:
   run-cli-functionality-tests:
