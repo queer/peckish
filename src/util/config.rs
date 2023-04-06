@@ -36,16 +36,31 @@ impl PeckishConfig {
 
         Ok(Self {
             input: config.input.into(),
-            output: config.output.iter().map(|o| o.into()).collect(),
+            output: config
+                .output
+                .iter()
+                .map(|o| o.clone().convert(&config.metadata))
+                .collect(),
             pipeline: config.pipeline,
         })
     }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+struct PackageMetadata {
+    name: String,
+    version: String,
+    description: String,
+    author: String,
+    arch: String,
+    depends: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalConfig {
     #[serde(default)]
     pipeline: bool,
+    metadata: PackageMetadata,
     input: InputArtifact,
     output: Vec<OutputProducer>,
 }
@@ -150,11 +165,6 @@ enum OutputProducer {
     Arch {
         name: String,
         path: PathBuf,
-        package_name: String,
-        description: String,
-        version: String,
-        author: String,
-        arch: String,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -166,12 +176,6 @@ enum OutputProducer {
         prerm: Option<PathBuf>,
         #[serde(default)]
         postinst: Option<PathBuf>,
-        package_name: String,
-        maintainer: String,
-        arch: String,
-        version: String,
-        depends: String,
-        description: String,
 
         #[serde(default)]
         injections: Vec<Injection>,
@@ -180,8 +184,8 @@ enum OutputProducer {
 
 // Safety: This is intended to be a one-way conversion
 #[allow(clippy::from_over_into)]
-impl Into<ConfiguredProducer> for &OutputProducer {
-    fn into(self) -> ConfiguredProducer {
+impl OutputProducer {
+    fn convert(self, metadata: &PackageMetadata) -> ConfiguredProducer {
         match self {
             OutputProducer::File {
                 name,
@@ -189,10 +193,10 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 preserve_empty_directories,
                 injections,
             } => ConfiguredProducer::File(FileProducer {
-                name: name.clone(),
-                path: path.clone(),
-                preserve_empty_directories: *preserve_empty_directories,
-                injections: injections.clone(),
+                name,
+                path,
+                preserve_empty_directories,
+                injections,
             }),
 
             OutputProducer::Tarball {
@@ -201,13 +205,10 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 compression,
                 injections,
             } => ConfiguredProducer::Tarball(TarballProducer {
-                name: name.clone(),
-                path: path.clone(),
-                compression: compression
-                    .clone()
-                    .unwrap_or(ConfigCompression::None)
-                    .into(),
-                injections: injections.clone(),
+                name,
+                path,
+                compression: compression.unwrap_or(ConfigCompression::None).into(),
+                injections,
             }),
 
             OutputProducer::Docker {
@@ -217,31 +218,26 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 entrypoint,
                 injections,
             } => ConfiguredProducer::Docker(DockerProducer {
-                name: name.clone(),
-                image: image.clone(),
-                base_image: base_image.clone(),
-                cmd: entrypoint.clone(),
-                injections: injections.clone(),
+                name,
+                image,
+                base_image,
+                cmd: entrypoint,
+                injections,
             }),
 
             OutputProducer::Arch {
                 name,
                 path,
-                package_name,
-                description,
-                version,
-                author,
-                arch,
                 injections,
             } => ConfiguredProducer::Arch(ArchProducer {
-                name: name.clone(),
-                package_name: package_name.clone(),
-                package_desc: description.clone(),
-                package_ver: version.clone(),
-                package_author: author.clone(),
-                package_arch: arch.clone(),
-                path: path.clone(),
-                injections: injections.clone(),
+                name,
+                package_name: metadata.name.clone(),
+                package_desc: metadata.description.clone(),
+                package_ver: metadata.version.clone(),
+                package_author: metadata.author.clone(),
+                package_arch: metadata.arch.clone(),
+                path,
+                injections,
             }),
 
             OutputProducer::Deb {
@@ -249,25 +245,19 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 path,
                 prerm,
                 postinst,
-                package_name,
-                maintainer,
-                arch,
-                version,
-                depends,
-                description,
                 injections,
             } => ConfiguredProducer::Deb(DebProducer {
-                name: name.clone(),
-                path: path.clone(),
-                prerm: prerm.clone(),
-                postinst: postinst.clone(),
-                package_name: package_name.clone(),
-                package_maintainer: maintainer.clone(),
-                package_architecture: arch.clone(),
-                package_version: version.clone(),
-                package_depends: depends.clone(),
-                package_description: description.clone(),
-                injections: injections.clone(),
+                name,
+                path,
+                prerm,
+                postinst,
+                package_name: metadata.name.clone(),
+                package_maintainer: metadata.author.clone(),
+                package_architecture: metadata.arch.clone(),
+                package_version: metadata.version.clone(),
+                package_depends: metadata.depends.clone(),
+                package_description: metadata.description.clone(),
+                injections,
             }),
         }
     }
