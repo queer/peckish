@@ -153,7 +153,7 @@ impl ArtifactProducer for TarballProducer {
         &self.injections
     }
 
-    async fn produce(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
+    async fn produce_from(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
         let memfs = previous.extract().await?;
         let memfs = self.inject(&memfs).await?;
         let paths = traverse_memfs(memfs, &PathBuf::from("/"), Some(true)).await?;

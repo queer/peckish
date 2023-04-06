@@ -33,27 +33,27 @@ impl Pipeline {
             let next_artifact: Box<dyn Artifact> = match producer {
                 ConfiguredProducer::File(producer) => {
                     producer.validate().await?;
-                    Box::new(producer.produce(input_artifact.as_ref()).await?)
+                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Tarball(producer) => {
                     producer.validate().await?;
-                    Box::new(producer.produce(input_artifact.as_ref()).await?)
+                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Docker(producer) => {
                     producer.validate().await?;
-                    Box::new(producer.produce(input_artifact.as_ref()).await?)
+                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Arch(producer) => {
                     producer.validate().await?;
-                    Box::new(producer.produce(input_artifact.as_ref()).await?)
+                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Deb(producer) => {
                     producer.validate().await?;
-                    Box::new(producer.produce(input_artifact.as_ref()).await?)
+                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
             };
 

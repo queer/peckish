@@ -200,7 +200,7 @@ impl ArtifactProducer for DockerProducer {
         &self.injections
     }
 
-    async fn produce(&self, previous: &dyn Artifact) -> Result<DockerArtifact> {
+    async fn produce_from(&self, previous: &dyn Artifact) -> Result<DockerArtifact> {
         // Produce a tarball artifact from the previous artifact
         let tmp = TempDir::new().await?;
         let tarball_path = tmp.path_view().join("image.tar");
@@ -225,7 +225,7 @@ impl ArtifactProducer for DockerProducer {
                     preserve_empty_directories: Some(true),
                     injections: vec![],
                 }
-                .produce(&DockerArtifact {
+                .produce_from(&DockerArtifact {
                     name: self.name.clone(),
                     image: base_image.clone(),
                 })
@@ -245,7 +245,7 @@ impl ArtifactProducer for DockerProducer {
                     preserve_empty_directories: Some(true),
                     injections: vec![],
                 }
-                .produce(previous)
+                .produce_from(previous)
                 .await?;
             }
 
@@ -255,7 +255,7 @@ impl ArtifactProducer for DockerProducer {
                 compression: compression::CompressionType::None,
                 injections: self.injections.clone(),
             }
-            .produce(&FileArtifact {
+            .produce_from(&FileArtifact {
                 name: self.name.clone(),
                 paths: vec![tmp.path_view()],
                 strip_path_prefixes: Some(true),
@@ -269,7 +269,7 @@ impl ArtifactProducer for DockerProducer {
                 compression: compression::CompressionType::None,
                 injections: self.injections.clone(),
             }
-            .produce(previous)
+            .produce_from(previous)
             .await?
         };
 
@@ -453,7 +453,7 @@ mod tests {
             injections: vec![],
         };
 
-        producer.produce(&artifact).await?;
+        producer.produce_from(&artifact).await?;
 
         let docker = Docker::connect_with_local_defaults()?;
 

@@ -84,7 +84,7 @@ impl DebArtifact {
                     compression: compression::CompressionType::None,
                     injections: vec![],
                 }
-                .produce(&TarballArtifact {
+                .produce_from(&TarballArtifact {
                     name: "deb data.tar compressed".to_string(),
                     path: produce_from_tarball,
                 })
@@ -96,7 +96,7 @@ impl DebArtifact {
                     preserve_empty_directories: Some(true),
                     injections: vec![],
                 }
-                .produce(&decompressed_artifact)
+                .produce_from(&decompressed_artifact)
                 .await?;
 
                 // Copy decompressed_data_artifact to fs
@@ -248,7 +248,7 @@ impl ArtifactProducer for DebProducer {
         &self.injections
     }
 
-    async fn produce(&self, previous: &dyn Artifact) -> Result<Self::Output> {
+    async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
         let tmp = TempDir::new().await?;
 
         // Create data.tar from previous artifact in tmp using TarballProducer
@@ -260,7 +260,7 @@ impl ArtifactProducer for DebProducer {
             compression: compression::CompressionType::Gzip,
             injections: self.injections.clone(),
         }
-        .produce(previous)
+        .produce_from(previous)
         .await?;
 
         // Create control.tar from control file in tmp

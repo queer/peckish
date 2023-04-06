@@ -37,7 +37,7 @@ pub trait ArtifactProducer: SelfValidation {
     fn injections(&self) -> &[Injection];
 
     /// Produce a new artifact, given a previous artifact.
-    async fn produce(&self, previous: &dyn Artifact) -> Result<Self::Output>;
+    async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output>;
 
     /// Inject this producer's custom changes into the memfs.
     async fn inject<'a>(&self, fs: &'a MemFS) -> Result<&'a MemFS> {
@@ -113,7 +113,7 @@ mod tests {
             injections: vec![],
         };
 
-        let tarball_artifact = tarball_producer.produce(&file_artifact).await?;
+        let tarball_artifact = tarball_producer.produce_from(&file_artifact).await?;
 
         assert_eq!(tarball_artifact.name(), "test.tar.gz");
         let tarball_path = PathBuf::from(tarball_artifact.name());
@@ -126,7 +126,7 @@ mod tests {
             preserve_empty_directories: None,
         };
 
-        let file_artifact = file_producer.produce(&tarball_artifact).await?;
+        let file_artifact = file_producer.produce_from(&tarball_artifact).await?;
 
         assert_eq!(file_artifact.name(), "test");
         for path in &file_artifact.paths {

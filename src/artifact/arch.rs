@@ -161,7 +161,7 @@ impl ArtifactProducer for ArchProducer {
         &self.injections
     }
 
-    async fn produce(&self, previous: &dyn Artifact) -> Result<Self::Output> {
+    async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
         let size = get_artifact_size(previous).await?;
 
         let content = indoc::formatdoc! {r#"
@@ -201,7 +201,7 @@ impl ArtifactProducer for ArchProducer {
             compression: compression::CompressionType::Zstd,
             injections: new_injections,
         }
-        .produce(previous)
+        .produce_from(previous)
         .await
         .map(|tarball| ArchArtifact {
             name: self.name.clone(),

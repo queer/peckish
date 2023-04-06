@@ -15,7 +15,7 @@ async fn main() -> Result<()> {
         .path("test.tar.gz")
         .build()?;
 
-    let tarball_artifact = tarball_producer.produce(&file_artifact).await?;
+    let tarball_artifact = tarball_producer.produce_from(&file_artifact).await?;
 
     println!("tar t -vf {}", tarball_artifact.path.display());
 

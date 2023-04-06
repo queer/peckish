@@ -152,7 +152,7 @@ impl ArtifactProducer for FileProducer {
         &self.injections
     }
 
-    async fn produce(&self, previous: &dyn Artifact) -> Result<FileArtifact> {
+    async fn produce_from(&self, previous: &dyn Artifact) -> Result<FileArtifact> {
         let memfs = previous.extract().await?;
         debug!("injecting memfs");
         let memfs = self.inject(&memfs).await?;
