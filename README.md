@@ -83,8 +83,10 @@ The goal is to be able to support all of these!
   - https://crates.io/crates/rpm
 - [ ] appimage `"appimage"`
   - https://crates.io/crates/appimage
-- [ ] VM images (tbd)
-  - Work underway on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
+- [ ] Filesystem and VM images (tbd)
+  - Working on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
+- [ ] Flatpak?
+  - More research needed
 
 ### library
 
