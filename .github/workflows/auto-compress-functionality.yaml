@@ -25,14 +25,14 @@ jobs:
           key: "cli-functionality"
           cache-on-failure: true
       - name: "Install musl-tools"
-        run: "sudo apt-get install -y musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools"
       - name: "Build release binary!"
         uses: "actions-rs/cargo@v1"
         with:
           command: "build"
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Run release binary"
-        run: "env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.autocompress.yaml"
+        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.autocompress.yaml"
       - name: "Validate tarball extraction"
         if: "success() || failure()"
         run: "ls -lah ./test_output_pls_ignore"

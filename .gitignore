@@ -1,5 +1,6 @@
 /target
 /test*
+!/test-configs
 /*.bak
 /NOTES.md
 /__*

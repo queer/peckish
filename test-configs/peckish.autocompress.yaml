@@ -1,0 +1,9 @@
+input:
+  name: "tarball"
+  type: "tarball"
+  path: "./examples/example.tar.Zstd"
+
+output:
+  - name: "files"
+    type: "file"
+    path: "./test_output_pls_ignore"

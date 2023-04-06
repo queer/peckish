@@ -25,7 +25,7 @@ jobs:
           key: "cli-functionality"
           cache-on-failure: true
       - name: "Install musl-tools"
-        run: "sudo apt-get install -y musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools"
       - name: "Build release binary!"
         uses: "actions-rs/cargo@v1"
         with:
