@@ -53,7 +53,6 @@ struct PackageMetadata {
     description: String,
     author: String,
     arch: String,
-    depends: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -176,16 +175,18 @@ enum OutputProducer {
         prerm: Option<PathBuf>,
         #[serde(default)]
         postinst: Option<PathBuf>,
+        #[serde(default)]
+        depends: String,
 
         #[serde(default)]
         injections: Vec<Injection>,
     },
 }
 
-// Safety: This is intended to be a one-way conversion
+// This is intended to be a one-way conversion
 #[allow(clippy::from_over_into)]
 impl OutputProducer {
-    fn convert(self, metadata: &PackageMetadata) -> ConfiguredProducer {
+    fn convert(&self, metadata: &PackageMetadata) -> ConfiguredProducer {
         match self {
             OutputProducer::File {
                 name,
@@ -193,10 +194,10 @@ impl OutputProducer {
                 preserve_empty_directories,
                 injections,
             } => ConfiguredProducer::File(FileProducer {
-                name,
-                path,
-                preserve_empty_directories,
-                injections,
+                name: name.clone(),
+                path: path.clone(),
+                preserve_empty_directories: *preserve_empty_directories,
+                injections: injections.clone(),
             }),
 
             OutputProducer::Tarball {
@@ -205,10 +206,13 @@ impl OutputProducer {
                 compression,
                 injections,
             } => ConfiguredProducer::Tarball(TarballProducer {
-                name,
-                path,
-                compression: compression.unwrap_or(ConfigCompression::None).into(),
-                injections,
+                name: name.clone(),
+                path: path.clone(),
+                compression: compression
+                    .clone()
+                    .unwrap_or(ConfigCompression::None)
+                    .into(),
+                injections: injections.clone(),
             }),
 
             OutputProducer::Docker {
@@ -218,11 +222,11 @@ impl OutputProducer {
                 entrypoint,
                 injections,
             } => ConfiguredProducer::Docker(DockerProducer {
-                name,
-                image,
-                base_image,
-                cmd: entrypoint,
-                injections,
+                name: name.clone(),
+                image: image.clone(),
+                base_image: base_image.clone(),
+                cmd: entrypoint.clone(),
+                injections: injections.clone(),
             }),
 
             OutputProducer::Arch {
@@ -230,14 +234,14 @@ impl OutputProducer {
                 path,
                 injections,
             } => ConfiguredProducer::Arch(ArchProducer {
-                name,
+                name: name.clone(),
                 package_name: metadata.name.clone(),
                 package_desc: metadata.description.clone(),
                 package_ver: metadata.version.clone(),
                 package_author: metadata.author.clone(),
-                package_arch: metadata.arch.clone(),
-                path,
-                injections,
+                package_arch: self.convert_architecture(metadata),
+                path: path.clone(),
+                injections: injections.clone(),
             }),
 
             OutputProducer::Deb {
@@ -245,20 +249,40 @@ impl OutputProducer {
                 path,
                 prerm,
                 postinst,
+                depends,
                 injections,
             } => ConfiguredProducer::Deb(DebProducer {
-                name,
-                path,
-                prerm,
-                postinst,
+                name: name.clone(),
+                path: path.clone(),
+                prerm: prerm.clone(),
+                postinst: postinst.clone(),
                 package_name: metadata.name.clone(),
                 package_maintainer: metadata.author.clone(),
-                package_architecture: metadata.arch.clone(),
+                package_architecture: self.convert_architecture(metadata),
                 package_version: metadata.version.clone(),
-                package_depends: metadata.depends.clone(),
+                package_depends: depends.clone(),
                 package_description: metadata.description.clone(),
-                injections,
+                injections: injections.clone(),
             }),
+        }
+    }
+
+    fn convert_architecture(&self, metadata: &PackageMetadata) -> String {
+        match self {
+            OutputProducer::Arch { .. } => match metadata.arch.as_str() {
+                "x86_64" => "x86_64".into(),
+                "amd64" => "x86_64".into(),
+                "any" => "any".into(),
+                _ => panic!("unsupported architecture for arch linux: {}", metadata.arch),
+            },
+
+            OutputProducer::Deb { .. } => match metadata.arch.as_str() {
+                "x86_64" => "amd64".into(),
+                "amd64" => "amd64".into(),
+                "any" => "all".into(),
+                _ => panic!("unsupported architecture for debian: {}", metadata.arch),
+            },
+            _ => metadata.arch.clone(),
         }
     }
 }

@@ -1,5 +1,12 @@
 pipeline: false
 
+metadata:
+  name: "peckish"
+  version: "0.0.1-1"
+  description: "peckish transforms software artifacts"
+  author: "amy"
+  arch: "amd64"
+
 input:
   name: "rust: peckish release binary"
   type: "file"
@@ -18,11 +25,6 @@ output:
   - name: "arch: peckish arch package"
     type: "arch"
     path: "./release/peckish.arch.pkg.tar"
-    package_name: "peckish"
-    description: "peckish transforms software artifacts"
-    author: "amy"
-    version: "0.0.1-1"
-    arch: "x86_64"
     injections:
       - type: "move"
         src: "/target/x86_64-unknown-linux-musl/release/peckish"
@@ -33,12 +35,7 @@ output:
   - name: "deb: peckish debian package"
     type: "deb"
     path: "./release/peckish.deb"
-    package_name: "peckish"
-    maintainer: "amy"
-    arch: "amd64"
-    version: "0.0.1-1"
     depends: "libc6"
-    description: "peckish transforms software artifacts"
     injections:
       - type: "move"
         src: "/target/x86_64-unknown-linux-musl/release/peckish"
