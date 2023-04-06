@@ -59,13 +59,6 @@ let tarball_producer = ...;
 let debian_producer = ...;
 
 let config = PeckishConfig {
-    metadata: PackageMetadata {
-        name: "example".into(),
-        version: "0.1.0".into(),
-        description: "example package".into(),
-        author: "amy".into()
-        arch: "x86_64".into(),
-    }
     input: ConfiguredArtifact::File(file_artifact),
     output: vec![
         ConfiguredProducer::Tarball(tarball_producer),
