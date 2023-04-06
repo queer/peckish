@@ -28,7 +28,7 @@ rsfs-tokio = { git = "https://github.com/queer/rsfs-tokio", rev = "55efcfa" }
 serde = { version = "1.0.159", features = ["derive"] }
 serde_derive = "1.0.152"
 serde_json = "1.0.95"
-serde_yaml = "0.9.19"
+serde_yaml = "0.9.21"
 strum = { version = "0.24.1", features = ["derive"] }
 thiserror = "1.0.40"
 tokio = { version = "1.27.0", features = ["full"] }
