@@ -21,15 +21,22 @@ specific artifact types can be found in the `docs/` directory.
 
 ```yaml
 # whether to run as a pipeline, ie each artifact output is the input to the
-# next producer
+# next producer. defaults to `false` if not specified.
 pipeline: false
 
+# metadata about the package. required, even if you're only producing a file or
+# a tarball. this is because it's just easier than trying to play the "is there
+# enough metadata to build the package" game.
 metadata:
-  name: "whatever"
-  version: "0.1.0-1"
+  name: "whatever" # suggested format: "me <me@example.com>"
+  version: "0.1.0-1" # many distros want versions that end in -#, which is a
+                     # revision number for the package.
   description: "a package"
   author: "me"
-  arch: "amd64"
+  arch: "amd64" # the architecture of the package. this is usually the same as
+                # the architecture of the system you're building on. will be
+                # automatically set to the correct value for the target package
+                # format, ex. x86_64 -> amd64 for debian.
 
 # the artifact being used as input to the pipeline.
 input:
@@ -38,7 +45,8 @@ input:
   paths:
   - "./path/to/file"
 
-# the producers being used as pipeline outputs.
+# the producers being used as pipeline outputs. see `docs/` for more info about
+# each producer.
 output:
   - name: "tarball"
     type: "tarball"
