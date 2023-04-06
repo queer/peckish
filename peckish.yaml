@@ -6,17 +6,17 @@ metadata:
   arch: "amd64"
 
 input:
-  name: "rust: peckish release binary"
+  name: "peckish release binary"
   type: "file"
   paths:
     - "./target/release/peckish"
 
 output:
-  - name: "tarball: peckish release binary"
+  - name: "peckish.tar"
     type: "tarball"
     path: "./release/peckish.tar"
 
-  - name: "arch: peckish arch package"
+  - name: "peckish.arch.pkg.tar"
     type: "arch"
     path: "./release/peckish.arch.pkg.tar"
     injections:
@@ -24,7 +24,7 @@ output:
         src: "/target/release/peckish"
         dest: "/usr/bin/peckish"
 
-  - name: "deb: peckish debian package"
+  - name: "peckish.deb"
     type: "deb"
     path: "./release/peckish.deb"
     depends: "libc6"
@@ -33,7 +33,7 @@ output:
         src: "/target/release/peckish"
         dest: "/usr/bin/peckish"
 
-  - name: "file: peckish release binary"
+  - name: "peckish exe"
     type: "file"
     path: "./release/peckish"
     injections:
@@ -41,7 +41,7 @@ output:
         src: "/target/release/peckish"
         dest: "/peckish"
 
-  - name: "docker: peckish docker image"
+  - name: "queer/peckish:latest docker image"
     type: "docker"
     image: "queer/peckish:latest"
     base_image: "ubuntu:jammy"

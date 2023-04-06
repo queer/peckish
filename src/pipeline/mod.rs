@@ -23,6 +23,7 @@ impl Pipeline {
             ConfiguredArtifact::Arch(arch) => Box::new(arch),
             ConfiguredArtifact::Deb(deb) => Box::new(deb),
         };
+        info!("input: {}", input_artifact.name());
 
         input_artifact.validate().await?;
 
@@ -63,6 +64,7 @@ impl Pipeline {
                 input_artifact = next_artifact.try_clone()?;
             }
 
+            info!("created artifact: {}", next_artifact.name());
             output_artifacts.push(next_artifact);
         }
 
