@@ -12,5 +12,5 @@ name: "my docker artifact producer"
 image: "output/image:latest"
 # package metadata
 base_image: "ubuntu:latest" # optional
-entrypoint: ["/bin/sh", "-c", "echo asdf"] # optional
+cmd: ["/bin/sh", "-c", "echo asdf"] # optional
 ```

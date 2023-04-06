@@ -177,14 +177,12 @@ impl SelfBuilder for DockerArtifactBuilder {
 ///
 /// - Will currently always attempt to pull the base image
 /// - Does not support changes other than setting the `CMD`
-///
-/// TODO: Rename `entrypoint` -> `cmd`
 #[derive(Debug, Clone)]
 pub struct DockerProducer {
     pub name: String,
     pub image: String,
     pub base_image: Option<String>,
-    pub entrypoint: Option<Vec<String>>,
+    pub cmd: Option<Vec<String>>,
     pub injections: Vec<Injection>,
 }
 
@@ -277,7 +275,7 @@ impl ArtifactProducer for DockerProducer {
         let (image, tag) = split_image_name_into_repo_and_tag(&self.image);
         let docker = Docker::connect_with_local_defaults()?;
         let docker_cmd = {
-            if let Some(docker_cmd) = self.entrypoint.clone() {
+            if let Some(docker_cmd) = self.cmd.clone() {
                 let docker_cmd = format!("CMD {}", serde_json::to_string(&docker_cmd)?);
                 debug!("docker_cmd = {docker_cmd}");
                 Some(docker_cmd)
@@ -404,7 +402,7 @@ impl SelfBuilder for DockerProducerBuilder {
             name: self.name.clone(),
             image: self.image.clone(),
             base_image: self.base_image.clone(),
-            entrypoint: self.entrypoint.clone(),
+            cmd: self.entrypoint.clone(),
             injections: self.injections.clone(),
         })
     }
@@ -449,7 +447,7 @@ mod tests {
             name: "docker image producer".into(),
             image: new_image.clone(),
             base_image: None,
-            entrypoint: None,
+            cmd: None,
             injections: vec![],
         };
 

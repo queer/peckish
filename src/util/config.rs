@@ -100,13 +100,19 @@ impl Into<ConfiguredArtifact> for InputArtifact {
                 ConfiguredArtifact::Docker(DockerArtifact { name, image })
             }
 
-            InputArtifact::Arch { name, path } => {
-                ConfiguredArtifact::Arch(ArchArtifact { name, path })
-            }
+            InputArtifact::Arch { name, path } => ConfiguredArtifact::Arch(ArchArtifact {
+                name,
+                path,
+                pkginfo: None,
+            }),
 
-            InputArtifact::Deb { name, path } => {
-                ConfiguredArtifact::Deb(DebArtifact { name, path })
-            }
+            InputArtifact::Deb { name, path } => ConfiguredArtifact::Deb(DebArtifact {
+                name,
+                path,
+                control: None,
+                postinst: None,
+                prerm: None,
+            }),
         }
     }
 }
@@ -214,7 +220,7 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 name: name.clone(),
                 image: image.clone(),
                 base_image: base_image.clone(),
-                entrypoint: entrypoint.clone(),
+                cmd: entrypoint.clone(),
                 injections: injections.clone(),
             }),
 

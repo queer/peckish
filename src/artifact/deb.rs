@@ -8,6 +8,7 @@ use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_tar::Header;
 
+use crate::artifact::get_artifact_size;
 use crate::artifact::tarball::TarballProducer;
 use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
@@ -24,6 +25,25 @@ use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 pub struct DebArtifact {
     pub name: String,
     pub path: PathBuf,
+    pub control: Option<ControlFile>,
+    pub postinst: Option<String>,
+    pub prerm: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct ControlFile {
+    pub package: String,
+    pub version: String,
+    pub section: String,
+    pub priority: String,
+    pub architecture: String,
+    pub depends: String,
+    pub suggests: String,
+    pub conflicts: String,
+    pub replaces: String,
+    pub installed_size: u64,
+    pub maintainer: String,
+    pub description: String,
 }
 
 #[async_trait::async_trait]
@@ -186,12 +206,30 @@ impl SelfValidation for DebArtifact {
 pub struct DebArtifactBuilder {
     name: String,
     path: PathBuf,
+    control: Option<ControlFile>,
+    postinst: Option<String>,
+    prerm: Option<String>,
 }
 
 #[allow(unused)]
 impl DebArtifactBuilder {
     pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
         self.path = path.into();
+        self
+    }
+
+    pub fn control(mut self, control: ControlFile) -> Self {
+        self.control = Some(control);
+        self
+    }
+
+    pub fn postinst<S: Into<String>>(mut self, postinst: S) -> Self {
+        self.postinst = Some(postinst.into());
+        self
+    }
+
+    pub fn prerm<S: Into<String>>(mut self, prerm: S) -> Self {
+        self.prerm = Some(prerm.into());
         self
     }
 }
@@ -203,6 +241,9 @@ impl SelfBuilder for DebArtifactBuilder {
         Self {
             name: name.into(),
             path: PathBuf::new(),
+            control: None,
+            postinst: None,
+            prerm: None,
         }
     }
 
@@ -210,6 +251,9 @@ impl SelfBuilder for DebArtifactBuilder {
         Ok(DebArtifact {
             name: self.name.clone(),
             path: self.path.clone(),
+            control: self.control.clone(),
+            postinst: self.postinst.clone(),
+            prerm: self.prerm.clone(),
         })
     }
 }
@@ -269,6 +313,7 @@ impl ArtifactProducer for DebProducer {
         let mut control_tar_builder = tokio_tar::Builder::new(File::create(&control_tar).await?);
 
         // Write self.control into control.tar as /control
+        let installed_size = get_artifact_size(previous).await?;
         let mut control_header = Header::new_gnu();
         control_header.set_entry_type(tokio_tar::EntryType::file());
         let control_data = indoc::formatdoc! {r#"
@@ -278,6 +323,7 @@ impl ArtifactProducer for DebProducer {
             Version: {version}
             Depends: {depends}
             Description: {description}
+            Installed-Size: {installed_size}
         "#,
             name = self.package_name,
             maintainer = self.package_maintainer,
@@ -285,6 +331,7 @@ impl ArtifactProducer for DebProducer {
             version = self.package_version,
             depends = self.package_depends,
             description = self.package_description,
+            installed_size = installed_size,
         };
         control_header.set_size(control_data.len() as u64);
         control_header.set_cksum();
@@ -366,9 +413,37 @@ impl ArtifactProducer for DebProducer {
 
         debug!("done!");
 
+        let prerm = if let Some(prerm) = &self.prerm {
+            Some(tokio::fs::read_to_string(prerm).await?)
+        } else {
+            None
+        };
+
+        let postinst = if let Some(postinst) = &self.postinst {
+            Some(tokio::fs::read_to_string(postinst).await?)
+        } else {
+            None
+        };
+
         Ok(DebArtifact {
             name: self.name.clone(),
             path: self.path.clone(),
+            control: Some(ControlFile {
+                package: self.package_name.clone(),
+                maintainer: self.package_maintainer.clone(),
+                architecture: self.package_architecture.clone(),
+                version: self.package_version.clone(),
+                depends: self.package_depends.clone(),
+                description: self.package_description.clone(),
+                section: "".into(),
+                priority: "".into(),
+                suggests: "".into(),
+                conflicts: "".into(),
+                replaces: "".into(),
+                installed_size,
+            }),
+            prerm,
+            postinst,
         })
     }
 }
