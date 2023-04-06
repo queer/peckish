@@ -19,8 +19,6 @@ use super::tarball::TarballArtifact;
 use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// A Debian package. This is a **non-compressed** ar archive.
-///
-/// TODO: Preserve control files
 #[derive(Debug, Clone)]
 pub struct DebArtifact {
     pub name: String,
