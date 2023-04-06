@@ -1,7 +1,12 @@
 [package]
 name = "peckish"
 version = "0.0.1"
+description = "Create and manipulate Linux package formats!"
+license = "Apache-2.0"
 edition = "2021"
+readme = "README.md"
+categories = ["command-line-utilities", "development-tools", "filesystem"]
+keywords = ["packages", "linux", "deb", "tarball", "docker"]
 
 [dependencies]
 anyhow = "1.0.70"

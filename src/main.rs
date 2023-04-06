@@ -30,7 +30,10 @@ async fn main() -> Result<()> {
         std::env::set_var("RUST_LOG", "info");
     }
 
-    color_eyre::install()?;
+    color_eyre::config::HookBuilder::new()
+        .issue_url(concat!(env!("CARGO_PKG_REPOSITORY"), "/issues/new"))
+        .add_issue_metadata("version", env!("CARGO_PKG_VERSION"))
+        .install()?;
     pretty_env_logger::init();
 
     let args = Input::parse();

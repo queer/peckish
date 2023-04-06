@@ -14,6 +14,15 @@ Some currently-sparse docs about the different producers can be found here:
 
 https://github.com/queer/peckish/tree/mistress/docs
 
+### caveats
+
+- peckish is `0.x.y`! treat it accordingly. maybe don't run it in prod.
+- peckish is not a build system or a package manager. it doesn't care about how
+  your code is built or installed, just about getting it from one package
+  format to another.
+- peckish is primarily tested for my use-cases. please please please please
+  report bugs!
+
 ## usage
 
 Create a `peckish.yaml` file in the root of your project. Documentation of
