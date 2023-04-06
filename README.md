@@ -10,6 +10,12 @@ remember all the specifics. This is compounded by having to figure out the
 appropriate CLI flags for each package format. How many people can write a
 [valid `tar` command](https://xkcd.com/1168/) on the first try? :P
 
+peckish solves this. Instead of mangling your files with various arcant tools,
+spinning up Docker containers or VMs to try to build packages and make sure
+they install, and all the other pains, you can just write a basic YAML file,
+and you're done! peckish does the rest, *without* shelling out to
+distro-specific tools!
+
 This problem is fairly common:
 
 > It seems more and more common, at least in the self-hosted community, to provide two methods of installations: Docker or a shell script installer. It seems that many new projects don’t even bother with a native package manager, such as dpkg or rpm, which makes me reluctant to use them.
