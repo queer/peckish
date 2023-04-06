@@ -20,6 +20,13 @@ specific artifact types can be found in the `docs/` directory.
 # next producer
 pipeline: false
 
+metadata:
+  name: "whatever"
+  version: "0.1.0-1"
+  description: "a package"
+  author: "me"
+  arch: "amd64"
+
 # the artifact being used as input to the pipeline.
 input:
   name: "some file"
@@ -33,7 +40,9 @@ output:
     type: "tarball"
     path: "./whatever.tar"
 
-  # ...
+  - name: "debian package"
+    type: "deb"
+    path: "./whatever.deb"
 ```
 
 ### library
@@ -50,6 +59,13 @@ let tarball_producer = ...;
 let debian_producer = ...;
 
 let config = PeckishConfig {
+    metadata: PackageMetadata {
+        name: "example".into(),
+        version: "0.1.0".into(),
+        description: "example package".into(),
+        author: "amy".into()
+        arch: "x86_64".into(),
+    }
     input: ConfiguredArtifact::File(file_artifact),
     output: vec![
         ConfiguredProducer::Tarball(tarball_producer),
