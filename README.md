@@ -72,7 +72,8 @@ output:
 
 ### supported package formats
 
-The goal is to be able to support all of these!
+The goal is to be able to support all of these! Formats not listed may end up
+on the list :D
 
 - [x] file `"file"`
 - [x] arch package `"arch"`
