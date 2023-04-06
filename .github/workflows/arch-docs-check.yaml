@@ -1,10 +1,5 @@
 name: "Check Arch package docs"
 on:
-  push:
-    branches:
-      - "mistress"
-    paths:
-      - "src/artifact/arch.rs"
   pull_request:
     branches:
       - "mistress"

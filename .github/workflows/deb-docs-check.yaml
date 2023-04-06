@@ -1,10 +1,5 @@
 name: "Check Debian package docs"
 on:
-  push:
-    branches:
-      - "mistress"
-    paths:
-      - "src/artifact/deb.rs"
   pull_request:
     branches:
       - "mistress"

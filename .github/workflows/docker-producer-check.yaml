@@ -1,10 +1,5 @@
 name: "Check Docker package docs"
 on:
-  push:
-    branches:
-      - "mistress"
-    paths:
-      - "src/artifact/docker.rs"
   pull_request:
     branches:
       - "mistress"

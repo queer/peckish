@@ -1,10 +1,5 @@
 name: "Check file package docs"
 on:
-  push:
-    branches:
-      - "mistress"
-    paths:
-      - "src/artifact/file.rs"
   pull_request:
     branches:
       - "mistress"
