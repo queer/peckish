@@ -10,4 +10,5 @@ path: "./path-to-artifact.tar"
 ```yaml
 name: "my tarball artifact producer"
 path: "./path-to-output-artifact.tar"
+compression: "none" | "brotli" | "deflate" | "gzip" | "xz" | "zlib" | "zstd"
 ```
