@@ -10,6 +10,10 @@ remember all the specifics. This is compounded by having to figure out the
 appropriate CLI flags for each package format. How many people can write a
 valid `tar` command on the first try? :P
 
+Some currently-sparse docs about the different producers can be found here:
+
+https://github.com/queer/peckish/tree/mistress/docs
+
 ## usage
 
 Create a `peckish.yaml` file in the root of your project. Documentation of
@@ -86,7 +90,31 @@ let out = pipeline.run(config).await?;
 println!("produced {} artifacts", out.len());
 ```
 
-# license
+## concepts
+
+peckish is built around the concepts of *artifacts* and *producers*.
+
+Artifacts are some sort of data that exists on your system that can be
+packaged; artifacts themselves do not contain any of that data, just metadata.
+For example, a `FileArtifact` is a list of paths to files on your system. A
+`TarballArtifact` is a path to a tarball. A `DebArtifact` is a path to a
+`.deb` file. So on and so forth.
+
+Producers are a bit more interesting. Producers are the things that actually
+do the packaging. They take an artifact as input and produce a new artifact
+as output. For example, a `TarballProducer` takes a `FileArtifact` as input
+and produces a `TarballArtifact` as output. A `DebProducer` takes a
+`TarballArtifact` as input and produces a `DebArtifact` as output.
+
+peckish artifacts and producers are centred around the idea of an in-memory
+filesystem. Rather than having to mangle things on the disk, peckish moves
+everything into memory, manipulates it, then flushes it back to disk. This
+allows for trivial manipulation of software artifacts, as changing them is
+simply injecting some changes into the in-memory filesystem and repackaging
+with the metadata in the producer. No knowledge of the previous artifact is
+needed beyond its in-memory filesystem representation.
+
+## license
 
 Copyright 2023-present amy null
 
