@@ -48,6 +48,20 @@ output:
 ### library
 
 ```rust
+// artifacts
+use peckish::prelude::builder::*;
+use peckish::prelude::*;
+
+let file_artifact = FileArtifactBuilder::new("example file artifact".into())
+    .add_path("./examples/a".into())
+    .build()?;
+
+let tarball_producer = TarballProducerBuilder::new("example tarball producer".into())
+    .path("test.tar.gz".into())
+    .build()?;
+
+let tarball_artifact = tarball_producer.produce(&file_artifact).await?;
+
 // pipelines
 use peckish::prelude::pipeline::*;
 use peckish::prelude::*;
@@ -70,20 +84,6 @@ let config = PeckishConfig {
 let pipeline = Pipeline::new();
 let out = pipeline.run(config).await?;
 println!("produced {} artifacts", out.len());
-
-// artifacts
-use peckish::prelude::builder::*;
-use peckish::prelude::*;
-
-let file_artifact = FileArtifactBuilder::new("example file artifact".into())
-    .add_path("./examples/a".into())
-    .build()?;
-
-let tarball_producer = TarballProducerBuilder::new("example tarball producer".into())
-    .path("test.tar.gz".into())
-    .build()?;
-
-let tarball_artifact = tarball_producer.produce(&file_artifact).await?;
 ```
 
 # license
