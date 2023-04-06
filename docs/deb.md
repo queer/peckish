@@ -18,10 +18,5 @@ path: "./path-to-output-artifact.deb"
 # package metadata
 prerm: "./path-to-prerm-script" # optional
 postinst: "./path-to-postinst-script" # optional
-package_name: "my-cool-package"
-package_maintainer: "my name goes here <me@example.com>"
-package_version: "1.0.0-1"
-package_arch: "amd64"
-package_depends: ""
-package_description: "my cool deb package"
+depends: ""
 ```
