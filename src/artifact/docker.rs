@@ -11,6 +11,7 @@ use tokio_util::codec::{BytesCodec, FramedRead};
 
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::fs::{MemFS, TempDir};
+use crate::util::compression;
 use crate::util::config::Injection;
 
 use super::tarball::{TarballArtifact, TarballProducer};
@@ -251,6 +252,7 @@ impl ArtifactProducer for DockerProducer {
             TarballProducer {
                 name: self.name.clone(),
                 path: tarball_path.clone(),
+                compression: compression::CompressionType::None,
                 injections: self.injections.clone(),
             }
             .produce(&FileArtifact {
@@ -264,6 +266,7 @@ impl ArtifactProducer for DockerProducer {
             TarballProducer {
                 name: self.name.clone(),
                 path: tarball_path.clone(),
+                compression: compression::CompressionType::None,
                 injections: self.injections.clone(),
             }
             .produce(previous)

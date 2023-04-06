@@ -8,7 +8,7 @@ on:
       - "mistress"
 
 jobs:
-  run-functionality-tests:
+  run-cli-functionality-tests:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"

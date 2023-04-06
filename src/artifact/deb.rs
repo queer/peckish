@@ -1,10 +1,8 @@
 use std::path::PathBuf;
 
 use eyre::Result;
-use futures_util::TryStreamExt;
 use log::*;
 use regex::Regex;
-use rsfs_tokio::unix_ext::GenFSExt;
 use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -13,14 +11,15 @@ use tokio_tar::Header;
 use crate::artifact::tarball::TarballProducer;
 use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
-use crate::util::traverse_memfs;
+use crate::util::{compression, traverse_memfs};
 
+use super::file::FileProducer;
+use super::tarball::TarballArtifact;
 use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// A Debian package. This is a **non-compressed** ar archive.
 ///
 /// TODO: Preserve control files
-/// TODO: Decompress more than just gzip
 #[derive(Debug, Clone)]
 pub struct DebArtifact {
     pub name: String,
@@ -62,8 +61,7 @@ impl DebArtifact {
         while let Some(entry) = archive.next_entry() {
             let mut ar_entry = entry?;
             let path = String::from_utf8_lossy(ar_entry.header().identifier()).to_string();
-            if path == "data.tar.gz" {
-                use async_compression::tokio::bufread::GzipDecoder;
+            if path.starts_with("data.tar") {
                 let ar_buf = {
                     use std::io::Read;
                     let mut b = vec![];
@@ -71,29 +69,43 @@ impl DebArtifact {
                     b
                 };
 
-                let reader = GzipDecoder::new(ar_buf.as_slice());
-                let mut tar = tokio_tar::Archive::new(reader);
-                let mut entries = tar.entries()?;
-                while let Some(mut gz_entry) = entries.try_next().await? {
-                    // Copy path to vfs
-                    let entry_type = gz_entry.header().entry_type();
-                    if entry_type.is_dir() {
-                        fs.as_ref().create_dir_all(&path).await?;
-                        debug!("deb: created dir: {path:#?}");
-                    } else if entry_type.is_file() {
-                        let mut file = fs.as_ref().create_file(&path).await?;
-                        // read all bytes from entry sync
-                        let mut buf = Vec::new();
-                        gz_entry.read_to_end(&mut buf).await?;
+                let produce_from_tmp = TempDir::new().await?;
+                let produce_from_tarball = produce_from_tmp.path_view().join(path);
+                let decompressed_tarball = produce_from_tmp.path_view().join("decompressed.tar");
+                let output_tmp = TempDir::new().await?;
 
-                        tokio::io::copy(&mut buf.as_slice(), &mut file).await?;
-                        debug!("deb: created file: {path:#?}");
-                    } else if entry_type.is_symlink() {
-                        let src = gz_entry.header().link_name()?.unwrap().to_path_buf();
-                        let dst = PathBuf::from(path.to_string());
-                        fs.as_ref().symlink(src, dst).await?;
-                    }
+                // Write ar_buf to produce_from_tmp
+                let mut ar_file = File::create(&produce_from_tarball).await?;
+                ar_file.write_all(&ar_buf).await?;
+
+                let decompressed_artifact = TarballProducer {
+                    name: "deb data.tar decompressed".to_string(),
+                    path: decompressed_tarball,
+                    compression: compression::CompressionType::None,
+                    injections: vec![],
                 }
+                .produce(&TarballArtifact {
+                    name: "deb data.tar compressed".to_string(),
+                    path: produce_from_tarball,
+                })
+                .await?;
+
+                let _decompressed_data_artifact = FileProducer {
+                    name: "deb data.tar decompressed files".to_string(),
+                    path: output_tmp.path_view(),
+                    preserve_empty_directories: Some(true),
+                    injections: vec![],
+                }
+                .produce(&decompressed_artifact)
+                .await?;
+
+                // Copy decompressed_data_artifact to fs
+                fs.copy_files_from_paths(
+                    &vec![output_tmp.path_view()],
+                    Some(output_tmp.path_view()),
+                )
+                .await?;
+
                 break;
             }
         }
@@ -243,8 +255,9 @@ impl ArtifactProducer for DebProducer {
         debug!("producing data.tar from previous artifact...");
         let data_tar = tmp.path_view().join("data.tar");
         let _tar_artifact = TarballProducer {
-            name: "data.tar".to_string(),
+            name: "data.tar.gz".to_string(),
             path: data_tar.clone(),
+            compression: compression::CompressionType::Gzip,
             injections: self.injections.clone(),
         }
         .produce(previous)

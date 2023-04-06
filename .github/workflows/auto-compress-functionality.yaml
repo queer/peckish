@@ -1,0 +1,36 @@
+name: "Validate autocompression functionality"
+on:
+  push:
+    branches:
+      - "mistress"
+  pull_request:
+    branches:
+      - "mistress"
+
+jobs:
+  run-autocompress-functionality-tests:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - name: "Install latest stable Rust"
+        uses: "actions-rs/toolchain@v1"
+        with:
+          toolchain: "stable"
+          profile: "minimal"
+          override: true
+          target: "x86_64-unknown-linux-musl"
+      - uses: "Swatinem/rust-cache@v2"
+        if: "always()"
+        with:
+          key: "cli-functionality"
+          cache-on-failure: true
+      - name: "Build release binary!"
+        uses: "actions-rs/cargo@v1"
+        with:
+          command: "build"
+          args: "--release --target=x86_64-unknown-linux-musl"
+      - name: "Run release binary"
+        run: "env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.tar-compression.yaml"
+      - name: "Validate tarball extraction"
+        if: "success() || failure()"
+        run: "ls -lah ./test_output_pls_ignore"

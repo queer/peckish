@@ -7,13 +7,14 @@ use tokio::fs::File;
 use tokio_stream::StreamExt;
 
 use crate::fs::MemFS;
+use crate::util::compression;
 use crate::util::config::Injection;
 
 use super::tarball::{TarballArtifact, TarballProducer};
 use super::{get_artifact_size, Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
-/// An Arch Linux package. This is a **non-compressed** tarball file with a
-/// `.pkg.tar` extension and a `.PKGINFO` file in the root.
+/// An Arch Linux package. This is a tarball file with a `.pkg.tar` extension
+/// and a `.PKGINFO` file in the root.
 #[derive(Debug, Clone)]
 pub struct ArchArtifact {
     /// The name of the artifact. Used for ex. logging.
@@ -133,10 +134,9 @@ impl SelfBuilder for ArchArtifactBuilder {
 }
 
 /// An [`ArtifactProducer`] that produces an Arch Linux package. This is a
-/// **non-compressed** tarball file with a `.pkg.tar` extension and a
-/// `.PKGINFO` file in the root. The `.PKGINFO` file is generated from the
-/// `package_*` fields on the struct. The size of the package is calculated
-/// from the previous artifact's memfs.
+/// tarball with a `.pkg.tar` extension and a `.PKGINFO` file in the root. The
+/// `.PKGINFO` file is generated from the `package_*` fields on the struct.
+/// The size of the package is calculated from the previous artifact's memfs.
 #[derive(Debug, Clone)]
 pub struct ArchProducer {
     pub name: String,
@@ -198,6 +198,7 @@ impl ArtifactProducer for ArchProducer {
         TarballProducer {
             name: format!("{}-tarball-producer", self.name),
             path: self.path.clone(),
+            compression: compression::CompressionType::Zstd,
             injections: new_injections,
         }
         .produce(previous)

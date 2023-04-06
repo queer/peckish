@@ -170,7 +170,7 @@ impl ArtifactProducer for FileProducer {
             use rsfs_tokio::unix_ext::PermissionsExt;
             use rsfs_tokio::{File, Metadata};
 
-            debug!("processing path: {path:?}");
+            debug!("processing path: {path:?} -> {:?}", self.path);
             let mut full_path = PathBuf::from("/");
             full_path.push(&self.path);
             full_path.push(path.strip_prefix("/")?);
@@ -183,12 +183,16 @@ impl ArtifactProducer for FileProducer {
                 full_path.strip_prefix("/")?.to_path_buf()
             };
             debug!("full_path = {full_path:?}");
-            output_paths.push(
-                full_path
-                    .strip_prefix("/")
-                    .unwrap_or(&full_path)
-                    .to_path_buf(),
-            );
+            if is_in_tmp_dir(path)? || self.path.starts_with("/") {
+                output_paths.push(full_path.to_path_buf());
+            } else {
+                output_paths.push(
+                    full_path
+                        .strip_prefix("/")
+                        .unwrap_or(&full_path)
+                        .to_path_buf(),
+                );
+            };
             if let Some(parent) = full_path.parent() {
                 tokio::fs::create_dir_all(parent).await.map_err(Fix::Io)?;
             }

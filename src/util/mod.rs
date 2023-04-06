@@ -8,6 +8,7 @@ use tokio_stream::StreamExt;
 
 use crate::fs::MemFS;
 
+pub mod compression;
 pub mod config;
 
 #[derive(Error, Debug)]

@@ -10,13 +10,13 @@ use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 
 use crate::fs::{InternalFileType, MemFS, TempDir};
+use crate::util::compression;
 use crate::util::config::Injection;
 use crate::util::{traverse_memfs, Fix};
 
 use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
-/// A tarball on the filesystem at the given path. Compression is **not**
-/// supported.
+/// A tarball on the filesystem at the given path.
 #[derive(Debug, Clone)]
 pub struct TarballArtifact {
     pub name: String,
@@ -37,10 +37,27 @@ impl Artifact for TarballArtifact {
         // This is sadly necessary because Rust's tar libraries don't allow for
         // in-memory manipulation.
         debug!("unpacking tarball to {:?}", self.path);
-        let mut archive = Archive::new(File::open(&self.path).await.map_err(Fix::Io)?);
+
+        let decompress_tmpdir = TempDir::new().await?;
+        let decompressed_tarball = decompress_tmpdir.path_view().join("decompressed.tar");
+        {
+            let mut decompress_file = File::create(&decompressed_tarball).await?.into_std().await;
+            let mut compressed_file = File::open(&self.path).await?.into_std().await;
+
+            let join_handle = tokio::task::spawn_blocking(move || {
+                compression::Context::autocompress(
+                    &mut compressed_file,
+                    &mut decompress_file,
+                    compression::CompressionType::None,
+                )
+            });
+            join_handle.await??;
+        }
+
+        let mut archive = Archive::new(File::open(&decompressed_tarball).await.map_err(Fix::Io)?);
         let tmp = TempDir::new().await?;
         debug!(
-            "unpacking archive to temporary directory: {:?}",
+            "unpacking archive {decompressed_tarball:?} to temporary directory: {:?}",
             tmp.path_view()
         );
         archive.unpack(&tmp).await.map_err(Fix::Io)?;
@@ -116,14 +133,11 @@ impl SelfBuilder for TarballArtifactBuilder {
 }
 
 /// Produces a tarball at the given path on the filesystem.
-///
-/// ## Caveats
-///
-/// - Compression is not supported
 #[derive(Debug, Clone)]
 pub struct TarballProducer {
     pub name: String,
     pub path: PathBuf,
+    pub compression: compression::CompressionType,
     pub injections: Vec<Injection>,
 }
 
@@ -248,6 +262,7 @@ impl SelfValidation for TarballProducer {
 pub struct TarballProducerBuilder {
     name: String,
     path: PathBuf,
+    compression: compression::CompressionType,
     injections: Vec<Injection>,
 }
 
@@ -255,6 +270,11 @@ pub struct TarballProducerBuilder {
 impl TarballProducerBuilder {
     pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
         self.path = path.into();
+        self
+    }
+
+    pub fn compression(mut self, compression: compression::CompressionType) -> Self {
+        self.compression = compression;
         self
     }
 
@@ -271,6 +291,7 @@ impl SelfBuilder for TarballProducerBuilder {
         Self {
             name: name.into(),
             path: PathBuf::from(""),
+            compression: compression::CompressionType::None,
             injections: vec![],
         }
     }
@@ -279,6 +300,7 @@ impl SelfBuilder for TarballProducerBuilder {
         Ok(TarballProducer {
             name: self.name.clone(),
             path: self.path.clone(),
+            compression: self.compression,
             injections: self.injections.clone(),
         })
     }

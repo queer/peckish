@@ -15,6 +15,8 @@ use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
 use crate::fs::MemFS;
 
+use super::compression::CompressionType;
+
 #[derive(Debug)]
 pub struct PeckishConfig {
     pub input: ConfiguredArtifact,
@@ -124,6 +126,7 @@ enum OutputProducer {
     Tarball {
         name: String,
         path: PathBuf,
+        compression: Option<ConfigCompression>,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -189,10 +192,15 @@ impl Into<ConfiguredProducer> for &OutputProducer {
             OutputProducer::Tarball {
                 name,
                 path,
+                compression,
                 injections,
             } => ConfiguredProducer::Tarball(TarballProducer {
                 name: name.clone(),
                 path: path.clone(),
+                compression: compression
+                    .clone()
+                    .unwrap_or(ConfigCompression::None)
+                    .into(),
                 injections: injections.clone(),
             }),
 
@@ -255,6 +263,33 @@ impl Into<ConfiguredProducer> for &OutputProducer {
                 package_description: description.clone(),
                 injections: injections.clone(),
             }),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+enum ConfigCompression {
+    None,
+    Brotli,
+    Deflate,
+    Gzip,
+    Xz,
+    Zlib,
+    Zstd,
+}
+
+#[allow(clippy::from_over_into)]
+impl Into<CompressionType> for ConfigCompression {
+    fn into(self) -> CompressionType {
+        match self {
+            ConfigCompression::None => CompressionType::None,
+            ConfigCompression::Brotli => CompressionType::Brotli,
+            ConfigCompression::Deflate => CompressionType::Deflate,
+            ConfigCompression::Gzip => CompressionType::Gzip,
+            ConfigCompression::Xz => CompressionType::Xz,
+            ConfigCompression::Zlib => CompressionType::Zlib,
+            ConfigCompression::Zstd => CompressionType::Zstd,
         }
     }
 }

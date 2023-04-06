@@ -6,14 +6,15 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.70"
 ar = "0.9.0"
-async-compression = { version = "0.3.15", features = ["flate2", "gzip", "tokio"] }
 async-recursion = "1.0.4"
 async-trait = "0.1.67"
 bollard = { git = "https://github.com/queer/bollard", rev = "628400c" }
+brotli = "3.3.4"
 clap = { version = "4.2.1", features = ["derive"] }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 ctor = "0.1.26"
 eyre = "0.6.8"
+flate2 = "1.0.25"
 futures-util = "0.3.28"
 hyper = "0.14.25"
 indoc = "2.0.1"
@@ -28,11 +29,14 @@ serde = { version = "1.0.159", features = ["derive"] }
 serde_derive = "1.0.152"
 serde_json = "1.0.95"
 serde_yaml = "0.9.19"
+strum = { version = "0.24.1", features = ["derive"] }
 thiserror = "1.0.40"
 tokio = { version = "1.27.0", features = ["full"] }
 tokio-stream = "0.1.12"
 tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
 tokio-util = { version = "0.7.7", features = ["codec"] }
+xz2 = "0.1.7"
+zstd = "0.12.3"
 
 [profile.release]
 opt-level = 3

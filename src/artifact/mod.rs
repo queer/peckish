@@ -89,7 +89,7 @@ mod tests {
 
     use eyre::Result;
 
-    use crate::util::Fix;
+    use crate::util::{compression, Fix};
 
     use super::*;
 
@@ -109,6 +109,7 @@ mod tests {
         let tarball_producer = tarball::TarballProducer {
             name: "test-tarball-producer".into(),
             path: "test.tar.gz".into(),
+            compression: compression::CompressionType::Gzip,
             injections: vec![],
         };
 
