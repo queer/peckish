@@ -16,6 +16,14 @@ they install, and all the other pains, you can just write a basic YAML file,
 and you're done! peckish does the rest, *without* shelling out to
 distro-specific tools!
 
+For example, peckish lets you take a statically-compiled binary and turn it
+into:
+
+- a tarball
+- an installable Debian package
+- an installable Arch Linux package
+- a runnable Docker image
+
 This problem is fairly common:
 
 > It seems more and more common, at least in the self-hosted community, to provide two methods of installations: Docker or a shell script installer. It seems that many new projects don’t even bother with a native package manager, such as dpkg or rpm, which makes me reluctant to use them.
