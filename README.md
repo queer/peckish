@@ -23,6 +23,7 @@ https://github.com/queer/peckish/tree/mistress/docs
 - peckish is primarily tested for my use-cases. please please please please
   report bugs!
 
+
 ## usage
 
 Create a `peckish.yaml` file in the root of your project. Documentation of
@@ -68,6 +69,22 @@ output:
     type: "deb"
     path: "./whatever.deb"
 ```
+
+### supported package formats
+
+The goal is to be able to support all of these!
+
+- [x] file `"file"`
+- [x] arch package `"arch"`
+- [x] tarball `"tarball"`
+- [x] debian package `"deb"`
+- [x] docker image `"docker"`
+- [ ] rpm package `"rpm"`
+  - https://crates.io/crates/rpm
+- [ ] appimage `"appimage"`
+  - https://crates.io/crates/appimage
+- [ ] VM images (tbd)
+  - Work underway on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
 
 ### library
 
