@@ -37,15 +37,18 @@ pipeline: false
 # a tarball. this is because it's just easier than trying to play the "is there
 # enough metadata to build the package" game.
 metadata:
-  name: "whatever" # suggested format: "me <me@example.com>"
-  version: "0.1.0-1" # many distros want versions that end in -#, which is a
-                     # revision number for the package.
+  name: "whatever"
+  # many distros want versions that end in -#, which is a revision number for
+  # the package.
+  version: "0.1.0-1"
   description: "a package"
+  # suggested format: "me <me@example.com>"
   author: "me"
-  arch: "amd64" # the architecture of the package. this is usually the same as
-                # the architecture of the system you're building on. will be
-                # automatically set to the correct value for the target package
-                # format, ex. x86_64 -> amd64 for debian.
+  # the architecture of the system the package is built for. this is usually
+  # the same as the architecture of the system you're building on. will be
+  # automatically set to the correct value for the target package format, ex.
+  # x86_64 -> amd64 for debian.
+  arch: "amd64"
 
 # the artifact being used as input to the pipeline.
 input:
