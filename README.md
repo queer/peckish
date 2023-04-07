@@ -26,25 +26,39 @@ For example, peckish lets you take a program you wrote and turn it into:
 
 This problem is fairly common:
 
-> It seems more and more common, at least in the self-hosted community, to provide two methods of installations: Docker or a shell script installer. It seems that many new projects don’t even bother with a native package manager, such as dpkg or rpm, which makes me reluctant to use them.
+> It seems more and more common, at least in the self-hosted community, to
+> provide two methods of installations: Docker or a shell script installer. It
+> seems that many new projects don’t even bother with a native package manager,
+> such as dpkg or rpm, which makes me reluctant to use them.
 >
 > https://yotam.net/posts/the-audacity-of-piping-curl-to-bash/
 
-> It's easier to compile the linux kernel from scratch than it is to build a debian package from scratch.
+> It's easier to compile the linux kernel from scratch than it is to build a
+> debian package from scratch.
 >
-> It's mind-blowing how complicated it is; at the end of the day it's just an archive. I hate having to do it.
+> It's mind-blowing how complicated it is; at the end of the day it's just an
+> archive. I hate having to do it.
 >
 > https://news.ycombinator.com/item?id=34787228
 
-> The impact of having frictionless package building cannot be understated. I'm publishing Arch Linux packages for all my applications because it takes just a few minutes to write up a PKGBUILD. Then one time, I tried providing a Debian package as well, but I gave up after several hours of trying to get through all the bureaucracy of the tooling.
+> The impact of having frictionless package building cannot be understated. I'm
+> publishing Arch Linux packages for all my applications because it takes just
+> a few minutes to write up a PKGBUILD. Then one time, I tried providing a
+> Debian package as well, but I gave up after several hours of trying to get
+> through all the bureaucracy of the tooling.
 >
 > https://news.ycombinator.com/item?id=34923960
 
-> [...] I've created my own RPM and DEB packages in the past as well; but, at least when I did it years ago, it wasn't as effective as a PKGBUILD on arch.
+> [...] I've created my own RPM and DEB packages in the past as well; but, at
+> least when I did it years ago, it wasn't as effective as a PKGBUILD on arch.
 >
 > https://news.ycombinator.com/item?id=35014171
 
-> Official documentation is a problem. It is aimed at Debian maintainers building a fully policy compliant package that could be accepted to the official repository. You don't need any of that crap for making a .deb package. It puts off people from creating Debian packages for their own programs or private use.
+> Official documentation is a problem. It is aimed at Debian maintainers
+> building a fully policy compliant package that could be accepted to the
+> official repository. You don't need any of that crap for making a .deb
+> package. It puts off people from creating Debian packages for their own
+> programs or private use.
 >
 > https://news.ycombinator.com/item?id=34788350
 
