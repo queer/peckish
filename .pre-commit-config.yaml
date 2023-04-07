@@ -29,8 +29,3 @@ repos:
         language: "system"
         pass_filenames: false
         files: ".rs*$"
-      - id: "audit"
-        name: "rust: cargo audit"
-        entry: "cargo audit -q"
-        language: "system"
-        pass_filenames: false

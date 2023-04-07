@@ -1,8 +1,8 @@
 use std::path::Path;
 
 use eyre::Result;
-use log::*;
 use rsfs_tokio::{GenFS, Metadata};
+use tracing::*;
 
 use crate::fs::MemFS;
 use crate::util::config::Injection;

@@ -2,11 +2,11 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
 use eyre::{eyre, Result};
-use log::*;
 use regex::Regex;
 use rsfs_tokio::mem::Permissions;
 use rsfs_tokio::unix_ext::{FSMetadataExt, PermissionsExt};
 use rsfs_tokio::{File, GenFS};
+use tracing::*;
 
 use crate::artifact::Artifact;
 use crate::fs::{MemFS, TempDir};

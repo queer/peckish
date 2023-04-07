@@ -5,7 +5,10 @@ use peckish::prelude::*;
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
-    pretty_env_logger::init();
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let tarball_artifact = TarballArtifactBuilder::new("example tarball artifact")
         .path("./examples/example.tar.Zstd")

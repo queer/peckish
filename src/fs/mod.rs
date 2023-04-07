@@ -3,10 +3,10 @@ use std::path::{Path, PathBuf};
 
 use eyre::eyre;
 use eyre::Result;
-use log::*;
 use rsfs_tokio::unix_ext::{FSMetadataExt, GenFSExt};
 use rsfs_tokio::{FileType, GenFS, Metadata};
 use tokio::fs::read_link;
+use tracing::*;
 
 use crate::util::Fix;
 

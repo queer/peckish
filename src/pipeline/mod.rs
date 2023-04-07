@@ -1,5 +1,5 @@
 use eyre::Result;
-use log::*;
+use tracing::*;
 
 use crate::artifact::{Artifact, ArtifactProducer, SelfValidation};
 use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig};

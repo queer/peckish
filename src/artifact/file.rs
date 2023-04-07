@@ -2,8 +2,8 @@ use std::os::unix::prelude::PermissionsExt;
 use std::path::PathBuf;
 
 use eyre::Result;
-use log::*;
 use rsfs_tokio::GenFS;
+use tracing::*;
 
 use crate::fs::{InternalFileType, MemFS};
 use crate::util::config::Injection;

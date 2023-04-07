@@ -1,12 +1,15 @@
 use color_eyre::eyre::Result;
-use log::info;
 use peckish::prelude::builder::*;
 use peckish::prelude::pipeline::*;
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     color_eyre::install()?;
-    pretty_env_logger::init();
+    let subscriber = tracing_subscriber::FmtSubscriber::builder()
+        .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .finish();
+    tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let file_artifact = FileArtifactBuilder::new("example file artifact")
         .add_path("./examples/a")

@@ -1,10 +1,10 @@
 use std::path::{Path, PathBuf};
 
 use eyre::Result;
-use log::*;
 use rsfs_tokio::{DirEntry, GenFS, Metadata};
 use thiserror::Error;
 use tokio_stream::StreamExt;
+use tracing::*;
 
 use crate::fs::MemFS;
 
@@ -65,6 +65,10 @@ pub fn test_init() {
     std::env::set_var("RUST_BACKTRACE", "full");
     std::panic::catch_unwind(|| {
         if color_eyre::install().is_ok() {}
-        pretty_env_logger::init();
+        let subscriber = tracing_subscriber::FmtSubscriber::builder()
+            .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+            .finish();
+        tracing::subscriber::set_global_default(subscriber)
+            .expect("setting default subscriber failed");
     });
 }

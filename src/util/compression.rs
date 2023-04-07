@@ -1,7 +1,7 @@
 use std::io::{self, BufRead, Read, Write};
 
 use eyre::Result;
-use log::*;
+use tracing::*;
 
 const BROTLI_BUFFER_SIZE: usize = 4096;
 const BROTLI_Q: u32 = 42;

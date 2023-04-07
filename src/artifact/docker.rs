@@ -1,13 +1,13 @@
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use eyre::Result;
-use log::*;
 use regex::Regex;
 use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_stream::StreamExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
+use tracing::*;
 
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::fs::{MemFS, TempDir};

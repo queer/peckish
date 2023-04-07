@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
 use eyre::Result;
-use log::*;
 use rsfs_tokio::unix_ext::GenFSExt;
 use rsfs_tokio::{GenFS, Metadata};
 use serde::{Deserialize, Serialize};
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tracing::*;
 
 use crate::artifact::arch::{ArchArtifact, ArchProducer};
 use crate::artifact::deb::{DebArtifact, DebProducer};

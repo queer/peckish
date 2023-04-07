@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
 use eyre::Result;
-use log::*;
 use regex::Regex;
 use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_tar::Header;
+use tracing::*;
 
 use crate::artifact::get_artifact_size;
 use crate::artifact::tarball::TarballProducer;

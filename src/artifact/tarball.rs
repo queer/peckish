@@ -3,11 +3,11 @@ use std::time::SystemTime;
 
 use eyre::eyre;
 use eyre::Result;
-use log::*;
 use rsfs_tokio::unix_ext::PermissionsExt;
 use rsfs_tokio::{GenFS, Metadata};
 use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
+use tracing::*;
 
 use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::compression;
