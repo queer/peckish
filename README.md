@@ -78,7 +78,8 @@ pipeline: false
 metadata:
   name: "my-cool-pkg"
   # many distros want versions that end in -#, which is a revision number for
-  # the package. this is required if you are producing an Arch/Deb/RPM package.
+  # the package. this is required if you are producing an Arch/Deb/RPM/similar
+  # package.
   version: "0.1.0-1"
   description: "a package"
   # suggested format: "me <me@example.com>"
