@@ -50,6 +50,14 @@ output:
         src: "/target/x86_64-unknown-linux-musl/release/peckish"
         dest: "/peckish"
 
+  - name: "rpm: peckish rpm package"
+    type: "rpm"
+    path: "./release/peckish.rpm"
+    injections:
+      - type: "move"
+        src: "/target/release/peckish"
+        dest: "/usr/bin/peckish"
+
   - name: "docker: peckish docker image"
     type: "docker"
     image: "queer/peckish:latest"
