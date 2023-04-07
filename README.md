@@ -122,6 +122,7 @@ on the list :D
 - [x] rpm package `"rpm"`
 - [ ] appimage `"appimage"`
   - https://crates.io/crates/appimage
+  - Missing read support...
 - [ ] Filesystem and VM images (tbd)
   - Working on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
 - [ ] Flatpak?
