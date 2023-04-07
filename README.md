@@ -16,14 +16,13 @@ they install, and all the other pains, you can just write a basic YAML file,
 and you're done! peckish does the rest, *without* shelling out to
 distro-specific tools!
 
-For example, peckish lets you take a statically-compiled binary and turn it
-into:
+For example, peckish lets you take a program you wrote and turn it into:
 
 - a tarball
 - an installable Debian package
 - an installable Arch Linux package
 - a runnable Docker image
-- an RPM package
+- an installable RPM package
 
 This problem is fairly common:
 
