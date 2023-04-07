@@ -1,7 +1,6 @@
 use clap::Parser;
 use color_eyre::Result;
 use tracing::*;
-use tracing_subscriber::FmtSubscriber;
 
 use crate::pipeline::Pipeline;
 use crate::util::config::PeckishConfig;
@@ -35,8 +34,9 @@ async fn main() -> Result<()> {
         .issue_url(concat!(env!("CARGO_PKG_REPOSITORY"), "/issues/new"))
         .add_issue_metadata("version", env!("CARGO_PKG_VERSION"))
         .install()?;
-    let subscriber = FmtSubscriber::builder()
+    let subscriber = tracing_subscriber::fmt()
         .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+        .compact()
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 

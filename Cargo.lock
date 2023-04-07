@@ -1625,7 +1625,6 @@ dependencies = [
  "rpm",
  "rsfs-tokio",
  "serde",
- "serde_derive",
  "serde_json",
  "serde_yaml",
  "strum",
