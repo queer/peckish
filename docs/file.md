@@ -2,6 +2,8 @@
 
 ```yaml
 name: "my file artifact"
+# Paths to include in the artifact. May be files or directories. If a
+# directory, contents will be recursively added.
 paths:
 - "./path/to/include"
 - "/other/path/to/include"

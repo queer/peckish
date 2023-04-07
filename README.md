@@ -73,6 +73,9 @@ https://github.com/queer/peckish/tree/mistress/docs
 - peckish is not a build system or a package manager. it doesn't care about how
   your code is built or installed, just about getting it from one package
   format to another.
+- peckish **cannot** guarantee all dependencies are placed into the package
+  correctly. it's up to you to make sure your package is statically linked, or
+  that all dependencies are included in the package.
 - peckish is primarily tested for my use-cases. please please please please
   report bugs!
 
