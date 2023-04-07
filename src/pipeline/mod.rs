@@ -22,6 +22,7 @@ impl Pipeline {
             ConfiguredArtifact::Docker(docker) => Box::new(docker),
             ConfiguredArtifact::Arch(arch) => Box::new(arch),
             ConfiguredArtifact::Deb(deb) => Box::new(deb),
+            ConfiguredArtifact::Rpm(rpm) => Box::new(rpm),
         };
         info!("input: {}", input_artifact.name());
 
@@ -53,6 +54,11 @@ impl Pipeline {
                 }
 
                 ConfiguredProducer::Deb(producer) => {
+                    producer.validate().await?;
+                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
+                }
+
+                ConfiguredProducer::Rpm(producer) => {
                     producer.validate().await?;
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }

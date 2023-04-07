@@ -23,6 +23,7 @@ into:
 - an installable Debian package
 - an installable Arch Linux package
 - a runnable Docker image
+- an RPM package
 
 This problem is fairly common:
 
@@ -39,6 +40,14 @@ This problem is fairly common:
 > The impact of having frictionless package building cannot be understated. I'm publishing Arch Linux packages for all my applications because it takes just a few minutes to write up a PKGBUILD. Then one time, I tried providing a Debian package as well, but I gave up after several hours of trying to get through all the bureaucracy of the tooling.
 >
 > https://news.ycombinator.com/item?id=34923960
+
+> [...] I've created my own RPM and DEB packages in the past as well; but, at least when I did it years ago, it wasn't as effective as a PKGBUILD on arch.
+>
+> https://news.ycombinator.com/item?id=35014171
+
+> Official documentation is a problem. It is aimed at Debian maintainers building a fully policy compliant package that could be accepted to the official repository. You don't need any of that crap for making a .deb package. It puts off people from creating Debian packages for their own programs or private use.
+>
+> https://news.ycombinator.com/item?id=34788350
 
 Some currently-sparse docs about the different artifacts and producers can be
 found here:
@@ -80,6 +89,7 @@ metadata:
   # automatically set to the correct value for the target package format, ex.
   # x86_64 -> amd64 for debian.
   arch: "amd64"
+  license: "Apache-2.0"
 
 # the artifact being used as input to the pipeline.
 input:
@@ -110,8 +120,7 @@ on the list :D
 - [x] tarball `"tarball"`
 - [x] debian package `"deb"`
 - [x] docker image `"docker"`
-- [ ] rpm package `"rpm"`
-  - https://crates.io/crates/rpm
+- [x] rpm package `"rpm"`
 - [ ] appimage `"appimage"`
   - https://crates.io/crates/appimage
 - [ ] Filesystem and VM images (tbd)

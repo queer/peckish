@@ -6,6 +6,7 @@ metadata:
   description: "peckish transforms software artifacts"
   author: "amy"
   arch: "amd64"
+  license: "Apache-2.0"
 
 input:
   name: "rust: peckish release binary"

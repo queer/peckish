@@ -57,3 +57,6 @@ jobs:
       - name: "Validate Docker image"
         if: "success() || failure()"
         run: "docker run --rm queer/peckish:latest peckish --version"
+      - name: "Validate RPM package on Fedora"
+        if: "success() || failure()"
+        run: 'docker run --rm -i -v "$(pwd)/release/peckish.rpm:/app/peckish.rpm" fedora:latest sh -c "dnf install -y /app/peckish.rpm && peckish --version"'

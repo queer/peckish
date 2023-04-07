@@ -7,9 +7,9 @@ metadata:
   license: "Apache-2.0"
 
 input:
-  name: "tarball"
-  type: "tarball"
-  path: "./examples/example.tar.Zstd"
+  name: "rpm"
+  type: "rpm"
+  path: "./release/peckish.rpm"
 
 output:
   - name: "files"

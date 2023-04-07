@@ -4,6 +4,7 @@ metadata:
   description: "peckish transforms software artifacts"
   author: "amy"
   arch: "amd64"
+  license: "Apache-2.0"
 
 input:
   name: "peckish release binary"
@@ -40,6 +41,14 @@ output:
       - type: "move"
         src: "/target/release/peckish"
         dest: "/peckish"
+
+  - name: "peckish rpm"
+    type: "rpm"
+    path: "./release/peckish.rpm"
+    injections:
+      - type: "move"
+        src: "/target/release/peckish"
+        dest: "/usr/bin/peckish"
 
   - name: "queer/peckish:latest docker image"
     type: "docker"

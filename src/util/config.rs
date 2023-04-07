@@ -12,6 +12,7 @@ use crate::artifact::arch::{ArchArtifact, ArchProducer};
 use crate::artifact::deb::{DebArtifact, DebProducer};
 use crate::artifact::docker::{DockerArtifact, DockerProducer};
 use crate::artifact::file::{FileArtifact, FileProducer};
+use crate::artifact::rpm::{RpmArtifact, RpmProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
 use crate::fs::MemFS;
 
@@ -53,6 +54,7 @@ struct PackageMetadata {
     description: String,
     author: String,
     arch: String,
+    license: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,6 +88,10 @@ enum InputArtifact {
         path: PathBuf,
     },
     Deb {
+        name: String,
+        path: PathBuf,
+    },
+    Rpm {
         name: String,
         path: PathBuf,
     },
@@ -126,6 +132,12 @@ impl Into<ConfiguredArtifact> for InputArtifact {
                 control: None,
                 postinst: None,
                 prerm: None,
+            }),
+
+            InputArtifact::Rpm { name, path } => ConfiguredArtifact::Rpm(RpmArtifact {
+                name,
+                path,
+                spec: None,
             }),
         }
     }
@@ -178,6 +190,15 @@ enum OutputProducer {
         #[serde(default)]
         depends: String,
 
+        #[serde(default)]
+        injections: Vec<Injection>,
+    },
+
+    Rpm {
+        name: String,
+        path: PathBuf,
+        #[serde(default)]
+        spec: Option<String>,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -264,6 +285,23 @@ impl OutputProducer {
                 package_description: metadata.description.clone(),
                 injections: injections.clone(),
             }),
+
+            OutputProducer::Rpm {
+                name,
+                path,
+                spec: _spec,
+                injections,
+            } => ConfiguredProducer::Rpm(RpmProducer {
+                name: name.clone(),
+                path: path.clone(),
+                package_name: metadata.name.clone(),
+                package_version: metadata.version.clone(),
+                package_license: metadata.license.clone(),
+                package_arch: self.convert_architecture(metadata),
+                package_description: metadata.description.clone(),
+                dependencies: vec![],
+                injections: injections.clone(),
+            }),
         }
     }
 
@@ -280,8 +318,16 @@ impl OutputProducer {
                 "x86_64" => "amd64".into(),
                 "amd64" => "amd64".into(),
                 "any" => "all".into(),
-                _ => panic!("unsupported architecture for debian: {}", metadata.arch),
+                other => other.into(),
             },
+
+            OutputProducer::Rpm { .. } => match metadata.arch.as_str() {
+                "x86_64" => "x86_64".into(),
+                "amd64" => "x86_64".into(),
+                "any" => "noarch".into(),
+                other => other.into(),
+            },
+
             _ => metadata.arch.clone(),
         }
     }
@@ -321,6 +367,7 @@ pub enum ConfiguredArtifact {
     Docker(DockerArtifact),
     Arch(ArchArtifact),
     Deb(DebArtifact),
+    Rpm(RpmArtifact),
 }
 
 #[derive(Debug, Clone)]
@@ -330,6 +377,7 @@ pub enum ConfiguredProducer {
     Docker(DockerProducer),
     Arch(ArchProducer),
     Deb(DebProducer),
+    Rpm(RpmProducer),
 }
 
 impl ConfiguredProducer {
@@ -340,6 +388,7 @@ impl ConfiguredProducer {
             ConfiguredProducer::Docker(producer) => &producer.name,
             ConfiguredProducer::Arch(producer) => &producer.name,
             ConfiguredProducer::Deb(producer) => &producer.name,
+            ConfiguredProducer::Rpm(producer) => &producer.name,
         }
     }
 }

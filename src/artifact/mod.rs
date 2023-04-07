@@ -12,6 +12,7 @@ pub mod arch;
 pub mod deb;
 pub mod docker;
 pub mod file;
+pub mod rpm;
 pub mod tarball;
 
 /// An artifact is the result of some build process.
