@@ -14,7 +14,7 @@ use crate::util::compression;
 use crate::util::config::Injection;
 
 use super::file::FileProducer;
-use super::{ArtifactProducer, SelfValidation};
+use super::{ArtifactProducer, SelfBuilder, SelfValidation};
 
 #[derive(Debug, Clone)]
 pub struct RpmArtifact {
@@ -123,6 +123,38 @@ impl SelfValidation for RpmArtifact {
         }
 
         Ok(())
+    }
+}
+
+pub struct RpmArtifactBuilder {
+    name: String,
+    path: PathBuf,
+}
+
+#[allow(unused)]
+impl RpmArtifactBuilder {
+    pub fn path<S: Into<PathBuf>>(mut self, path: S) -> Self {
+        self.path = path.into();
+        self
+    }
+}
+
+impl SelfBuilder for RpmArtifactBuilder {
+    type Output = RpmArtifact;
+
+    fn new<S: Into<String>>(name: S) -> Self {
+        Self {
+            name: name.into(),
+            path: PathBuf::new(),
+        }
+    }
+
+    fn build(&self) -> Result<Self::Output> {
+        Ok(RpmArtifact {
+            name: self.name.clone(),
+            path: self.path.clone(),
+            spec: None,
+        })
     }
 }
 
@@ -250,5 +282,102 @@ impl SelfValidation for RpmProducer {
         }
 
         Ok(())
+    }
+}
+
+pub struct RpmProducerBuilder {
+    name: String,
+    path: PathBuf,
+    package_name: String,
+    package_version: String,
+    package_license: String,
+    package_arch: String,
+    package_description: String,
+    dependencies: Vec<String>,
+    injections: Vec<Injection>,
+}
+
+#[allow(unused)]
+impl RpmProducerBuilder {
+    pub fn path<S: Into<PathBuf>>(mut self, path: S) -> Self {
+        self.path = path.into();
+        self
+    }
+
+    pub fn package_name<S: Into<String>>(mut self, package_name: S) -> Self {
+        self.package_name = package_name.into();
+        self
+    }
+
+    pub fn package_version<S: Into<String>>(mut self, package_version: S) -> Self {
+        self.package_version = package_version.into();
+        self
+    }
+
+    pub fn package_license<S: Into<String>>(mut self, package_license: S) -> Self {
+        self.package_license = package_license.into();
+        self
+    }
+
+    pub fn package_arch<S: Into<String>>(mut self, package_arch: S) -> Self {
+        self.package_arch = package_arch.into();
+        self
+    }
+
+    pub fn package_description<S: Into<String>>(mut self, package_description: S) -> Self {
+        self.package_description = package_description.into();
+        self
+    }
+
+    pub fn dependency<S: Into<String>>(mut self, dependency: S) -> Self {
+        self.dependencies.push(dependency.into());
+        self
+    }
+
+    pub fn dependencies<S: Into<String>>(mut self, dependencies: Vec<S>) -> Self {
+        self.dependencies = dependencies.into_iter().map(|d| d.into()).collect();
+        self
+    }
+
+    pub fn injection(mut self, injection: Injection) -> Self {
+        self.injections.push(injection);
+        self
+    }
+
+    pub fn inject(mut self, injection: Injection) -> Self {
+        self.injections.push(injection);
+        self
+    }
+}
+
+impl SelfBuilder for RpmProducerBuilder {
+    type Output = RpmProducer;
+
+    fn new<S: Into<String>>(name: S) -> Self {
+        Self {
+            name: name.into(),
+            path: PathBuf::new(),
+            package_name: String::new(),
+            package_version: String::new(),
+            package_license: String::new(),
+            package_arch: String::new(),
+            package_description: String::new(),
+            dependencies: vec![],
+            injections: vec![],
+        }
+    }
+
+    fn build(&self) -> Result<Self::Output> {
+        Ok(RpmProducer {
+            name: self.name.clone(),
+            path: self.path.clone(),
+            package_name: self.package_name.clone(),
+            package_version: self.package_version.clone(),
+            package_license: self.package_license.clone(),
+            package_arch: self.package_arch.clone(),
+            package_description: self.package_description.clone(),
+            dependencies: self.dependencies.clone(),
+            injections: self.injections.clone(),
+        })
     }
 }

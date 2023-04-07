@@ -52,6 +52,7 @@ pub mod prelude {
         pub use crate::artifact::docker::DockerArtifact;
         pub use crate::artifact::file::FileArtifact;
         pub use crate::artifact::get_artifact_size;
+        pub use crate::artifact::rpm::RpmArtifact;
         pub use crate::artifact::tarball::TarballArtifact;
     }
 
@@ -60,6 +61,7 @@ pub mod prelude {
         pub use crate::artifact::deb::DebProducer;
         pub use crate::artifact::docker::DockerProducer;
         pub use crate::artifact::file::FileProducer;
+        pub use crate::artifact::rpm::RpmProducer;
         pub use crate::artifact::tarball::TarballProducer;
     }
 
@@ -68,6 +70,7 @@ pub mod prelude {
         pub use crate::artifact::deb::{DebArtifactBuilder, DebProducerBuilder};
         pub use crate::artifact::docker::{DockerArtifactBuilder, DockerProducerBuilder};
         pub use crate::artifact::file::{FileArtifactBuilder, FileProducerBuilder};
+        pub use crate::artifact::rpm::{RpmArtifactBuilder, RpmProducerBuilder};
         pub use crate::artifact::tarball::{TarballArtifactBuilder, TarballProducerBuilder};
         pub use crate::artifact::SelfBuilder;
     }
