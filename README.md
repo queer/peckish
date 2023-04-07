@@ -76,9 +76,9 @@ pipeline: false
 # a tarball. this is because it's just easier than trying to play the "is there
 # enough metadata to build the package" game.
 metadata:
-  name: "whatever"
+  name: "my-cool-pkg"
   # many distros want versions that end in -#, which is a revision number for
-  # the package.
+  # the package. this is required if you are producing an Arch/Deb/RPM package.
   version: "0.1.0-1"
   description: "a package"
   # suggested format: "me <me@example.com>"
