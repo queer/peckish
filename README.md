@@ -69,14 +69,17 @@ https://github.com/queer/peckish/tree/mistress/docs
 
 ### caveats
 
-- peckish is `0.x.y`! treat it accordingly. maybe don't run it in prod.
-- peckish is not a build system or a package manager. it doesn't care about how
+- peckish is `0.x.y`! Treat it accordingly. Maybe don't run it in prod.
+- Documentation is hard, and I am not the best at it. Some questions may only
+  be able to be answered by reading the source or opening an issue. Reporting
+  missing and/or broken docs helps everyone!
+- peckish is not a build system or a package manager. It doesn't care about how
   your code is built or installed, just about getting it from one package
   format to another.
 - peckish **cannot** guarantee all dependencies are placed into the package
-  correctly. it's up to you to make sure your package is statically linked, or
+  correctly. It's up to you to make sure your package is statically linked, or
   that all dependencies are included in the package.
-- peckish is primarily tested for my use-cases. please please please please
+- peckish is primarily tested for my use-cases. Please please please please
   report bugs!
 
 
@@ -140,7 +143,7 @@ on the list :D
 - [x] rpm package `"rpm"`
 - [ ] appimage `"appimage"`
   - https://crates.io/crates/appimage
-  - Missing read support...
+    - Missing read support...
 - [ ] Filesystem and VM images (tbd)
   - Working on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
 - [ ] Flatpak?
