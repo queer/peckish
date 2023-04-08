@@ -18,5 +18,5 @@ path: "./path-to-output-artifact.deb"
 # package metadata
 prerm: "./path-to-prerm-script" # optional
 postinst: "./path-to-postinst-script" # optional
-depends: ""
+depends: "libc6" # optional
 ```
