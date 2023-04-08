@@ -141,8 +141,8 @@ input:
   paths:
   - "./path/to/file"
 
-# the producers being used as pipeline outputs. see `docs/` for more info about
-# each producer.
+# the producers being used as outputs. see `docs/` for more info about each
+# producer.
 output:
   - name: "tarball"
     type: "tarball"
