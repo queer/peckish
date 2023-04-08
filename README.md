@@ -59,6 +59,7 @@ This problem is fairly common:
 > Package managers are great... for the user. For everyone else, a polyglot
 > system, with arcane technical policies, and even more arcane human policies
 > is... not ideal.
+>
 > https://news.ycombinator.com/item?id=33832401
 
 peckish solves this. Instead of mangling your files with various arcane tools,
