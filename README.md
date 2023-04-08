@@ -164,8 +164,9 @@ output:
 
 #### package/artifact formats
 
-The goal is to be able to support all of these! Formats not listed may end up
-on the list :D
+The goal/hope is to be able to support all of these. Formats not listed may end
+up on the list in the future. Formats that are not currently supported may
+never be supported.
 
 - [x] flat files `"file"`
 - [x] arch package `"arch"`
