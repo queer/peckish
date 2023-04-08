@@ -10,26 +10,6 @@ remember all the specifics. This is compounded by having to figure out the
 appropriate CLI flags for each package format. How many people can write a
 [valid `tar` command](https://xkcd.com/1168/) on the first try? :P
 
-peckish solves this. Instead of mangling your files with various arcane tools,
-spinning up Docker containers or VMs to try to build packages and make sure
-they install or are even valid, and all the other pains, you can just write a
-basic YAML file, and you're done! peckish does the rest, *without* shelling out
-to distro-specific tools!
-
-Additionally, peckish makes repackaging software easy. You can take a DEB and
-convert it into an RPM, or a Docker image to flat files on the filesystem, or
-turn a tarball into an installable package for DEB-based, RPM-based, or
-Arch-based distros.
-
-peckish lets you convert back and forth between all of these formats:
-
-- flat files on the filesystem
-- a tarball
-- an installable Debian package
-- an installable Arch Linux package
-- a runnable Docker image
-- an installable RPM package
-
 This problem is fairly common:
 
 > It seems more and more common, at least in the self-hosted community, to
@@ -67,6 +47,26 @@ This problem is fairly common:
 > programs or private use.
 >
 > https://news.ycombinator.com/item?id=34788350
+
+peckish solves this. Instead of mangling your files with various arcane tools,
+spinning up Docker containers or VMs to try to build packages and make sure
+they install or are even valid, and all the other pains, you can just write a
+basic YAML file, and you're done! peckish does the rest, *without* shelling out
+to distro-specific tools!
+
+Additionally, peckish makes repackaging software easy. You can take a DEB and
+convert it into an RPM, or a Docker image to flat files on the filesystem, or
+turn a tarball into an installable package for DEB-based, RPM-based, or
+Arch-based distros.
+
+peckish lets you convert back and forth between all of these formats:
+
+- flat files on the filesystem
+- a tarball
+- an installable Debian package
+- an installable Arch Linux package
+- a runnable Docker image
+- an installable RPM package
 
 Some currently-sparse docs about the different artifacts and producers can be
 found here:
