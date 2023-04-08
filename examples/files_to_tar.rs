@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
 
     let file_artifact = FileArtifactBuilder::new("example file artifact")
-        .add_path("./examples/a")
+        .add_path("./examples/data/a")
         .build()?;
 
     let tarball_producer = TarballProducerBuilder::new("example tarball producer")
