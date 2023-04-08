@@ -48,6 +48,19 @@ This problem is fairly common:
 >
 > https://news.ycombinator.com/item?id=34788350
 
+> >  If my package manager had an Oh My Zsh package
+>
+> This is the author missing the point. The reason `curl | bash` is common is
+> because devs don't like packaging for every distro under the sun, and MacOS,
+> and FreeBSD, and... If you really think `curl | bash` is the problem, then
+> you should be lining up to package the stuff you use for your distro.
+> Instead, it is always someone else's problem.
+>
+> Package managers are great... for the user. For everyone else, a polyglot
+> system, with arcane technical policies, and even more arcane human policies
+> is... not ideal.
+> https://news.ycombinator.com/item?id=33832401
+
 peckish solves this. Instead of mangling your files with various arcane tools,
 spinning up Docker containers or VMs to try to build packages and make sure
 they install or are even valid, and all the other pains, you can just write a
@@ -87,7 +100,10 @@ https://github.com/queer/peckish/tree/mistress/docs
   that all dependencies are included in the package.
 - peckish is primarily tested for my use-cases. Please please please please
   report bugs!
-
+- **Packages produced with peckish almost certainly are not of sufficient
+  quality to be accepted into a distro's official repositories**. PLEASE don't
+  waste the time of distro maintainers by submitting a bunch of
+  peckish-generated packages.
 
 ## usage
 
