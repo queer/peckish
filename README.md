@@ -160,12 +160,14 @@ output:
         dest: "/new/path/to/file"
 ```
 
-### supported package formats
+### roadmap
+
+#### package/artifact formats
 
 The goal is to be able to support all of these! Formats not listed may end up
 on the list :D
 
-- [x] file `"file"`
+- [x] flat files `"file"`
 - [x] arch package `"arch"`
 - [x] tarball `"tarball"`
 - [x] debian package `"deb"`
@@ -178,6 +180,13 @@ on the list :D
   - Working on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
 - [ ] Flatpak?
   - More research needed
+
+#### other
+
+- [ ] better docs
+- [ ] GitHub Actions support for ease-of-use
+- [ ] better error messages
+- [ ] maybe someday hit 1.0.0?
 
 ### library
 
