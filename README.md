@@ -128,6 +128,13 @@ output:
   - name: "debian package"
     type: "deb"
     path: "./whatever.deb"
+    # a list of changes to inject into the filesystem. this lets you move,
+    # copy, symlink, etc. files and directories within the artifact before it's
+    # written to disk. see `docs/injections.md` for more info.
+    injections:
+      - type: "move"
+        path: "/path/to/original/file"
+        dest: "/new/path/to/file"
 ```
 
 ### supported package formats
