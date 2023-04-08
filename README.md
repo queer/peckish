@@ -183,6 +183,7 @@ on the list :D
 
 #### other
 
+- [x] compression handled transparently
 - [ ] better docs
 - [ ] GitHub Actions support for ease-of-use
 - [ ] better error messages
