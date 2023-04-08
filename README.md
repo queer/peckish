@@ -16,8 +16,14 @@ they install or are even valid, and all the other pains, you can just write a
 basic YAML file, and you're done! peckish does the rest, *without* shelling out
 to distro-specific tools!
 
-For example, peckish lets you take a program you wrote and turn it into:
+Additionally, peckish makes repackaging software easy. You can take a DEB and
+convert it into an RPM, or a Docker image to flat files on the filesystem, or
+turn a tarball into an installable package for DEB-based, RPM-based, or
+Arch-based distros.
 
+peckish lets you convert back and forth between all of these formats:
+
+- flat files on the filesystem
 - a tarball
 - an installable Debian package
 - an installable Arch Linux package
@@ -73,8 +79,8 @@ https://github.com/queer/peckish/tree/mistress/docs
 - Documentation is hard, and I am not the best at it. Some questions may only
   be able to be answered by reading the source or opening an issue. Reporting
   missing and/or broken docs helps everyone!
-- peckish is not a build system or a package manager. It doesn't care about how
-  your code is built or installed, just about getting it from one package
+- peckish is **not** a build system or a package manager. It doesn't care about
+  how your code is built or installed, just about getting it from one package
   format to another.
 - peckish **cannot** guarantee all dependencies are placed into the package
   correctly. It's up to you to make sure your package is statically linked, or
@@ -197,6 +203,15 @@ let out = pipeline.run(config).await?;
 println!("produced {} artifacts", out.len());
 ```
 
+### suggested use-cases
+
+- Package your software for more distros with less pain
+- Extract packages without having to memorise arcane CLI flags
+- Create Docker images without a `Dockerfile`
+- Make a package for one distro installable on others, without having to
+  repackage by hand
+- Programmatically create/manipulate packages in Rust
+
 ## concepts
 
 peckish is built around the concepts of *artifacts* and *producers*.
@@ -221,7 +236,13 @@ simply injecting some changes into the in-memory filesystem and repackaging
 with the metadata in the producer. No knowledge of the previous artifact is
 needed beyond its in-memory filesystem representation.
 
-## license
+## misc
+
+### why is it called peckish?
+
+If you pretend really hard, "peckish" sounds kinda sorta a bit like "package.
+
+### license
 
 Copyright 2023-present amy null
 
