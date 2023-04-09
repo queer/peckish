@@ -82,10 +82,14 @@ peckish lets you convert back and forth between all of these formats:
 - a runnable Docker image
 - an installable RPM package
 
-Some currently-sparse docs about the different artifacts and producers can be
-found here:
+peckish is based around the concept of "artifacts" and "producers." An artifact
+is some metadata about a package that exists on your system, and a producer is
+something that takes in an artifact and produces a new artifact. For example,
+taking a tarball and producing a DEB or RPM package.
 
-https://github.com/queer/peckish/tree/mistress/docs
+
+- [peckish concepts](https://github.com/queer/peckish#concepts)
+- [artifact and producer docs](https://github.com/queer/peckish/tree/mistress/docs)
 
 ### caveats
 
