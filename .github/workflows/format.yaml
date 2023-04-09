@@ -13,16 +13,13 @@ on:
 
 jobs:
   check-formatting:
-    strategy:
-      matrix:
-        version: ["stable", "nightly", "1.66"]
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
       - name: "Install latest stable Rust"
         uses: "actions-rs/toolchain@v1"
         with:
-          toolchain: "${{ matrix.version }}"
+          toolchain: "stable"
           override: true
           components: "rustfmt"
       - uses: "Swatinem/rust-cache@v2"
