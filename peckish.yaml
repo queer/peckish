@@ -36,7 +36,7 @@ output:
 
   - name: "peckish exe"
     type: "file"
-    path: "./release/peckish"
+    path: "./release"
     injections:
       - type: "move"
         src: "/target/release/peckish"

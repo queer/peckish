@@ -4,7 +4,7 @@ metadata:
   name: "peckish"
   version: "0.0.1-1"
   description: "peckish transforms software artifacts"
-  author: "amy"
+  author: "amy null"
   arch: "amd64"
   license: "Apache-2.0"
 
@@ -53,16 +53,6 @@ output:
   - name: "rpm: peckish rpm package"
     type: "rpm"
     path: "./release/peckish.rpm"
-    injections:
-      - type: "move"
-        src: "/target/x86_64-unknown-linux-musl/release/peckish"
-        dest: "/usr/bin/peckish"
-
-  - name: "docker: peckish docker image"
-    type: "docker"
-    image: "queer/peckish:latest"
-    base_image: "ubuntu:jammy"
-    entrypoint: ["/usr/bin/peckish"]
     injections:
       - type: "move"
         src: "/target/x86_64-unknown-linux-musl/release/peckish"

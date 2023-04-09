@@ -218,13 +218,16 @@ impl ArtifactProducer for RpmProducer {
                 .unwrap();
         }
 
+        debug!("adding metadata dependencies to rpm...");
         for dep in &self.dependencies {
             pkg = pkg.requires(rpm::Dependency::any(dep));
         }
 
+        debug!("building package!");
         let pkg = pkg.build().unwrap();
         let path_clone = self.path.clone();
         let join_handle = tokio::task::spawn_blocking(move || {
+            debug!("writing package {path_clone:?}!");
             let mut f = std::fs::File::create(path_clone).unwrap();
             pkg.write(&mut f).unwrap();
         });

@@ -1,0 +1,45 @@
+name: Release
+
+permissions:
+  contents: write
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.*"
+
+jobs:
+  create-release:
+    runs-on: "ubuntu-latest"
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v2"
+      - name: "Install latest stable Rust"
+        uses: "actions-rs/toolchain@v1"
+        with:
+          toolchain: "stable"
+          override: true
+          profile: "minimal"
+      - name: "Build static-linked release binary!"
+        uses: "actions-rs/cargo@v1"
+        with:
+          command: "build"
+          args: "--release --target=x86_64-unknown-linux-musl"
+      - name: "Package peckish!!"
+        run: "./target/x86_64-unknown-linux-musl/release/peckish -c ./peckish.release.yaml"
+      - name: "Generate changelog"
+        uses: "metcalfc/changelog-generator@v4.1.0"
+        with:
+          myToken: "${{ secrets.GITHUB_TOKEN }}"
+      - name: "Create release"
+        uses: "softprops/action-gh-release@v1"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+        with:
+          body: "${{ steps.changelog.outputs.changelog }}"
+          files: |
+            ./release/peckish/peckish
+            ./release/peckish.tar
+            ./release/peckish.arch.pkg.tar
+            ./release/peckish.deb
+            ./release/peckish.rpm

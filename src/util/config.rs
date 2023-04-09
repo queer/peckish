@@ -1,6 +1,6 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-use eyre::Result;
+use eyre::{eyre, Result};
 use rsfs_tokio::unix_ext::GenFSExt;
 use rsfs_tokio::{GenFS, Metadata};
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ use crate::artifact::docker::{DockerArtifact, DockerProducer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::rpm::{RpmArtifact, RpmProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
-use crate::fs::MemFS;
+use crate::fs::{InternalFileType, MemFS};
 
 use super::compression::CompressionType;
 
@@ -405,8 +405,8 @@ pub enum Injection {
 }
 
 impl Injection {
-    pub async fn inject(&self, fs: &MemFS) -> Result<()> {
-        let fs = fs.as_ref();
+    pub async fn inject(&self, memfs: &MemFS) -> Result<()> {
+        let fs = memfs.as_ref();
         match self {
             Injection::Move { src, dest } => {
                 debug!("moving {:?} to {:?}", src, dest);
@@ -415,7 +415,7 @@ impl Injection {
                     debug!("created parent: {parent:?}");
                 }
 
-                fs.rename(src, dest).await?;
+                Self::do_move_file(memfs, src, dest, 0).await?;
             }
 
             Injection::Copy { src, dest } => {
@@ -450,6 +450,78 @@ impl Injection {
                 let mut file = fs.create_file(path).await?;
                 file.write_all(content).await?;
             }
+        }
+
+        Ok(())
+    }
+
+    #[async_recursion::async_recursion]
+    async fn do_move_file(memfs: &MemFS, src: &Path, dest: &Path, depth: u8) -> Result<()> {
+        // if src doesn't exist in the memfs, return an error, without an exists() method
+        // code goes here:
+        let fs = memfs.as_ref();
+        if fs.metadata(src).await.is_err() {
+            return Err(eyre!("source path {src:?} does not exist"));
+        }
+
+        if depth > 8 {
+            return Err(eyre!(
+                "too many symlinks (last path was {src:?} -> {dest:?})"
+            ));
+        }
+
+        // possible scenarios:
+        // src is file, dest is file. replace dest with src
+        // src is file, dest is dir. move src into dest
+        // src is file, dest is symlink. unimplemented!("resolve symlink, treat as respective case")
+        // src is dir, dest is file. error
+        // src is dir, dest is dir. merge src into dest
+        // src is dir, dest is symlink. unimplemented!("resolve symlink, treat as respective case")
+        // src is symlink, dest is file. unimplemented!("resolve symlink, treat as respective case")
+        // src is symlink, dest is dir. unimplemented!("resolve symlink, treat as respective case")
+        // src is symlink, dest is symlink. unimplemented!("resolve symlink, treat as respective case")
+        let src_type = memfs.determine_file_type(src).await?;
+        let dest_exists = fs.metadata(dest).await.is_ok();
+
+        if dest_exists {
+            let dest_type = memfs.determine_file_type(dest).await?;
+
+            if src_type == InternalFileType::File && dest_type == InternalFileType::File {
+                fs.rename(src, dest).await?;
+            } else if src_type == InternalFileType::File && dest_type == InternalFileType::Dir {
+                let file_name = src.file_name().unwrap();
+                fs.rename(src, dest.join(file_name)).await?;
+            } else if src_type == InternalFileType::File && dest_type == InternalFileType::Symlink {
+                let dest = memfs.resolve_symlink(dest).await?;
+                Self::do_move_file(memfs, src, &dest, depth + 1).await?;
+            } else if src_type == InternalFileType::Dir && dest_type == InternalFileType::File {
+                return Err(eyre!("cannot move directory {:?} to file {:?}", src, dest));
+            } else if src_type == InternalFileType::Dir && dest_type == InternalFileType::Dir {
+                panic!("aaaaaaaa")
+            } else if src_type == InternalFileType::Dir && dest_type == InternalFileType::Symlink {
+                let dest = memfs.resolve_symlink(dest).await?;
+                Self::do_move_file(memfs, src, &dest, depth + 1).await?;
+            } else if src_type == InternalFileType::Symlink && dest_type == InternalFileType::File {
+                let src = memfs.resolve_symlink(src).await?;
+                Self::do_move_file(memfs, &src, dest, depth + 1).await?;
+            } else if src_type == InternalFileType::Symlink && dest_type == InternalFileType::Dir {
+                let src = memfs.resolve_symlink(src).await?;
+                Self::do_move_file(memfs, &src, dest, depth + 1).await?;
+            } else if src_type == InternalFileType::Symlink
+                && dest_type == InternalFileType::Symlink
+            {
+                let src = memfs.resolve_symlink(src).await?;
+                let dest = memfs.resolve_symlink(dest).await?;
+                Self::do_move_file(memfs, &src, &dest, depth + 1).await?;
+            } else {
+                unreachable!("it should be impossible for a file to not be one of the known 3 internal types")
+            }
+        } else {
+            if let Some(parent) = dest.parent() {
+                fs.create_dir_all(parent).await?;
+            }
+
+            fs.rename(src, dest).await?;
         }
 
         Ok(())

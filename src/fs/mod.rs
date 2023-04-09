@@ -227,6 +227,24 @@ impl MemFS {
             }
         }
     }
+
+    pub async fn resolve_symlink(&self, path: &Path) -> Result<PathBuf> {
+        self.do_resolve_symlink(path, 0).await
+    }
+
+    #[async_recursion::async_recursion]
+    async fn do_resolve_symlink(&self, path: &Path, depth: u8) -> Result<PathBuf> {
+        if depth > 8 {
+            return Err(eyre!("too many symlinks (depth > 8), last path: {path:?}"));
+        }
+
+        if path.is_symlink() {
+            let link = self.fs.read_link(path).await?;
+            self.do_resolve_symlink(&link, depth + 1).await
+        } else {
+            Ok(path.to_path_buf())
+        }
+    }
 }
 
 impl AsRef<InMemoryUnixFS> for MemFS {

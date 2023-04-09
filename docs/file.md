@@ -17,6 +17,7 @@ strip_path_prefixes: true # optional
 
 ```yaml
 name: "my file artifact producer"
+# The path to the **directory** in which output files will be placed.
 path: "/path/to/output"
 # Whether or not to preserve empty directories. If false, only directories that
 # contain files will be present in the artifact. Defaults to false.
