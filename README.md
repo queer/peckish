@@ -88,7 +88,7 @@ something that takes in an artifact and produces a new artifact. For example,
 taking a tarball and producing a DEB or RPM package.
 
 
-- [peckish concepts](https://github.com/queer/peckish#concepts)
+- [peckish concepts](#concepts)
 - [artifact and producer docs](https://github.com/queer/peckish/tree/mistress/docs)
 
 ### caveats
