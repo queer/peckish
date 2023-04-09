@@ -266,9 +266,9 @@ For example, a `FileArtifact` is a list of paths to files on your system. A
 
 Producers are a bit more interesting. Producers are the things that actually
 do the packaging: they take an artifact as input and produce a new artifact
-as output. For example, a `TarballProducer` takes a `FileArtifact` as input and
-produces a `TarballArtifact` as output, a `DebProducer` takes a
-`TarballArtifact` as input and produces a `DebArtifact` as output, and so on.
+as output. For example, a `TarballProducer` may take a `FileArtifact` as input
+and produce a `TarballArtifact` as output, a `DebProducer` may take a
+`TarballArtifact` as input and produce a `DebArtifact` as output, and so on.
 
 peckish artifacts and producers are centred around the idea of an in-memory
 filesystem. Rather than having to mangle things on the disk, peckish moves
