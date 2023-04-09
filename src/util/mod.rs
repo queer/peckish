@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use eyre::Result;
+use eyre::{eyre, Result};
 use rsfs_tokio::{DirEntry, GenFS, Metadata};
 use thiserror::Error;
 use tokio_stream::StreamExt;
@@ -71,4 +71,35 @@ pub fn test_init() {
         tracing::subscriber::set_global_default(subscriber)
             .expect("setting default subscriber failed");
     });
+}
+
+pub fn get_current_time() -> Result<u64> {
+    if let Ok(source_date_epoch) = std::env::var("SOURCE_DATE_EPOCH") {
+        let source_date_epoch = source_date_epoch.parse::<u64>()?;
+        let current_time = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_secs();
+        if source_date_epoch > current_time {
+            return Err(eyre!("SOURCE_DATE_EPOCH is set to a time in the future"));
+        }
+        Ok(source_date_epoch)
+    } else {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)?
+            .as_secs();
+        Ok(now)
+    }
+}
+
+pub fn maybe_clamp_timestamp(timestamp: u64) -> Result<u64> {
+    if let Ok(source_date_epoch) = std::env::var("SOURCE_DATE_EPOCH") {
+        let source_date_epoch = source_date_epoch.parse::<u64>()?;
+        if timestamp > source_date_epoch {
+            Ok(source_date_epoch)
+        } else {
+            Ok(timestamp)
+        }
+    } else {
+        Ok(timestamp)
+    }
 }

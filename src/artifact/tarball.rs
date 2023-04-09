@@ -10,6 +10,7 @@ use tokio_tar::{Archive, EntryType, Header};
 use tracing::*;
 
 use crate::fs::{InternalFileType, MemFS, TempDir};
+use crate::util;
 use crate::util::compression;
 use crate::util::config::Injection;
 use crate::util::{traverse_memfs, Fix};
@@ -181,12 +182,12 @@ impl ArtifactProducer for TarballProducer {
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
                 header.set_mode(metadata.permissions().mode());
-                header.set_mtime(
+                header.set_mtime(util::maybe_clamp_timestamp(
                     metadata
                         .modified()?
                         .duration_since(SystemTime::UNIX_EPOCH)?
                         .as_secs(),
-                );
+                )?);
                 header.set_uid(metadata.uid()? as u64);
                 header.set_gid(metadata.gid()? as u64);
                 header.set_cksum();
@@ -206,12 +207,12 @@ impl ArtifactProducer for TarballProducer {
                 header.set_entry_type(EntryType::Regular);
                 header.set_size(data.len() as u64);
                 header.set_mode(stream.metadata().await?.permissions().mode());
-                header.set_mtime(
+                header.set_mtime(util::maybe_clamp_timestamp(
                     metadata
                         .modified()?
                         .duration_since(SystemTime::UNIX_EPOCH)?
                         .as_secs(),
-                );
+                )?);
                 header.set_uid(metadata.uid()? as u64);
                 header.set_gid(metadata.gid()? as u64);
                 header.set_cksum();

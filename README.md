@@ -160,35 +160,10 @@ output:
         dest: "/new/path/to/file"
 ```
 
-### roadmap
+### reproducibile builds
 
-#### package/artifact formats
-
-The goal/hope is to be able to support all of these. Formats not listed may end
-up on the list in the future. Formats that are not currently supported may
-never be supported.
-
-- [x] flat files `"file"`
-- [x] arch package `"arch"`
-- [x] tarball `"tarball"`
-- [x] debian package `"deb"`
-- [x] docker image `"docker"`
-- [x] rpm package `"rpm"`
-- [ ] appimage `"appimage"`
-  - https://crates.io/crates/appimage
-    - Missing read support...
-- [ ] Filesystem and VM images (tbd)
-  - Working on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
-- [ ] Flatpak?
-  - More research needed
-
-#### other
-
-- [x] compression handled transparently
-- [ ] better docs
-- [ ] GitHub Actions support for ease-of-use
-- [ ] better error messages
-- [ ] maybe someday hit 1.0.0?
+peckish tries to respect [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/).
+Please open issues or PRs if you find places where it doesn't!
 
 ### library
 
@@ -239,6 +214,37 @@ println!("produced {} artifacts", out.len());
 - Make a package for one distro installable on others, without having to
   repackage by hand
 - Programmatically create/manipulate packages in Rust
+
+## roadmap
+
+### package/artifact formats
+
+The goal/hope is to be able to support all of these. Formats not listed may end
+up on the list in the future. Formats that are not currently supported may
+never be supported.
+
+- [x] flat files `"file"`
+- [x] arch package `"arch"`
+- [x] tarball `"tarball"`
+- [x] debian package `"deb"`
+- [x] docker image `"docker"`
+- [x] rpm package `"rpm"`
+- [ ] appimage `"appimage"`
+  - https://crates.io/crates/appimage
+    - Missing read support...
+- [ ] Filesystem and VM images (tbd)
+  - Working on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
+- [ ] Flatpak?
+  - More research needed
+
+### other
+
+- [x] compression handled transparently
+- [ ] [WIP] `SOURCE_DATE_EPOCH` support for reproducible builds
+- [ ] better docs
+- [ ] GitHub Actions support for ease-of-use
+- [ ] better error messages
+- [ ] maybe someday hit 1.0.0?
 
 ## concepts
 
