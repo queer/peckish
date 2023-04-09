@@ -68,6 +68,10 @@ impl Artifact for DebArtifact {
     fn try_clone(&self) -> Result<Box<dyn Artifact>> {
         Ok(Box::new(self.clone()))
     }
+
+    fn paths(&self) -> Option<Vec<PathBuf>> {
+        Some(vec![self.path.clone()])
+    }
 }
 
 impl DebArtifact {

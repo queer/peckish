@@ -37,7 +37,7 @@ async fn main() -> Result<()> {
         pipeline: false,
     };
 
-    let pipeline = Pipeline::new();
+    let pipeline = Pipeline::new(None);
 
     let out = pipeline.run(config).await?;
 

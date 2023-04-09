@@ -54,6 +54,10 @@ impl Artifact for ArchArtifact {
     fn try_clone(&self) -> Result<Box<dyn Artifact>> {
         Ok(Box::new(self.clone()))
     }
+
+    fn paths(&self) -> Option<Vec<PathBuf>> {
+        Some(vec![self.path.clone()])
+    }
 }
 
 #[async_trait::async_trait]

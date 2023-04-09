@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use eyre::Result;
 use rsfs_tokio::{GenFS, Metadata};
@@ -26,6 +26,11 @@ pub trait Artifact: Send + Sync + SelfValidation {
 
     /// We can't require `Clone` bounds because then it's not object-safe.
     fn try_clone(&self) -> Result<Box<dyn Artifact>>;
+
+    /// A list of paths on the filesystem that this artifact represents. This
+    /// value is optional, as ex. Docker artifacts don't "exist" on the
+    /// filesystem, but are instead pulled from the daemon.
+    fn paths(&self) -> Option<Vec<PathBuf>>;
 }
 
 /// An artifact producer takes in the previous artifact and produces a new one.

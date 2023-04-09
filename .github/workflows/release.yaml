@@ -26,7 +26,10 @@ jobs:
           command: "build"
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Package peckish!!"
-        run: "./target/x86_64-unknown-linux-musl/release/peckish -c ./peckish.release.yaml"
+        run: "./target/x86_64-unknown-linux-musl/release/peckish -c ./peckish.release.yaml -r report.txt"
+      - name: "Make GH aware of release artifacts"
+        id: "release-artifacts"
+        run: 'echo "artifacts=$(cat report.txt)" >> $GITHUB_OUTPUT'
       - name: "Generate changelog"
         uses: "metcalfc/changelog-generator@v4.1.0"
         with:
@@ -37,9 +40,4 @@ jobs:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         with:
           body: "${{ steps.changelog.outputs.changelog }}"
-          files: |
-            ./release/peckish/peckish
-            ./release/peckish.tar
-            ./release/peckish.arch.pkg.tar
-            ./release/peckish.deb
-            ./release/peckish.rpm
+          files: "${{ steps.release-artifacts.outputs.artifacts }}"

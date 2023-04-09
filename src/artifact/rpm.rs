@@ -103,6 +103,10 @@ impl Artifact for RpmArtifact {
             spec: None,
         }))
     }
+
+    fn paths(&self) -> Option<Vec<PathBuf>> {
+        Some(vec![self.path.clone()])
+    }
 }
 
 #[async_trait::async_trait]

@@ -1,5 +1,5 @@
 use std::os::unix::prelude::PermissionsExt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use eyre::Result;
 use rsfs_tokio::GenFS;
@@ -58,6 +58,10 @@ impl Artifact for FileArtifact {
 
     fn try_clone(&self) -> Result<Box<dyn Artifact>> {
         Ok(Box::new(self.clone()))
+    }
+
+    fn paths(&self) -> Option<Vec<PathBuf>> {
+        Some(self.paths.clone())
     }
 }
 
@@ -251,7 +255,16 @@ impl ArtifactProducer for FileProducer {
 
         Ok(FileArtifact {
             name: self.path.to_string_lossy().to_string(),
-            paths: output_paths,
+            paths: output_paths
+                .iter()
+                .map(|p| {
+                    if !p.starts_with("./") {
+                        Path::join(&PathBuf::from("./"), p)
+                    } else {
+                        p.to_path_buf()
+                    }
+                })
+                .collect(),
             strip_path_prefixes: Some(true),
         })
     }

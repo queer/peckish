@@ -1,4 +1,9 @@
+use std::path::PathBuf;
+
 use eyre::Result;
+use itertools::Itertools;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
 use tracing::*;
 
 use crate::artifact::{Artifact, ArtifactProducer, SelfValidation};
@@ -6,12 +11,14 @@ use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig}
 
 /// A pipeline that can run a given config. This is the main entrypoint for
 /// running a peckish config.
-pub struct Pipeline {}
+pub struct Pipeline {
+    report_file: Option<PathBuf>,
+}
 
 impl Pipeline {
     #[allow(clippy::new_without_default)]
-    pub fn new() -> Self {
-        Self {}
+    pub fn new(report_file: Option<PathBuf>) -> Self {
+        Self { report_file }
     }
 
     pub async fn run(&self, config: PeckishConfig) -> Result<Vec<Box<dyn Artifact>>> {
@@ -74,10 +81,30 @@ impl Pipeline {
             output_artifacts.push(next_artifact);
         }
 
-        let mut out = vec![];
-        for artifact in output_artifacts.iter() {
-            let artifact: Box<dyn Artifact> = artifact.try_clone()?;
-            out.push(artifact);
+        if let Some(report_file) = &self.report_file {
+            let mut output_buffer = String::new();
+
+            for artifact in &output_artifacts {
+                if let Some(paths) = artifact.paths() {
+                    output_buffer.push_str(
+                        paths
+                            .iter()
+                            .map(|p| p.canonicalize().unwrap())
+                            .map(|d| format!("{}", d.display()))
+                            .join("\n")
+                            .as_str(),
+                    );
+
+                    if paths.len() == 1 {
+                        output_buffer.push('\n');
+                    }
+                }
+            }
+
+            let mut file = File::create(report_file).await?;
+            file.write_all(output_buffer.as_bytes()).await?;
+
+            info!("wrote report to {}", report_file.display());
         }
 
         Ok(output_artifacts)
@@ -123,7 +150,7 @@ mod tests {
             })],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(None);
         assert!(pipeline.run(config).await.is_ok());
 
         Ok(())
@@ -161,7 +188,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(None);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(!tmp.path_view().join("Cargo.toml").exists());
@@ -201,7 +228,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(None);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -241,7 +268,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(None);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").is_symlink());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -280,7 +307,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(None);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());
@@ -319,7 +346,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(None);
         pipeline.run(config).await?;
         assert!(!tmp.path_view().join("Cargo.toml").exists());
 
@@ -358,7 +385,7 @@ mod tests {
             ],
         };
 
-        let pipeline = Pipeline::new();
+        let pipeline = Pipeline::new(None);
         pipeline.run(config).await?;
         assert!(tmp.path_view().join("Cargo-2.toml").exists());
         assert!(tmp.path_view().join("Cargo.toml").exists());

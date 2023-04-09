@@ -1618,6 +1618,7 @@ dependencies = [
  "futures-util",
  "hyper",
  "indoc",
+ "itertools",
  "md5",
  "nix",
  "rand 0.8.5",

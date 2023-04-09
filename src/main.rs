@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use clap::Parser;
 use color_eyre::Result;
 use tracing::*;
@@ -22,6 +24,13 @@ const VERSION: &str = env!("CARGO_PKG_VERSION");
 struct Input {
     #[arg(short = 'c', long = "config")]
     config_file: Option<String>,
+
+    #[arg(
+        short = 'r',
+        long = "report",
+        help = "Name of the file to generate artifact file output report to."
+    )]
+    report_file: Option<PathBuf>,
 }
 
 #[tokio::main]
@@ -46,7 +55,7 @@ async fn main() -> Result<()> {
 
     let config = PeckishConfig::load(args.config_file).await?;
 
-    Pipeline::new().run(config).await?;
+    Pipeline::new(args.report_file).run(config).await?;
 
     Ok(())
 }

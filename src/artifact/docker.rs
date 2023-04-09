@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use eyre::Result;
@@ -129,6 +131,10 @@ impl Artifact for DockerArtifact {
 
     fn try_clone(&self) -> Result<Box<dyn Artifact>> {
         Ok(Box::new(self.clone()))
+    }
+
+    fn paths(&self) -> Option<Vec<PathBuf>> {
+        None
     }
 }
 
