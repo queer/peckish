@@ -4,11 +4,11 @@ peckish (case-sensitive) is a tool for repackaging Linux software artifacts.
 
 For example, suppose you're an application developer. You just made something
 cool and want to distribute it. However, packaging is *hard*. Different package
-formats do things differently -- ex. Arch has `x86_64` and `any` as architectures,
-but Debian has over a dozen and calls x86_64 `amd64` -- and it's hard to
-remember all the specifics. This is compounded by having to figure out the
-appropriate CLI flags for each package format. How many people can write a
-[valid `tar` command](https://xkcd.com/1168/) on the first try? :P
+formats do things differently -- ex. Arch has `x86_64` and `any` as
+architectures, but Debian has over a dozen and calls "`x86_64`" "`amd64`" --
+and it's hard to remember all the specifics. This is compounded by having to
+figure out the appropriate CLI flags for each package format. How many people
+can write a [valid `tar` command](https://xkcd.com/1168/) on the first try? :P
 
 This problem is fairly common:
 
@@ -97,8 +97,9 @@ https://github.com/queer/peckish/tree/mistress/docs
   how your code is built or installed, just about getting it from one package
   format to another.
 - peckish **does not** guarantee that files are placed in the correct locations
-  in the package. It's up to you to make sure your package is valid for the
-  target distro.
+  in the package, just that the package is valid. For example, if you convert a
+  DEB to an RPM, you'll need to make sure that the files in the RPM are
+  installed to the correct locations.
 - peckish **cannot** guarantee all dependencies are placed into the package
   correctly. It's up to you to make sure your package is statically linked, or
   that all dependencies are included in the package.
