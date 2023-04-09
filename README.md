@@ -282,7 +282,7 @@ needed beyond its in-memory filesystem representation.
 
 ### why is it called peckish?
 
-If you pretend really hard, "peckish" sounds kinda sorta a bit like "package.
+If you pretend really hard, "peckish" sounds kinda sorta a bit like "package."
 
 ### license
 
