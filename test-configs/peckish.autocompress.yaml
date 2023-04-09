@@ -9,7 +9,7 @@ metadata:
 input:
   name: "tarball"
   type: "tarball"
-  path: "./examples/example.tar.Zstd"
+  path: "./examples/data/example.tar.Zstd"
 
 output:
   - name: "files"
