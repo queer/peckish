@@ -177,7 +177,7 @@ Please open issues or PRs if you find places where it doesn't!
 
 **crates.io:** I have to work out the issue of git dependencies first
 
-For now, you can use the git dependency:
+For now, you can use peckish as a git dependency:
 
 ```toml
 [depedencies]
