@@ -175,6 +175,15 @@ Please open issues or PRs if you find places where it doesn't!
 
 ### library
 
+**crates.io:** I have to work out the issue of git dependencies first
+
+For now, you can use the git dependency:
+
+```toml
+[depedencies]
+peckish = { git = "https://github.com/queer/peckish.git" }
+```
+
 ```rust
 // artifacts
 use peckish::prelude::builder::*;
