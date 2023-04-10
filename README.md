@@ -62,11 +62,11 @@ This problem is fairly common:
 >
 > https://news.ycombinator.com/item?id=33832401
 
-peckish solves this. Instead of mangling your files with various arcane tools,
-spinning up Docker containers or VMs to try to build packages and make sure
-they install or are even valid, and all the other pains, you can just write a
-basic YAML file, and you're done! peckish does the rest, *without* shelling out
-to distro-specific tools!
+peckish aims to solve this. Instead of mangling your files with various arcane
+tools, spinning up Docker containers or VMs to try to build packages and make
+sure they install or are even valid, and all the other pains, you can just
+write a basic YAML file, and you're done! peckish does the rest, *without*
+shelling out to distro-specific tools!
 
 Additionally, peckish makes repackaging software easy. You can take a DEB and
 convert it into an RPM, or a Docker image to flat files on the filesystem, or
