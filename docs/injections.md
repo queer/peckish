@@ -37,6 +37,10 @@ list of injections that will be applied to the artifact before it's written to
 the filesystem. In this case, we're moving the file from
 `/target/release/peckish` to `/usr/bin/peckish`.
 
+Note that when doing things like moving files, the parent directories will
+remain in the artifact's memfs. Cleaning up empty directories is your
+responsibility.
+
 ## supported injections
 
 - move `"move"`
