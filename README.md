@@ -164,7 +164,7 @@ output:
     # written to disk. see `docs/injections.md` for more info.
     injections:
       - type: "move"
-        path: "/path/to/original/file"
+        src: "/path/to/original/file"
         dest: "/new/path/to/file"
 ```
 
