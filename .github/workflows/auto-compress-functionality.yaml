@@ -25,7 +25,6 @@ jobs:
           override: true
           target: "x86_64-unknown-linux-musl"
       - uses: "Swatinem/rust-cache@v2"
-        if: "always()"
         with:
           key: "cli-functionality"
           cache-on-failure: true

@@ -20,6 +20,12 @@ jobs:
           toolchain: "stable"
           profile: "minimal"
           target: "x86_64-unknown-linux-musl"
+      - uses: "Swatinem/rust-cache@v2"
+        with:
+          key: "release"
+          cache-on-failure: true
+      - name: "Install musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools"
       - name: "Build static-linked release binary!"
         uses: "actions-rs/cargo@v1"
         with:
@@ -27,17 +33,11 @@ jobs:
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Package peckish!!"
         run: "./target/x86_64-unknown-linux-musl/release/peckish -c ./peckish.release.yaml -r report.txt"
-      - name: "Make GH aware of release artifacts"
-        id: "release-artifacts"
-        run: 'echo "artifacts=$(cat report.txt)" >> $GITHUB_OUTPUT'
-      - name: "Generate changelog"
-        uses: "metcalfc/changelog-generator@v4.1.0"
-        with:
-          myToken: "${{ secrets.GITHUB_TOKEN }}"
       - name: "Create release"
         uses: "softprops/action-gh-release@v1"
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        with:
-          body: "${{ steps.changelog.outputs.changelog }}"
-          files: "${{ steps.release-artifacts.outputs.artifacts }}"
+      - name: "Upload release assets with gh cli"
+        run: "cat report.txt | xargs -I {} gh release upload ${{ github.ref_name }} {}"
+        env:
+          GH_TOKEN: ${{ github.token }}
