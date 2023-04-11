@@ -31,7 +31,7 @@ rand = "0.8.5"
 regex = "1.7.3"
 rpm = { git = "https://github.com/rpm-rs/rpm.git", rev = "cf4ef5c", features = ["with-file-async-tokio"] }
 rsfs-tokio = { git = "https://github.com/queer/rsfs-tokio", rev = "55efcfa" }
-serde = { version = "1.0.159", features = ["derive"] }
+serde = { version = "1.0.160", features = ["derive"] }
 serde_json = "1.0.95"
 serde_yaml = "0.9.21"
 strum = { version = "0.24.1", features = ["derive"] }
