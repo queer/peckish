@@ -6,12 +6,14 @@ on:
     paths:
       - "**.rs"
       - "**.yaml"
+      - "**.toml"
   pull_request:
     branches:
       - "mistress"
     paths:
       - "**.rs"
       - "**.yaml"
+      - "**.toml"
 
 jobs:
   run-cli-functionality-tests:
