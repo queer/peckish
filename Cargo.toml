@@ -39,7 +39,7 @@ thiserror = "1.0.40"
 tokio = { version = "1.28.0", features = ["full"] }
 tokio-stream = "0.1.12"
 tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
-tokio-util = { version = "0.7.7", features = ["codec"] }
+tokio-util = { version = "0.7.8", features = ["codec"] }
 tracing = "0.1.38"
 tracing-subscriber = { version = "0.3.17", features = ["serde", "serde_json", "tracing", "env-filter", "fmt", "std"] }
 xz2 = "0.1.7"
