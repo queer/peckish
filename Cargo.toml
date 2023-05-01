@@ -20,7 +20,7 @@ color-eyre = { version = "0.6.2", features = ["issue-url"] }
 cpio_reader = "0.1.1"
 ctor = "0.1.26"
 eyre = "0.6.8"
-flate2 = "1.0.25"
+flate2 = "1.0.26"
 futures-util = "0.3.28"
 hyper = "0.14.26"
 indoc = "2.0.1"
