@@ -91,6 +91,8 @@ taking a tarball and producing a DEB or RPM package.
 - [peckish concepts](#concepts)
 - [artifact and producer docs](https://github.com/queer/peckish/tree/mistress/docs)
 
+peckish is a part of the [amyware discord server](https://discord.gg/7WgSTwh).
+
 ### caveats
 
 - peckish is `0.x.y`! Treat it accordingly. Maybe don't run it in prod.
