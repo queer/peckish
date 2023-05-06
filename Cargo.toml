@@ -9,18 +9,18 @@ categories = ["command-line-utilities", "development-tools", "filesystem"]
 keywords = ["packages", "linux", "deb", "tarball", "docker"]
 
 [dependencies]
-anyhow = "1.0.70"
+anyhow = "1.0.71"
 ar = "0.9.0"
 async-recursion = "1.0.4"
 async-trait = "0.1.67"
 bollard = { git = "https://github.com/queer/bollard", rev = "628400c" }
 brotli = "3.3.4"
-clap = { version = "4.2.5", features = ["derive"] }
+clap = { version = "4.2.7", features = ["derive"] }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 cpio_reader = "0.1.1"
 ctor = "0.1.26"
 eyre = "0.6.8"
-flate2 = "1.0.25"
+flate2 = "1.0.26"
 futures-util = "0.3.28"
 hyper = "0.14.26"
 indoc = "2.0.1"
@@ -31,7 +31,7 @@ rand = "0.8.5"
 regex = "1.8.1"
 rpm = { git = "https://github.com/rpm-rs/rpm.git", rev = "cf4ef5c", features = ["with-file-async-tokio"] }
 rsfs-tokio = { git = "https://github.com/queer/rsfs-tokio", rev = "55efcfa" }
-serde = { version = "1.0.160", features = ["derive"] }
+serde = { version = "1.0.162", features = ["derive"] }
 serde_json = "1.0.96"
 serde_yaml = "0.9.21"
 strum = { version = "0.24.1", features = ["derive"] }
