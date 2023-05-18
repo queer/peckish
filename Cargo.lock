@@ -1922,11 +1922,13 @@ checksum = "3582f63211428f83597b51b2ddb88e2a91a9d52d12831f9d08f5e624e8977422"
 
 [[package]]
 name = "rpm"
-version = "0.9.0"
-source = "git+https://github.com/rpm-rs/rpm.git?rev=cf4ef5c#cf4ef5c58499c4c67dd4a2b2c49264f7ca4342ec"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "30323fc82aa5a1a6770b40852926ad1efda78b0705bd58644a66281ef03a45a4"
 dependencies = [
  "chrono",
  "cpio",
+ "digest 0.10.6",
  "enum-display-derive",
  "enum-primitive-derive",
  "futures",
@@ -1940,12 +1942,12 @@ dependencies = [
  "num-derive",
  "num-traits",
  "pgp",
- "rand 0.8.5",
  "sha1",
  "sha2 0.10.6",
  "thiserror",
  "tokio",
  "tokio-util",
+ "xz2",
  "zstd",
 ]
 
@@ -1973,7 +1975,8 @@ dependencies = [
 [[package]]
 name = "rsfs-tokio"
 version = "0.5.0"
-source = "git+https://github.com/queer/rsfs-tokio?rev=55efcfa#55efcfa1ac56aecfecceb3f74eaa34eb9801e166"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e9de6301c9f7d9f4e90013710779cc6aa31ceb63031cf120cc7498f62c12fe0"
 dependencies = [
  "async-stream",
  "async-trait",

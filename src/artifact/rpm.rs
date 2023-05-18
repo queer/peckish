@@ -1,5 +1,4 @@
 use std::path::{Path, PathBuf};
-use std::str::FromStr;
 
 use eyre::{eyre, Result};
 use regex::Regex;
@@ -208,7 +207,7 @@ impl ArtifactProducer for RpmProducer {
             &self.package_arch,
             &self.package_description,
         )
-        .compression(rpm::Compressor::from_str("gzip").unwrap());
+        .compression(rpm::CompressionType::Gzip);
 
         for path in &file_artifact.paths {
             let rpm_path = Path::join(Path::new("/"), path.strip_prefix(tmp.path_view())?);

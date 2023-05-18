@@ -29,8 +29,8 @@ md5 = "0.7.0"
 nix = "0.26.2"
 rand = "0.8.5"
 regex = "1.8.1"
-rpm = { git = "https://github.com/rpm-rs/rpm.git", rev = "cf4ef5c", features = ["with-file-async-tokio"] }
-rsfs-tokio = { git = "https://github.com/queer/rsfs-tokio", rev = "55efcfa" }
+rpm = { version = "0.10.0", features = ["with-file-async-tokio"] }
+rsfs-tokio = "0.5.0"
 serde = { version = "1.0.162", features = ["derive"] }
 serde_json = "1.0.96"
 serde_yaml = "0.9.21"
