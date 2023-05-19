@@ -83,11 +83,10 @@ impl Artifact for RpmArtifact {
                 .set_permissions(Permissions::from_mode(file.mode().bits()))
                 .await?;
 
-            let uid = nix::unistd::getuid().as_raw();
-            let gid = nix::unistd::getgid().as_raw();
+            let uid = file.uid();
+            let gid = file.gid();
             mem_file.chown(uid, gid).await?;
             debug!("set uid and gid to {} and {}", uid, gid);
-            debug!("note: we use the current user's uid/gid for now!!! please take care!!!");
         }
 
         debug!("done!");

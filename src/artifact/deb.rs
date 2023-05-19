@@ -1,3 +1,4 @@
+use std::io::Cursor;
 use std::path::PathBuf;
 
 use eyre::Result;
@@ -51,16 +52,9 @@ impl Artifact for DebArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        // ar archive of:
-        // /debian-binary
-        // /control.tar.gz
-        // /data.tar.gz
-        // /debian-binary can be discarded
-        // /control.tar.gz can be discarded
-        // /data.tar.gz is the vfs contents
-        let mut archive = ar::Archive::new(std::fs::File::open(&self.path)?);
+        // TODO: Autodecompress the deb
         let fs = MemFS::new();
-        self.extract_deb_to_memfs(&mut archive, &fs).await?;
+        self.extract_deb_to_memfs(&fs).await?;
 
         Ok(fs)
     }
@@ -75,11 +69,22 @@ impl Artifact for DebArtifact {
 }
 
 impl DebArtifact {
-    async fn extract_deb_to_memfs(
-        &self,
-        archive: &mut ar::Archive<std::fs::File>,
-        fs: &MemFS,
-    ) -> Result<()> {
+    async fn extract_deb_to_memfs(&self, fs: &MemFS) -> Result<()> {
+        let mut archive = {
+            let path = self.path.clone();
+            tokio::task::spawn_blocking(move || {
+                let mut decompressed = vec![];
+                let mut file = std::fs::File::open(path).unwrap();
+                compression::Context::autocompress(
+                    &mut file,
+                    &mut decompressed,
+                    compression::CompressionType::None,
+                )
+                .unwrap();
+                ar::Archive::new(Cursor::new(decompressed))
+            })
+            .await?
+        };
         while let Some(entry) = archive.next_entry() {
             let mut ar_entry = entry?;
             let path = String::from_utf8_lossy(ar_entry.header().identifier()).to_string();
@@ -87,6 +92,7 @@ impl DebArtifact {
                 let ar_buf = {
                     use std::io::Read;
                     let mut b = vec![];
+                    // TODO: async?
                     ar_entry.read_to_end(&mut b)?;
                     b
                 };
