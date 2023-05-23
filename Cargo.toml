@@ -28,7 +28,7 @@ itertools = "0.10.5"
 md5 = "0.7.0"
 nix = "0.26.2"
 rand = "0.8.5"
-regex = "1.8.1"
+regex = "1.8.2"
 rpm = { version = "0.10.0", features = ["with-file-async-tokio"] }
 rsfs-tokio = "0.5.0"
 serde = { version = "1.0.163", features = ["derive"] }
