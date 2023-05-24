@@ -93,6 +93,10 @@ taking a tarball and producing a DEB or RPM package.
 
 peckish is a part of the [amyware discord server](https://discord.gg/7WgSTwh).
 
+If you like what I make, consider supporting me on Patreon:
+
+[<img src="https://i.imgur.com/YFjoCd1.png" width="162" height="38" />](https://patreon.com/amyware)
+
 ### caveats
 
 - peckish is `0.x.y`! Treat it accordingly. Maybe don't run it in prod.
