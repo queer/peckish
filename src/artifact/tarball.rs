@@ -37,7 +37,7 @@ impl Artifact for TarballArtifact {
         // filesystem.
         // This is sadly necessary because Rust's tar libraries don't allow for
         // in-memory manipulation.
-        debug!("unpacking tarball to {:?}", self.path);
+        info!("unpacking {}", self.path.display());
 
         let decompress_tmpdir = TempDir::new().await?;
         let decompressed_tarball = decompress_tmpdir.path_view().join("decompressed.tar");
@@ -99,7 +99,7 @@ impl SelfValidation for TarballArtifact {
         }
 
         if !errors.is_empty() {
-            return Err(eyre!("Tarball artifact not valid:\n{}", errors.join("\n")));
+            return Err(eyre!("tarball artifact not valid:\n{}", errors.join("\n")));
         }
 
         Ok(())
@@ -159,6 +159,7 @@ impl ArtifactProducer for TarballProducer {
     }
 
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
+        info!("producing {}", self.path.display());
         let memfs = previous.extract().await?;
         let memfs = self.inject(&memfs).await?;
         let paths = traverse_memfs(memfs, &PathBuf::from("/"), Some(true)).await?;

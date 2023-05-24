@@ -31,7 +31,7 @@ impl Artifact for RpmArtifact {
     async fn extract(&self) -> Result<MemFS> {
         use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-        debug!("reading rpm: {}", &self.path.display());
+        info!("extracting {}...", &self.path.display());
         let mut rpm_file = tokio::fs::File::open(&self.path).await?;
         let metadata = rpm_file.metadata().await?;
         let size = metadata.len();
@@ -187,6 +187,7 @@ impl ArtifactProducer for RpmProducer {
 
     /// Produce a new artifact, given a previous artifact.
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
+        info!("producing {}", self.path.display());
         debug!("extracting previous artifact to tmpdir");
         let tmp = TempDir::new().await?;
         let file_artifact = FileProducer {
@@ -225,7 +226,7 @@ impl ArtifactProducer for RpmProducer {
             pkg = pkg.requires(rpm::Dependency::any(dep));
         }
 
-        debug!("building package!");
+        info!("building final rpm...");
         let pkg = pkg.build().unwrap();
         let path_clone = self.path.clone();
         let join_handle = tokio::task::spawn_blocking(move || {

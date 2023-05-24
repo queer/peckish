@@ -43,6 +43,7 @@ impl Artifact for DockerArtifact {
         let docker = Docker::connect_with_local_defaults()?;
         let (image, tag) = split_image_name_into_repo_and_tag(&self.image);
 
+        info!("attempting to pull {}...", self.image);
         // Attempt to download the image
         let mut pull = docker.create_image(
             Some(CreateImageOptions {
@@ -61,8 +62,9 @@ impl Artifact for DockerArtifact {
         // Export image to a TAR file
         let tmp = TempDir::new().await?;
 
+        info!("exporting to tarball...");
         let mut export = docker.export_image(&self.image);
-        let export_name = format!("{}.tar", self.name);
+        let export_name = format!("{}.tar", self.name.replace(['/', ':', ' '], "_"));
         let export_path = tmp.path_view().join(&export_name);
         tokio::fs::create_dir_all(export_path.parent().unwrap())
             .await
@@ -88,6 +90,7 @@ impl Artifact for DockerArtifact {
         tokio::fs::remove_dir_all(&tmp).await?;
 
         // Collect layers
+        info!("gathering docker layers...");
         let mut manifest = basic_tar_fs.open_file("/manifest.json").await?;
         let mut buf = String::new();
         manifest.read_to_string(&mut buf).await?;
@@ -105,6 +108,7 @@ impl Artifact for DockerArtifact {
             .map(|v| v.as_str().unwrap())
             .collect();
 
+        info!("extracting docker layers into memfs...");
         let tmp = TempDir::new().await?;
         for layer in layers {
             // For each layer, extract it into the tmp directory.

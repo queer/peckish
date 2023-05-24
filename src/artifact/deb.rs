@@ -72,6 +72,7 @@ impl DebArtifact {
         let mut archive = {
             let path = self.path.clone();
             tokio::task::spawn_blocking(move || {
+                debug!("decompressing deb into memory...");
                 let mut decompressed = vec![];
                 // Decompress deb into memory
                 let mut file = std::fs::File::open(path).unwrap();
@@ -90,6 +91,7 @@ impl DebArtifact {
             let mut ar_entry = entry?;
             let path = String::from_utf8_lossy(ar_entry.header().identifier()).to_string();
             if path.starts_with("data.tar") {
+                debug!("found data.dar!");
                 let ar_buf = {
                     use std::io::Read;
                     let mut b = vec![];
@@ -102,6 +104,7 @@ impl DebArtifact {
                 let decompressed_tarball = produce_from_tmp.path_view().join("decompressed.tar");
                 let output_tmp = TempDir::new().await?;
 
+                debug!("extracting to {}", produce_from_tarball.display());
                 // Write ar_buf to produce_from_tmp
                 let mut ar_file = File::create(&produce_from_tarball).await?;
                 ar_file.write_all(&ar_buf).await?;
@@ -127,6 +130,7 @@ impl DebArtifact {
                 .produce_from(&decompressed_artifact)
                 .await?;
 
+                debug!("copying data artifact to memfs...");
                 // Copy decompressed_data_artifact to fs
                 fs.copy_files_from_paths(
                     &vec![output_tmp.path_view()],
@@ -304,6 +308,7 @@ impl ArtifactProducer for DebProducer {
         let tmp = TempDir::new().await?;
 
         // Create data.tar from previous artifact in tmp using TarballProducer
+        info!("packaging data files...");
         debug!("producing data.tar from previous artifact...");
         let data_tar = tmp.path_view().join("data.tar");
         let _tar_artifact = TarballProducer {
@@ -316,6 +321,7 @@ impl ArtifactProducer for DebProducer {
         .await?;
 
         // Create control.tar from control file in tmp
+        info!("packaging metadata files...");
         debug!("producing control.tar...");
         let control_tar = tmp.path_view().join("control.tar");
         let mut control_tar_builder = tokio_tar::Builder::new(File::create(&control_tar).await?);
@@ -361,6 +367,7 @@ impl ArtifactProducer for DebProducer {
             debug!("wrote postinst file {} to control.tar", postinst.display());
         }
 
+        info!("computing checksums...");
         // Compute the md5sums of every file in the memfs
         let mut md5sums = vec![];
         let memfs = previous.extract().await?;
@@ -412,7 +419,7 @@ impl ArtifactProducer for DebProducer {
         }
 
         // Create .deb ar archive from debian-binary, control.tar, and data.tar
-        debug!("building final .deb...");
+        info!("building final .deb...");
         let mut deb_builder = ar::Builder::new(std::fs::File::create(&self.path)?);
 
         deb_builder.append_path(&debian_binary)?;

@@ -38,7 +38,7 @@ impl Pipeline {
         let mut output_artifacts: Vec<Box<dyn Artifact>> = vec![];
 
         for (i, producer) in config.output.iter().enumerate() {
-            info!("step {}: {}", i + 1, producer.name());
+            info!("* step {}: {}", i + 1, producer.name());
             let next_artifact: Box<dyn Artifact> = match producer {
                 ConfiguredProducer::File(producer) => {
                     producer.validate().await?;
@@ -77,7 +77,7 @@ impl Pipeline {
                 input_artifact = next_artifact.try_clone()?;
             }
 
-            info!("created artifact: {}", next_artifact.name());
+            info!("* created artifact: {}", next_artifact.name());
             output_artifacts.push(next_artifact);
         }
 
