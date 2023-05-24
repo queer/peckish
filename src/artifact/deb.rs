@@ -52,7 +52,6 @@ impl Artifact for DebArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        // TODO: Autodecompress the deb
         let fs = MemFS::new();
         self.extract_deb_to_memfs(&fs).await?;
 
@@ -74,6 +73,7 @@ impl DebArtifact {
             let path = self.path.clone();
             tokio::task::spawn_blocking(move || {
                 let mut decompressed = vec![];
+                // Decompress deb into memory
                 let mut file = std::fs::File::open(path).unwrap();
                 compression::Context::autocompress(
                     &mut file,
@@ -81,6 +81,7 @@ impl DebArtifact {
                     compression::CompressionType::None,
                 )
                 .unwrap();
+                // Open Vec<u8> as ar archive
                 ar::Archive::new(Cursor::new(decompressed))
             })
             .await?
@@ -92,7 +93,6 @@ impl DebArtifact {
                 let ar_buf = {
                     use std::io::Read;
                     let mut b = vec![];
-                    // TODO: async?
                     ar_entry.read_to_end(&mut b)?;
                     b
                 };

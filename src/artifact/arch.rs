@@ -20,6 +20,7 @@ pub struct ArchArtifact {
     pub name: String,
     /// The path to the artifact.
     pub path: PathBuf,
+    /// The .PKGINFO file.
     pub pkginfo: Option<Pkginfo>,
 }
 
