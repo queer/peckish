@@ -91,13 +91,7 @@ taking a tarball and producing a DEB or RPM package.
 - [peckish concepts](#concepts)
 - [artifact and producer docs](https://github.com/queer/peckish/tree/mistress/docs)
 
-peckish is a part of the [amyware discord server](https://discord.gg/7WgSTwh).
-
-If you like what I make, consider supporting me on Patreon:
-
-[<img src="https://i.imgur.com/YFjoCd1.png" width="162" height="38" />](https://patreon.com/amyware)
-
-### caveats
+## caveats
 
 - peckish is `0.x.y`! Treat it accordingly. Maybe don't run it in prod.
 - Documentation is hard, and I am not the best at it. Some questions may only
@@ -119,6 +113,17 @@ If you like what I make, consider supporting me on Patreon:
   quality to be accepted into a distro's official repositories**. PLEASE don't
   waste the time of distro maintainers by submitting a bunch of
   peckish-generated packages.
+
+## community
+
+peckish is a part of the [amyware discord server](https://discord.gg/7WgSTwh).
+
+If you like what I make, consider supporting me on Patreon:
+
+[<img src="https://i.imgur.com/YFjoCd1.png" width="162" height="38" />](https://patreon.com/amyware)
+
+# peckish
+
 
 ## usage
 
@@ -229,6 +234,19 @@ let out = pipeline.run(config).await?;
 println!("produced {} artifacts", out.len());
 ```
 
+### GitHub Actions
+
+GitHub Actions for peckish can be found at [queer/actions](https://github.com/queer/actions).
+
+```yaml
+- name: "install peckish!"
+  uses: "queer/actions/peckish_install@mistress"
+  with:
+    token: "${{ secrets.GITHUB_TOKEN }}"
+- name: "run peckish!"
+  uses: "queer/actions/peckish_run@mistress"
+```
+
 ### suggested use-cases
 
 - Package your software for more distros with less pain
@@ -265,7 +283,8 @@ never be supported.
 - [x] compression handled transparently
 - [ ] [WIP] `SOURCE_DATE_EPOCH` support for reproducible builds
 - [ ] better docs
-- [ ] GitHub Actions support for ease-of-use
+- [x] GitHub Actions support for ease-of-use
+  - https://github.com/queer/actions
 - [ ] better error messages
 - [ ] maybe someday hit 1.0.0?
 
