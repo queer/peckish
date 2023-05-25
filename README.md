@@ -122,9 +122,6 @@ If you like what I make, consider supporting me on Patreon:
 
 [<img src="https://i.imgur.com/YFjoCd1.png" width="162" height="38" />](https://patreon.com/amyware)
 
-# peckish
-
-
 ## usage
 
 Create a `peckish.yaml` file in the root of your project.
@@ -179,10 +176,14 @@ output:
         dest: "/new/path/to/file"
 ```
 
-### reproducibile builds
+### suggested use-cases
 
-peckish tries to respect [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/).
-Please open issues or PRs if you find places where it doesn't!
+- Package your software for more distros with less pain
+- Extract packages without having to memorise arcane CLI flags
+- Create Docker images without a `Dockerfile`
+- Make a package for one distro installable on others, without having to
+  repackage by hand
+- Programmatically create/manipulate packages in Rust
 
 ### library
 
@@ -247,14 +248,10 @@ GitHub Actions for peckish can be found at [queer/actions](https://github.com/qu
   uses: "queer/actions/peckish_run@mistress"
 ```
 
-### suggested use-cases
+### reproducibile builds
 
-- Package your software for more distros with less pain
-- Extract packages without having to memorise arcane CLI flags
-- Create Docker images without a `Dockerfile`
-- Make a package for one distro installable on others, without having to
-  repackage by hand
-- Programmatically create/manipulate packages in Rust
+peckish tries to respect [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/).
+Please open issues or PRs if you find places where it doesn't!
 
 ## roadmap
 
