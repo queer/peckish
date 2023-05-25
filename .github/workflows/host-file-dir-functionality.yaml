@@ -40,6 +40,6 @@ jobs:
       - name: "Run release binary"
         run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.host_file_dir.yaml"
       - name: "Validate file contents"
-        run: "tar -tvf ./test_output_pls_ignore/host_file_dir | grep hosts2"
+        run: "tar -tvf ./test_output_pls_ignore/host_file_dir.tar | grep hosts2"
       - name: "Validate directory contents"
-        run: "tar -tvf ./test_output_pls_ignore/host_file_dir | grep docs2"
+        run: "tar -tvf ./test_output_pls_ignore/host_file_dir.tar | grep docs2"
