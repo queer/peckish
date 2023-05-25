@@ -112,3 +112,25 @@ responsibility.
       path: "/hello.txt"
       content: "hello world"
   ```
+
+- host file `"host_file"`
+
+  Copies a file from the host to the given location in the artifact.
+
+  ```yaml
+  injections:
+    - type: "host_file"
+      src: "/etc/hosts"
+      dest: "/etc/hosts2"
+  ```
+
+- host directory `"host_dir"`
+
+  Copies a directory from the host to the given location in the artifact.
+
+  ```yaml
+  injections:
+    - type: "host_dir"
+      src: "/etc"
+      dest: "/etc2"
+  ```

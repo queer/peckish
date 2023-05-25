@@ -46,11 +46,11 @@ impl Artifact for FileArtifact {
                 } else {
                     path
                 };
-                fs.copy_files_from_paths(&vec![path.clone()], Some(prefix.into()))
+                fs.copy_files_from_paths(&vec![path.clone()], Some(prefix.into()), None)
                     .await?;
             }
         } else {
-            fs.copy_files_from_paths(&self.paths, None).await?;
+            fs.copy_files_from_paths(&self.paths, None, None).await?;
         }
 
         Ok(fs)

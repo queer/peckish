@@ -1,0 +1,27 @@
+pipeline: false
+
+metadata:
+  name: "peckish"
+  version: "0.0.1-1"
+  description: "peckish transforms software artifacts"
+  author: "amy null"
+  arch: "amd64"
+  license: "Apache-2.0"
+
+input:
+  name: "Cargo.toml"
+  type: "file"
+  paths:
+    - "./Cargo.toml"
+
+output:
+  - name: "tarball"
+    type: "tarball"
+    path: "./test_output_pls_ignore/host_file_dir.tar"
+    injections:
+      - type: "host_file"
+        src: "/etc/hosts"
+        dest: "/etc/hosts2"
+      - type: "host_dir"
+        src: "./docs"
+        dest: "/docs2"

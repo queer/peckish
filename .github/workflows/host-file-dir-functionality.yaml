@@ -1,0 +1,45 @@
+name: "Validate host file/dir functionality"
+on:
+  push:
+    branches:
+      - "mistress"
+    paths:
+      - "**.rs"
+      - "**.yaml"
+      - "**.toml"
+  pull_request:
+    branches:
+      - "mistress"
+    paths:
+      - "**.rs"
+      - "**.yaml"
+      - "**.toml"
+jobs:
+  run-host-file-dir-functionality-tests:
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: "actions/checkout@v2"
+      - name: "Install latest stable Rust"
+        uses: "actions-rs/toolchain@v1"
+        with:
+          toolchain: "stable"
+          profile: "minimal"
+          override: true
+          target: "x86_64-unknown-linux-musl"
+      - uses: "Swatinem/rust-cache@v2"
+        with:
+          key: "cli-functionality"
+          cache-on-failure: true
+      - name: "Install musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools"
+      - name: "Build release binary!"
+        uses: "actions-rs/cargo@v1"
+        with:
+          command: "build"
+          args: "--release --target=x86_64-unknown-linux-musl"
+      - name: "Run release binary"
+        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.host_file_dir.yaml"
+      - name: "Validate file contents"
+        run: "tar -tvf ./test_output_pls_ignore/host_file_dir | grep hosts2"
+      - name: "Validate directory contents"
+        run: "tar -tvf ./test_output_pls_ignore/host_file_dir | grep docs2"

@@ -70,7 +70,7 @@ impl Artifact for TarballArtifact {
 
         debug!("copying {} paths to memfs!", paths.len());
 
-        fs.copy_files_from_paths(&paths, Some(tmp.path_view()))
+        fs.copy_files_from_paths(&paths, Some(tmp.path_view()), None)
             .await?;
 
         Ok(fs)

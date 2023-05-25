@@ -402,6 +402,8 @@ pub enum Injection {
     Touch { path: PathBuf },
     Delete { path: PathBuf },
     Create { path: PathBuf, content: Vec<u8> },
+    HostFile { src: PathBuf, dest: PathBuf },
+    HostDir { src: PathBuf, dest: PathBuf },
 }
 
 impl Injection {
@@ -449,6 +451,16 @@ impl Injection {
                 fs.create_dir_all(path.parent().unwrap()).await?;
                 let mut file = fs.create_file(path).await?;
                 file.write_all(content).await?;
+            }
+
+            Injection::HostFile { src, dest } => {
+                debug!("copying host file {:?} to {:?}", src, dest);
+                memfs.copy_file_to_memfs(src, dest).await?;
+            }
+
+            Injection::HostDir { src, dest } => {
+                debug!("copying host directory {:?} to {:?}", src, dest);
+                memfs.copy_dir_to_memfs(src, dest).await?;
             }
         }
 

@@ -127,7 +127,7 @@ impl Artifact for DockerArtifact {
         debug!("copying docker layers to memfs!");
 
         let memfs_paths = vec![tmp.path_view()];
-        fs.copy_files_from_paths(&memfs_paths, Some(tmp.path_view()))
+        fs.copy_files_from_paths(&memfs_paths, Some(tmp.path_view()), None)
             .await?;
 
         Ok(fs)

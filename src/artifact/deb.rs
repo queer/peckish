@@ -135,6 +135,7 @@ impl DebArtifact {
                 fs.copy_files_from_paths(
                     &vec![output_tmp.path_view()],
                     Some(output_tmp.path_view()),
+                    None,
                 )
                 .await?;
 

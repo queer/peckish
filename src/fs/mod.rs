@@ -89,6 +89,7 @@ impl MemFS {
         &self,
         paths: &Vec<PathBuf>,
         view_of: Option<PathBuf>,
+        dest: Option<PathBuf>,
     ) -> Result<()> {
         for path in paths {
             let memfs_path = if let Some(ref view) = view_of {
@@ -103,13 +104,19 @@ impl MemFS {
             } else {
                 path
             };
+            let memfs_path = if let Some(ref dest) = dest {
+                dest.join(memfs_path)
+            } else {
+                memfs_path.to_path_buf()
+            };
+            info!("{} -> {}", path.display(), memfs_path.display());
             let file_type = self.determine_file_type_from_filesystem(path).await?;
             if file_type == InternalFileType::Dir {
-                self.copy_dir_to_memfs(path, memfs_path).await?;
+                self.copy_dir_to_memfs(path, &memfs_path).await?;
             } else if file_type == InternalFileType::File {
-                self.copy_file_to_memfs(path, memfs_path).await?;
+                self.copy_file_to_memfs(path, &memfs_path).await?;
             } else if file_type == InternalFileType::Symlink {
-                self.add_symlink_to_memfs(path, memfs_path).await?;
+                self.add_symlink_to_memfs(path, &memfs_path).await?;
             } else {
                 error!("unknown file type for path {path:?}");
             }
@@ -118,7 +125,7 @@ impl MemFS {
         Ok(())
     }
 
-    async fn copy_file_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
+    pub(crate) async fn copy_file_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
         use rsfs_tokio::unix_ext::PermissionsExt;
 
         debug!("creating file {path:?}");
@@ -149,7 +156,7 @@ impl MemFS {
     }
 
     #[async_recursion::async_recursion]
-    async fn copy_dir_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
+    pub(crate) async fn copy_dir_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
         use rsfs_tokio::unix_ext::PermissionsExt;
 
         self.fs.create_dir_all(memfs_path).await?;
@@ -180,7 +187,7 @@ impl MemFS {
         Ok(())
     }
 
-    async fn add_symlink_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
+    pub(crate) async fn add_symlink_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
         let link = read_link(&path).await.map_err(Fix::Io)?;
         debug!("linking {memfs_path:?} to {link:?}");
         self.fs.symlink(link, memfs_path).await?;
