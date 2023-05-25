@@ -2,8 +2,6 @@ use std::path::PathBuf;
 
 use eyre::Result;
 use regex::Regex;
-use tokio::fs::File;
-use tokio_stream::StreamExt;
 use tracing::*;
 
 use crate::fs::MemFS;
@@ -76,39 +74,33 @@ impl SelfValidation for ArchArtifact {
         }
 
         if let Some(file_name) = self.path.file_name() {
-            if !file_name
-                .to_string_lossy()
-                .to_string()
-                .ends_with(".pkg.tar")
-            {
-                errors.push(format!(
-                    "{} does not end with .pkg.tar",
-                    self.path.display(),
-                ));
+            if !file_name.to_string_lossy().to_string().contains(".pkg.tar") {
+                errors.push(format!("{} does not contain .pkg.tar", self.path.display(),));
             }
         } else {
             errors.push(format!("{} does not have a file name", self.path.display()));
         }
 
         // Validate that the .PKGINFO file exists in the tarball
-        let mut tarball = tokio_tar::Archive::new(File::open(&self.path).await?);
-        let mut pkginfo_exists = false;
+        // TODO: This check needs to handle compression correctly.
+        // let mut tarball = tokio_tar::Archive::new(File::open(&self.path).await?);
+        // let mut pkginfo_exists = false;
 
-        let mut entries = tarball.entries()?;
-        while let Some(gz_entry) = entries.try_next().await? {
-            let path = gz_entry.path()?;
-            if path.ends_with(".PKGINFO") {
-                pkginfo_exists = true;
-                break;
-            }
-        }
+        // let mut entries = tarball.entries()?;
+        // while let Some(gz_entry) = entries.try_next().await? {
+        //     let path = gz_entry.path()?;
+        //     if path.ends_with(".PKGINFO") {
+        //         pkginfo_exists = true;
+        //         break;
+        //     }
+        // }
 
-        if !pkginfo_exists {
-            errors.push(format!(
-                "{} does not contain a .PKGINFO file",
-                self.path.display()
-            ));
-        }
+        // if !pkginfo_exists {
+        //     errors.push(format!(
+        //         "{} does not contain a .PKGINFO file",
+        //         self.path.display()
+        //     ));
+        // }
 
         if !errors.is_empty() {
             Err(eyre::eyre!(
