@@ -5,6 +5,7 @@ use bollard::Docker;
 use eyre::Result;
 use floppy_disk::{FloppyDisk, FloppyOpenOptions};
 use regex::Regex;
+use smoosh::CompressionType;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_stream::StreamExt;
@@ -13,7 +14,6 @@ use tracing::*;
 
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::fs::{MemFS, TempDir};
-use crate::util::compression;
 use crate::util::config::Injection;
 
 use super::tarball::{TarballArtifact, TarballProducer};
@@ -269,7 +269,7 @@ impl ArtifactProducer for DockerProducer {
             TarballProducer {
                 name: self.name.clone(),
                 path: tarball_path.clone(),
-                compression: compression::CompressionType::None,
+                compression: CompressionType::None,
                 injections: self.injections.clone(),
             }
             .produce_from(&FileArtifact {
@@ -283,7 +283,7 @@ impl ArtifactProducer for DockerProducer {
             TarballProducer {
                 name: self.name.clone(),
                 path: tarball_path.clone(),
-                compression: compression::CompressionType::None,
+                compression: CompressionType::None,
                 injections: self.injections.clone(),
             }
             .produce_from(previous)

@@ -114,13 +114,13 @@ impl Pipeline {
 #[cfg(test)]
 mod tests {
     use eyre::Result;
+    use smoosh::CompressionType;
     use tokio::fs::File;
     use tokio::io::AsyncReadExt;
 
     use crate::artifact::file::{FileArtifact, FileProducer};
     use crate::artifact::tarball::TarballProducer;
     use crate::fs::TempDir;
-    use crate::util::compression;
     use crate::util::config::Injection;
 
     use super::*;
@@ -145,7 +145,7 @@ mod tests {
             output: vec![ConfiguredProducer::Tarball(TarballProducer {
                 name: "cargo dot toml output".into(),
                 path: tar.clone(),
-                compression: compression::CompressionType::None,
+                compression: CompressionType::None,
                 injections: vec![],
             })],
         };
@@ -173,7 +173,7 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    compression: compression::CompressionType::None,
+                    compression: CompressionType::None,
                     injections: vec![Injection::Move {
                         src: "Cargo.toml".into(),
                         dest: "Cargo-2.toml".into(),
@@ -213,7 +213,7 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    compression: compression::CompressionType::None,
+                    compression: CompressionType::None,
                     injections: vec![Injection::Copy {
                         src: "Cargo.toml".into(),
                         dest: "Cargo-2.toml".into(),
@@ -253,7 +253,7 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    compression: compression::CompressionType::None,
+                    compression: CompressionType::None,
                     injections: vec![Injection::Symlink {
                         src: "Cargo.toml".into(),
                         dest: "Cargo-2.toml".into(),
@@ -293,7 +293,7 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    compression: compression::CompressionType::None,
+                    compression: CompressionType::None,
                     injections: vec![Injection::Touch {
                         path: "Cargo-2.toml".into(),
                     }],
@@ -332,7 +332,7 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    compression: compression::CompressionType::None,
+                    compression: CompressionType::None,
                     injections: vec![Injection::Delete {
                         path: "Cargo.toml".into(),
                     }],
@@ -370,7 +370,7 @@ mod tests {
                 ConfiguredProducer::Tarball(TarballProducer {
                     name: "cargo dot toml output".into(),
                     path: tar.clone(),
-                    compression: compression::CompressionType::None,
+                    compression: CompressionType::None,
                     injections: vec![Injection::Create {
                         path: "Cargo-2.toml".into(),
                         content: "test".into(),

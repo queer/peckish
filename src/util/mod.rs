@@ -7,7 +7,6 @@ use tracing::*;
 
 use crate::fs::MemFS;
 
-pub mod compression;
 pub mod config;
 
 #[derive(Error, Debug)]

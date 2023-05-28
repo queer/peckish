@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use eyre::Result;
 use floppy_disk::{FloppyDisk, FloppyOpenOptions};
 use regex::Regex;
+use smoosh::CompressionType;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_tar::Header;
@@ -13,7 +14,7 @@ use crate::artifact::get_artifact_size;
 use crate::artifact::tarball::TarballProducer;
 use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
-use crate::util::{compression, traverse_memfs};
+use crate::util::traverse_memfs;
 
 use super::file::FileProducer;
 use super::tarball::TarballArtifact;
@@ -71,21 +72,13 @@ impl DebArtifact {
     async fn extract_deb_to_memfs(&self, fs: &mut MemFS) -> Result<()> {
         let mut archive = {
             let path = self.path.clone();
-            tokio::task::spawn_blocking(move || {
-                debug!("decompressing deb into memory...");
-                let mut decompressed = vec![];
-                // Decompress deb into memory
-                let mut file = std::fs::File::open(path).unwrap();
-                compression::Context::autocompress(
-                    &mut file,
-                    &mut decompressed,
-                    compression::CompressionType::None,
-                )
-                .unwrap();
-                // Open Vec<u8> as ar archive
-                ar::Archive::new(Cursor::new(decompressed))
-            })
-            .await?
+            debug!("decompressing deb into memory...");
+            let mut decompressed = vec![];
+            // Decompress deb into memory
+            let mut file = File::open(path).await?;
+            smoosh::recompress(&mut file, &mut decompressed, CompressionType::None).await?;
+            // Open Vec<u8> as ar archive
+            ar::Archive::new(Cursor::new(decompressed))
         };
         while let Some(entry) = archive.next_entry() {
             let mut ar_entry = entry?;
@@ -112,7 +105,7 @@ impl DebArtifact {
                 let decompressed_artifact = TarballProducer {
                     name: "deb data.tar decompressed".to_string(),
                     path: decompressed_tarball,
-                    compression: compression::CompressionType::None,
+                    compression: CompressionType::None,
                     injections: vec![],
                 }
                 .produce_from(&TarballArtifact {
@@ -315,7 +308,7 @@ impl ArtifactProducer for DebProducer {
         let _tar_artifact = TarballProducer {
             name: "data.tar.gz".to_string(),
             path: data_tar.clone(),
-            compression: compression::CompressionType::Gzip,
+            compression: CompressionType::Gzip,
             injections: self.injections.clone(),
         }
         .produce_from(previous)

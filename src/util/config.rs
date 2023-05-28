@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use eyre::{eyre, Result};
 use floppy_disk::{FloppyDisk, FloppyMetadata, FloppyOpenOptions};
 use serde::{Deserialize, Serialize};
+use smoosh::CompressionType;
 use tokio::fs::File;
 use tokio::io::AsyncReadExt;
 use tracing::*;
@@ -14,8 +15,6 @@ use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::rpm::{RpmArtifact, RpmProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
 use crate::fs::{InternalFileType, MemFS};
-
-use super::compression::CompressionType;
 
 #[derive(Debug)]
 pub struct PeckishConfig {
@@ -336,7 +335,7 @@ impl OutputProducer {
 #[serde(tag = "type", rename_all = "snake_case")]
 enum ConfigCompression {
     None,
-    Brotli,
+    Bzip,
     Deflate,
     Gzip,
     Xz,
@@ -349,12 +348,12 @@ impl Into<CompressionType> for ConfigCompression {
     fn into(self) -> CompressionType {
         match self {
             ConfigCompression::None => CompressionType::None,
-            ConfigCompression::Brotli => CompressionType::Brotli,
             ConfigCompression::Deflate => CompressionType::Deflate,
             ConfigCompression::Gzip => CompressionType::Gzip,
             ConfigCompression::Xz => CompressionType::Xz,
             ConfigCompression::Zlib => CompressionType::Zlib,
             ConfigCompression::Zstd => CompressionType::Zstd,
+            ConfigCompression::Bzip => CompressionType::Bzip,
         }
     }
 }

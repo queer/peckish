@@ -8,13 +8,13 @@ use floppy_disk::FloppyMetadata;
 use floppy_disk::FloppyOpenOptions;
 use floppy_disk::FloppyUnixMetadata;
 use floppy_disk::FloppyUnixPermissions;
+use smoosh::CompressionType;
 use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 use tracing::*;
 
 use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util;
-use crate::util::compression;
 use crate::util::config::Injection;
 use crate::util::{traverse_memfs, Fix};
 
@@ -45,17 +45,15 @@ impl Artifact for TarballArtifact {
         let decompress_tmpdir = TempDir::new().await?;
         let decompressed_tarball = decompress_tmpdir.path_view().join("decompressed.tar");
         {
-            let mut decompress_file = File::create(&decompressed_tarball).await?.into_std().await;
-            let mut compressed_file = File::open(&self.path).await?.into_std().await;
+            let mut decompress_file = File::create(&decompressed_tarball).await?;
+            let mut compressed_file = File::open(&self.path).await?;
 
-            let join_handle = tokio::task::spawn_blocking(move || {
-                compression::Context::autocompress(
-                    &mut compressed_file,
-                    &mut decompress_file,
-                    compression::CompressionType::None,
-                )
-            });
-            join_handle.await??;
+            smoosh::recompress(
+                &mut compressed_file,
+                &mut decompress_file,
+                CompressionType::None,
+            )
+            .await?;
         }
 
         let mut archive = Archive::new(File::open(&decompressed_tarball).await.map_err(Fix::Io)?);
@@ -145,7 +143,7 @@ impl SelfBuilder for TarballArtifactBuilder {
 pub struct TarballProducer {
     pub name: String,
     pub path: PathBuf,
-    pub compression: compression::CompressionType,
+    pub compression: CompressionType,
     pub injections: Vec<Injection>,
 }
 
@@ -272,7 +270,7 @@ impl SelfValidation for TarballProducer {
 pub struct TarballProducerBuilder {
     name: String,
     path: PathBuf,
-    compression: compression::CompressionType,
+    compression: CompressionType,
     injections: Vec<Injection>,
 }
 
@@ -283,7 +281,7 @@ impl TarballProducerBuilder {
         self
     }
 
-    pub fn compression(mut self, compression: compression::CompressionType) -> Self {
+    pub fn compression(mut self, compression: CompressionType) -> Self {
         self.compression = compression;
         self
     }
@@ -301,7 +299,7 @@ impl SelfBuilder for TarballProducerBuilder {
         Self {
             name: name.into(),
             path: PathBuf::from(""),
-            compression: compression::CompressionType::None,
+            compression: CompressionType::None,
             injections: vec![],
         }
     }

@@ -108,7 +108,7 @@ impl MemFS {
             } else {
                 memfs_path.to_path_buf()
             };
-            info!("{} -> {}", path.display(), memfs_path.display());
+            debug!("{} -> {}", path.display(), memfs_path.display());
             let file_type = self.determine_file_type_from_filesystem(path).await?;
             if file_type == InternalFileType::Dir {
                 self.copy_dir_to_memfs(path, &memfs_path).await?;

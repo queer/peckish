@@ -2,11 +2,12 @@ use std::path::PathBuf;
 
 use eyre::Result;
 use regex::Regex;
+use smoosh::CompressionType;
 use tracing::*;
 
 use crate::fs::MemFS;
+use crate::util;
 use crate::util::config::Injection;
-use crate::util::{self, compression};
 
 use super::tarball::{TarballArtifact, TarballProducer};
 use super::{get_artifact_size, Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
@@ -220,7 +221,7 @@ impl ArtifactProducer for ArchProducer {
         TarballProducer {
             name: format!("{}-tarball-producer", self.name),
             path: self.path.clone(),
-            compression: compression::CompressionType::Zstd,
+            compression: CompressionType::Zstd,
             injections: new_injections,
         }
         .produce_from(previous)

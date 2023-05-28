@@ -95,8 +95,9 @@ mod tests {
     use std::path::PathBuf;
 
     use eyre::Result;
+    use smoosh::CompressionType;
 
-    use crate::util::{compression, Fix};
+    use crate::util::Fix;
 
     use super::*;
 
@@ -116,7 +117,7 @@ mod tests {
         let tarball_producer = tarball::TarballProducer {
             name: "test-tarball-producer".into(),
             path: "test.tar.gz".into(),
-            compression: compression::CompressionType::Gzip,
+            compression: CompressionType::Gzip,
             injections: vec![],
         };
 

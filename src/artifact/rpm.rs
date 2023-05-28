@@ -6,11 +6,11 @@ use floppy_disk::{
     FloppyDisk, FloppyDiskUnixExt, FloppyFile, FloppyOpenOptions, FloppyUnixPermissions,
 };
 use regex::Regex;
+use smoosh::CompressionType;
 use tracing::*;
 
 use crate::artifact::Artifact;
 use crate::fs::{MemFS, TempDir};
-use crate::util::compression;
 use crate::util::config::Injection;
 
 use super::file::FileProducer;
@@ -46,16 +46,12 @@ impl Artifact for RpmArtifact {
 
         let mut cpio_data = vec![];
 
-        let join_handle = tokio::task::spawn_blocking(move || {
-            compression::Context::autocompress(
-                &mut pkg.content.as_slice(),
-                &mut cpio_data,
-                compression::CompressionType::None,
-            )
-            .unwrap();
-            cpio_data
-        });
-        let cpio_data = join_handle.await?;
+        smoosh::recompress(
+            &mut pkg.content.as_slice(),
+            &mut cpio_data,
+            CompressionType::None,
+        )
+        .await?;
 
         debug!("building cpio reader from {} bytes", cpio_data.len());
 
@@ -75,16 +71,12 @@ impl Artifact for RpmArtifact {
                 .await?;
             let rpm_file_content = file.file().to_vec();
             let mut buf = vec![];
-            let join_handle = tokio::task::spawn_blocking(move || {
-                compression::Context::autocompress(
-                    &mut rpm_file_content.as_slice(),
-                    &mut buf,
-                    compression::CompressionType::None,
-                )
-                .unwrap();
-                buf
-            });
-            let buf = join_handle.await?;
+            smoosh::recompress(
+                &mut rpm_file_content.as_slice(),
+                &mut buf,
+                CompressionType::None,
+            )
+            .await?;
             mem_file.write_all(&buf).await?;
             mem_file
                 .set_permissions(MemPermissions::from_mode(file.mode().bits()))
