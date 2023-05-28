@@ -2,8 +2,8 @@ use std::io::Cursor;
 use std::path::PathBuf;
 
 use eyre::Result;
+use floppy_disk::{FloppyDisk, FloppyOpenOptions};
 use regex::Regex;
-use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_tar::Header;
@@ -52,8 +52,8 @@ impl Artifact for DebArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        let fs = MemFS::new();
-        self.extract_deb_to_memfs(&fs).await?;
+        let mut fs = MemFS::new();
+        self.extract_deb_to_memfs(&mut fs).await?;
 
         Ok(fs)
     }
@@ -68,7 +68,7 @@ impl Artifact for DebArtifact {
 }
 
 impl DebArtifact {
-    async fn extract_deb_to_memfs(&self, fs: &MemFS) -> Result<()> {
+    async fn extract_deb_to_memfs(&self, fs: &mut MemFS) -> Result<()> {
         let mut archive = {
             let path = self.path.clone();
             tokio::task::spawn_blocking(move || {
@@ -371,12 +371,17 @@ impl ArtifactProducer for DebProducer {
         info!("computing checksums...");
         // Compute the md5sums of every file in the memfs
         let mut md5sums = vec![];
-        let memfs = previous.extract().await?;
-        let memfs = self.inject(&memfs).await?;
+        let mut memfs = previous.extract().await?;
+        let memfs = self.inject(&mut memfs).await?;
         let paths = traverse_memfs(memfs, &PathBuf::from("/"), None).await?;
         for path in paths {
             if memfs.determine_file_type(&path).await? == InternalFileType::File {
-                let mut file = memfs.as_ref().open_file(&path).await?;
+                let mut file = memfs
+                    .as_ref()
+                    .new_open_options()
+                    .read(true)
+                    .open(&path)
+                    .await?;
                 let mut buf = Vec::new();
                 file.read_to_end(&mut buf).await?;
                 let md5sum = md5::compute(buf);

@@ -2,7 +2,10 @@ use std::os::unix::prelude::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use eyre::Result;
-use rsfs_tokio::GenFS;
+use floppy_disk::{
+    FloppyDisk, FloppyFile, FloppyMetadata, FloppyOpenOptions, FloppyUnixMetadata,
+    FloppyUnixPermissions,
+};
 use tracing::*;
 
 use crate::fs::{InternalFileType, MemFS};
@@ -33,7 +36,7 @@ impl Artifact for FileArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        let fs = MemFS::new();
+        let mut fs = MemFS::new();
 
         debug!("copying {} paths to memfs!", self.paths.len());
 
@@ -157,9 +160,9 @@ impl ArtifactProducer for FileProducer {
     }
 
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<FileArtifact> {
-        let memfs = previous.extract().await?;
+        let mut memfs = previous.extract().await?;
         debug!("injecting memfs");
-        let memfs = self.inject(&memfs).await?;
+        let memfs = self.inject(&mut memfs).await?;
         debug!("traversing memfs");
         let paths =
             traverse_memfs(memfs, &PathBuf::from("/"), self.preserve_empty_directories).await?;
@@ -171,9 +174,6 @@ impl ArtifactProducer for FileProducer {
 
         let mut output_paths = vec![];
         for path in &paths {
-            use rsfs_tokio::unix_ext::PermissionsExt;
-            use rsfs_tokio::{File, Metadata};
-
             debug!("processing path: {path:?} -> {:?}", self.path);
             let mut full_path = PathBuf::from("/");
             full_path.push(&self.path);
@@ -208,12 +208,18 @@ impl ArtifactProducer for FileProducer {
             if file_type == InternalFileType::File {
                 debug!("writing file to {full_path:?}");
                 let mut file = tokio::fs::File::create(&full_path).await?;
-                let mut file_handle = fs.open_file(path).await?;
+                let mut file_handle = fs
+                    .new_open_options()
+                    .write(true)
+                    .create(true)
+                    .open(path)
+                    .await?;
                 tokio::io::copy(&mut file_handle, &mut file).await?;
 
                 // Set permissions
+                let metadata = file_handle.metadata().await?;
                 file.set_permissions(std::fs::Permissions::from_mode(
-                    file_handle.metadata().await?.permissions().mode(),
+                    metadata.permissions().await.mode(),
                 ))
                 .await?;
 
@@ -236,7 +242,7 @@ impl ArtifactProducer for FileProducer {
 
                 // Set permissions
                 let metadata = fs.metadata(path).await?;
-                let permissions = metadata.permissions();
+                let permissions = metadata.permissions().await;
                 tokio::fs::set_permissions(
                     &full_path,
                     std::fs::Permissions::from_mode(permissions.mode()),

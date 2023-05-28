@@ -1,10 +1,11 @@
 use std::path::{Path, PathBuf};
 
 use eyre::{eyre, Result};
+use floppy_disk::mem::MemPermissions;
+use floppy_disk::{
+    FloppyDisk, FloppyDiskUnixExt, FloppyFile, FloppyOpenOptions, FloppyUnixPermissions,
+};
 use regex::Regex;
-use rsfs_tokio::mem::Permissions;
-use rsfs_tokio::unix_ext::{FSMetadataExt, PermissionsExt};
-use rsfs_tokio::{File, GenFS};
 use tracing::*;
 
 use crate::artifact::Artifact;
@@ -59,13 +60,19 @@ impl Artifact for RpmArtifact {
         debug!("building cpio reader from {} bytes", cpio_data.len());
 
         for file in cpio_reader::iter_files(&cpio_data) {
+            let floppy_disk = fs.as_ref();
             let path = Path::join(Path::new("/"), Path::new(file.name()).strip_prefix(".")?);
             if let Some(parent) = path.parent() {
-                fs.as_ref().create_dir_all(parent).await?;
+                floppy_disk.create_dir_all(parent).await?;
             }
 
             debug!("extracting file: {:?}", path.display());
-            let mut mem_file = fs.as_ref().create_file(file.name()).await?;
+            let mut mem_file = floppy_disk
+                .new_open_options()
+                .create(true)
+                .write(true)
+                .open(file.name())
+                .await?;
             let rpm_file_content = file.file().to_vec();
             let mut buf = vec![];
             let join_handle = tokio::task::spawn_blocking(move || {
@@ -80,12 +87,12 @@ impl Artifact for RpmArtifact {
             let buf = join_handle.await?;
             mem_file.write_all(&buf).await?;
             mem_file
-                .set_permissions(Permissions::from_mode(file.mode().bits()))
+                .set_permissions(MemPermissions::from_mode(file.mode().bits()))
                 .await?;
 
             let uid = file.uid();
             let gid = file.gid();
-            mem_file.chown(uid, gid).await?;
+            floppy_disk.chown(path, uid, gid).await?;
             debug!("set uid and gid to {} and {}", uid, gid);
         }
 

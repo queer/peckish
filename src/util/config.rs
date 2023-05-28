@@ -1,11 +1,10 @@
 use std::path::{Path, PathBuf};
 
 use eyre::{eyre, Result};
-use rsfs_tokio::unix_ext::GenFSExt;
-use rsfs_tokio::{GenFS, Metadata};
+use floppy_disk::{FloppyDisk, FloppyMetadata, FloppyOpenOptions};
 use serde::{Deserialize, Serialize};
 use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::io::AsyncReadExt;
 use tracing::*;
 
 use crate::artifact::arch::{ArchArtifact, ArchProducer};
@@ -407,7 +406,7 @@ pub enum Injection {
 }
 
 impl Injection {
-    pub async fn inject(&self, memfs: &MemFS) -> Result<()> {
+    pub async fn inject(&self, memfs: &mut MemFS) -> Result<()> {
         let fs = memfs.as_ref();
         match self {
             Injection::Move { src, dest } => {
@@ -433,13 +432,17 @@ impl Injection {
             Injection::Touch { path } => {
                 debug!("touching {:?}", path);
                 fs.create_dir_all(path.parent().unwrap()).await?;
-                fs.create_file(path).await?;
+                fs.new_open_options()
+                    .create(true)
+                    .create_new(true)
+                    .open(path)
+                    .await?;
             }
 
             Injection::Delete { path } => {
                 debug!("deleting {:?}", path);
                 let metadata = fs.metadata(path).await?;
-                if metadata.is_dir() {
+                if metadata.is_dir().await {
                     fs.remove_dir_all(path).await?;
                 } else {
                     fs.remove_file(path).await?;
@@ -449,8 +452,7 @@ impl Injection {
             Injection::Create { path, content } => {
                 debug!("creating {:?} with content {:?}", path, content);
                 fs.create_dir_all(path.parent().unwrap()).await?;
-                let mut file = fs.create_file(path).await?;
-                file.write_all(content).await?;
+                fs.write(path, content).await?;
             }
 
             Injection::HostFile { src, dest } => {
@@ -502,7 +504,7 @@ impl Injection {
                 fs.rename(src, dest).await?;
             } else if src_type == InternalFileType::File && dest_type == InternalFileType::Dir {
                 let file_name = src.file_name().unwrap();
-                fs.rename(src, dest.join(file_name)).await?;
+                fs.rename(src, &dest.join(file_name)).await?;
             } else if src_type == InternalFileType::File && dest_type == InternalFileType::Symlink {
                 let dest = memfs.resolve_symlink(dest).await?;
                 Self::do_move_file(memfs, src, &dest, depth + 1).await?;

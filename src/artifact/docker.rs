@@ -3,8 +3,8 @@ use std::path::PathBuf;
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use eyre::Result;
+use floppy_disk::{FloppyDisk, FloppyOpenOptions};
 use regex::Regex;
-use rsfs_tokio::GenFS;
 use tokio::fs::File;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio_stream::StreamExt;
@@ -91,7 +91,11 @@ impl Artifact for DockerArtifact {
 
         // Collect layers
         info!("gathering docker layers...");
-        let mut manifest = basic_tar_fs.open_file("/manifest.json").await?;
+        let mut manifest = basic_tar_fs
+            .new_open_options()
+            .read(true)
+            .open("/manifest.json")
+            .await?;
         let mut buf = String::new();
         manifest.read_to_string(&mut buf).await?;
         let manifest: serde_json::Value = serde_json::from_str(&buf)?;
@@ -112,7 +116,12 @@ impl Artifact for DockerArtifact {
         let tmp = TempDir::new().await?;
         for layer in layers {
             // For each layer, extract it into the tmp directory.
-            let layer_tar = basic_tar_fs.open_file(&format!("/{}", layer)).await?;
+            let layer_tar = basic_tar_fs
+                .new_open_options()
+                .read(true)
+                .open(&format!("/{}", layer))
+                .await?;
+
             let tmp_clone = tmp.path_view();
             let mut layer_tar = tokio_tar::Archive::new(layer_tar);
             layer_tar.unpack(&tmp_clone).await?;
@@ -122,7 +131,7 @@ impl Artifact for DockerArtifact {
         // We don't reuse the file artifact here because we need to control how
         // the file paths are computed.
 
-        let fs = MemFS::new();
+        let mut fs = MemFS::new();
 
         debug!("copying docker layers to memfs!");
 
@@ -428,12 +437,9 @@ fn split_image_name_into_repo_and_tag(name: &str) -> (&str, &str) {
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-
     use super::*;
 
     use eyre::Result;
-    use rsfs_tokio::GenFS;
 
     #[ctor::ctor]
     fn init() {
@@ -449,7 +455,12 @@ mod tests {
         {
             let fs = artifact.extract().await?;
             let fs = fs.as_ref();
-            assert!(fs.open_file(Path::new("/bin/sh")).await.is_ok());
+            assert!(fs
+                .new_open_options()
+                .read(true)
+                .open("/bin/sh")
+                .await
+                .is_ok());
         }
 
         let new_image = "peckish-dev/repackaged".to_string();

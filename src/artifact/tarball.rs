@@ -3,8 +3,11 @@ use std::time::SystemTime;
 
 use eyre::eyre;
 use eyre::Result;
-use rsfs_tokio::unix_ext::PermissionsExt;
-use rsfs_tokio::{GenFS, Metadata};
+use floppy_disk::FloppyDisk;
+use floppy_disk::FloppyMetadata;
+use floppy_disk::FloppyOpenOptions;
+use floppy_disk::FloppyUnixMetadata;
+use floppy_disk::FloppyUnixPermissions;
 use tokio::fs::File;
 use tokio_tar::{Archive, EntryType, Header};
 use tracing::*;
@@ -31,7 +34,7 @@ impl Artifact for TarballArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        let fs = MemFS::new();
+        let mut fs = MemFS::new();
 
         // Unpack TAR to a temporary archive, then copy it to the memory
         // filesystem.
@@ -160,8 +163,8 @@ impl ArtifactProducer for TarballProducer {
 
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
         info!("producing {}", self.path.display());
-        let memfs = previous.extract().await?;
-        let memfs = self.inject(&memfs).await?;
+        let mut memfs = previous.extract().await?;
+        let memfs = self.inject(&mut memfs).await?;
         let paths = traverse_memfs(memfs, &PathBuf::from("/"), Some(true)).await?;
 
         if let Some(parent) = self.path.parent() {
@@ -186,10 +189,12 @@ impl ArtifactProducer for TarballProducer {
                 let metadata = fs.metadata(path).await?;
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
-                header.set_mode(metadata.permissions().mode());
+                let permissions = metadata.permissions().await;
+                header.set_mode(permissions.mode());
                 header.set_mtime(util::maybe_clamp_timestamp(
                     metadata
-                        .modified()?
+                        .modified()
+                        .await?
                         .duration_since(SystemTime::UNIX_EPOCH)?
                         .as_secs(),
                 )?);
@@ -203,18 +208,17 @@ impl ArtifactProducer for TarballProducer {
                 archive_builder.append(&header, empty).await?;
             } else if file_type == InternalFileType::File {
                 let metadata = fs.metadata(path).await?;
-                use rsfs_tokio::File;
-
                 let mut data = Vec::new();
-                let mut stream = fs.open_file(path).await?;
+                let mut stream = fs.new_open_options().read(true).open(path).await?;
                 tokio::io::copy(&mut stream, &mut data).await?;
 
                 header.set_entry_type(EntryType::Regular);
                 header.set_size(data.len() as u64);
-                header.set_mode(stream.metadata().await?.permissions().mode());
+                header.set_mode(metadata.permissions().await.mode());
                 header.set_mtime(util::maybe_clamp_timestamp(
                     metadata
-                        .modified()?
+                        .modified()
+                        .await?
                         .duration_since(SystemTime::UNIX_EPOCH)?
                         .as_secs(),
                 )?);

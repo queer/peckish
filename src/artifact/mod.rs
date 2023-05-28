@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use eyre::Result;
-use rsfs_tokio::{GenFS, Metadata};
+use floppy_disk::{FloppyDisk, FloppyMetadata};
 use tracing::*;
 
 use crate::fs::MemFS;
@@ -11,6 +11,7 @@ use crate::util::traverse_memfs;
 pub mod arch;
 pub mod deb;
 pub mod docker;
+pub mod ext4;
 pub mod file;
 pub mod rpm;
 pub mod tarball;
@@ -46,7 +47,7 @@ pub trait ArtifactProducer: SelfValidation {
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output>;
 
     /// Inject this producer's custom changes into the memfs.
-    async fn inject<'a>(&self, fs: &'a MemFS) -> Result<&'a MemFS> {
+    async fn inject<'a>(&self, fs: &'a mut MemFS) -> Result<&'a MemFS> {
         for injection in self.injections() {
             debug!("applying injection {injection:?}");
             injection.inject(fs).await?;
@@ -83,7 +84,7 @@ pub async fn get_artifact_size(artifact: &dyn Artifact) -> Result<u64> {
     let fs = memfs.as_ref();
     for path in paths {
         let metadata = fs.metadata(&path).await?;
-        size += metadata.len();
+        size += metadata.len().await;
     }
 
     Ok(size)

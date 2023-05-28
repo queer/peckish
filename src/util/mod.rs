@@ -1,9 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use eyre::{eyre, Result};
-use rsfs_tokio::{DirEntry, GenFS, Metadata};
+use floppy_disk::{FloppyDirEntry, FloppyDisk, FloppyMetadata, FloppyReadDir};
 use thiserror::Error;
-use tokio_stream::StreamExt;
 use tracing::*;
 
 use crate::fs::MemFS;
@@ -31,23 +30,21 @@ pub async fn traverse_memfs(
     debug!("traversing memfs from {root_path:?}");
 
     let mut read_dir = fs.read_dir(root_path).await?;
-    while let Some(entry) = read_dir.next().await {
-        if let Some(entry) = entry? {
-            let metadata = entry.metadata().await?;
+    while let Some(entry) = read_dir.next_entry().await? {
+        let metadata = entry.metadata().await?;
 
-            #[allow(clippy::if_same_then_else)]
-            if metadata.is_dir() {
-                let mut sub_paths =
-                    traverse_memfs(memfs, &entry.path(), push_directory_entries).await?;
-                if let Some(true) = push_directory_entries {
-                    paths.push(entry.path());
-                }
-                paths.append(&mut sub_paths);
-            } else if metadata.is_file() {
-                paths.push(entry.path());
-            } else if fs.read_link(entry.path()).await.is_ok() {
+        #[allow(clippy::if_same_then_else)]
+        if metadata.is_dir().await {
+            let mut sub_paths =
+                traverse_memfs(memfs, &entry.path(), push_directory_entries).await?;
+            if let Some(true) = push_directory_entries {
                 paths.push(entry.path());
             }
+            paths.append(&mut sub_paths);
+        } else if metadata.is_file().await {
+            paths.push(entry.path());
+        } else if fs.read_link(entry.path()).await.is_ok() {
+            paths.push(entry.path());
         }
     }
 

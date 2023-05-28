@@ -3,14 +3,12 @@ use std::path::{Path, PathBuf};
 
 use eyre::eyre;
 use eyre::Result;
-use rsfs_tokio::unix_ext::{FSMetadataExt, GenFSExt};
-use rsfs_tokio::{FileType, GenFS, Metadata};
+use floppy_disk::mem::MemPermissions;
+use floppy_disk::prelude::*;
 use tokio::fs::read_link;
 use tracing::*;
 
 use crate::util::Fix;
-
-pub type InMemoryUnixFS = rsfs_tokio::mem::unix::FS;
 
 pub struct TempDir {
     path: PathBuf,
@@ -62,15 +60,16 @@ impl std::ops::Deref for TempDir {
 /// A `MemFS` is a memory-backed filesystem. It is a wrapper around
 /// `rsfs_tokio` that helps with manipulation of things like temporary paths
 /// that would otherwise be difficult to know about.
-#[derive(Clone, Debug, Default)]
+#[derive(Debug)]
 pub struct MemFS {
-    fs: InMemoryUnixFS,
+    fs: MemFloppyDisk,
 }
 
 impl MemFS {
+    #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         MemFS {
-            fs: InMemoryUnixFS::new(),
+            fs: MemFloppyDisk::new(),
         }
     }
 
@@ -86,7 +85,7 @@ impl MemFS {
     ///              filesystem with the view path stripped from the beginning.
     // TODO: What about xattrs?
     pub async fn copy_files_from_paths(
-        &self,
+        &mut self,
         paths: &Vec<PathBuf>,
         view_of: Option<PathBuf>,
         dest: Option<PathBuf>,
@@ -125,15 +124,23 @@ impl MemFS {
         Ok(())
     }
 
-    pub(crate) async fn copy_file_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
-        use rsfs_tokio::unix_ext::PermissionsExt;
-
+    pub(crate) async fn copy_file_to_memfs(
+        &mut self,
+        path: &Path,
+        memfs_path: &Path,
+    ) -> Result<()> {
         debug!("creating file {path:?}");
         if let Some(memfs_parent) = memfs_path.parent() {
             self.fs.create_dir_all(memfs_parent).await?;
         }
 
-        let mut file_handle = self.fs.create_file(memfs_path).await?;
+        let mut file_handle = self
+            .fs
+            .new_open_options()
+            .create(true)
+            .write(true)
+            .open(memfs_path)
+            .await?;
         let path_clone = path.to_path_buf();
         let mut file = tokio::fs::File::open(path_clone).await?;
         tokio::io::copy(&mut file, &mut file_handle)
@@ -141,32 +148,27 @@ impl MemFS {
             .map_err(Fix::Io)?;
 
         let mode = file.metadata().await?.permissions().mode();
-        let permissions = rsfs_tokio::mem::Permissions::from_mode(mode);
+        let permissions = MemPermissions::from_mode(mode);
         self.fs.set_permissions(memfs_path, permissions).await?;
 
-        let mem_file = self.fs.open_file(memfs_path).await?;
         let host_file = tokio::fs::metadata(path).await?;
         let uid = host_file.uid();
         let gid = host_file.gid();
-        mem_file.chown(uid, gid).await?;
-
-        mem_file.touch_utime().await?;
+        self.fs.chown(memfs_path, uid, gid).await?;
 
         Ok(())
     }
 
     #[async_recursion::async_recursion]
-    pub(crate) async fn copy_dir_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
-        use rsfs_tokio::unix_ext::PermissionsExt;
-
+    pub(crate) async fn copy_dir_to_memfs(&mut self, path: &Path, memfs_path: &Path) -> Result<()> {
         self.fs.create_dir_all(memfs_path).await?;
 
         let host_dir = tokio::fs::metadata(&path).await?;
         let mode = host_dir.permissions().mode();
-        let permissions = rsfs_tokio::mem::Permissions::from_mode(mode);
+        let permissions = MemPermissions::from_mode(mode);
         self.fs.set_permissions(memfs_path, permissions).await?;
         self.fs
-            .set_ownership(memfs_path, host_dir.uid(), host_dir.gid())
+            .chown(memfs_path, host_dir.uid(), host_dir.gid())
             .await?;
 
         let mut files = tokio::fs::read_dir(path).await?;
@@ -190,7 +192,7 @@ impl MemFS {
     pub(crate) async fn add_symlink_to_memfs(&self, path: &Path, memfs_path: &Path) -> Result<()> {
         let link = read_link(&path).await.map_err(Fix::Io)?;
         debug!("linking {memfs_path:?} to {link:?}");
-        self.fs.symlink(link, memfs_path).await?;
+        self.fs.symlink(link, memfs_path.into()).await?;
 
         Ok(())
     }
@@ -199,7 +201,7 @@ impl MemFS {
         match self.fs.read_link(path).await {
             Ok(_) => Ok(InternalFileType::Symlink),
             Err(_) => {
-                let file_type = self.fs.metadata(path).await?.file_type();
+                let file_type = self.fs.metadata(path).await?.file_type().await;
                 if file_type.is_symlink() {
                     Ok(InternalFileType::Symlink)
                 } else if file_type.is_dir() {
@@ -254,8 +256,8 @@ impl MemFS {
     }
 }
 
-impl AsRef<InMemoryUnixFS> for MemFS {
-    fn as_ref(&self) -> &InMemoryUnixFS {
+impl AsRef<MemFloppyDisk> for MemFS {
+    fn as_ref(&self) -> &MemFloppyDisk {
         &self.fs
     }
 }
@@ -265,42 +267,4 @@ pub enum InternalFileType {
     Dir,
     File,
     Symlink,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    use eyre::Result;
-
-    #[tokio::test]
-    async fn test_utime_works() -> Result<()> {
-        let memfs = MemFS::new();
-        let path = Path::new("/test");
-
-        let file = memfs.fs.create_file(path).await?;
-        tokio::time::sleep(std::time::Duration::from_secs(1)).await;
-        file.touch_utime().await?;
-
-        let metadata = memfs.fs.metadata(path).await?;
-        let utime = metadata.modified().unwrap();
-        assert!(utime.elapsed().unwrap().as_secs() < 1);
-
-        Ok(())
-    }
-
-    #[tokio::test]
-    async fn test_ownership_update_works() -> Result<()> {
-        let memfs = MemFS::new();
-        let path = Path::new("/test");
-
-        let file = memfs.fs.create_file(path).await?;
-        file.chown(420, 69).await?;
-
-        let metadata = memfs.fs.metadata(path).await?;
-        assert_eq!(metadata.uid()?, 420);
-        assert_eq!(metadata.gid()?, 69);
-
-        Ok(())
-    }
 }
