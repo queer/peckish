@@ -36,7 +36,7 @@ serde_json = "1.0.96"
 serde_yaml = "0.9.21"
 strum = { version = "0.24.1", features = ["derive"] }
 thiserror = "1.0.40"
-tokio = { version = "1.28.1", features = ["full"] }
+tokio = { version = "1.28.2", features = ["full"] }
 tokio-stream = "0.1.14"
 tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
 tokio-util = { version = "0.7.8", features = ["codec"] }
