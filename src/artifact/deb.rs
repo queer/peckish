@@ -2,7 +2,8 @@ use std::io::Cursor;
 use std::path::PathBuf;
 
 use eyre::Result;
-use floppy_disk::{FloppyDisk, FloppyOpenOptions};
+use floppy_disk::mem::MemOpenOptions;
+use floppy_disk::FloppyOpenOptions;
 use regex::Regex;
 use smoosh::CompressionType;
 use tokio::fs::File;
@@ -369,11 +370,9 @@ impl ArtifactProducer for DebProducer {
         let paths = traverse_memfs(memfs, &PathBuf::from("/"), None).await?;
         for path in paths {
             if memfs.determine_file_type(&path).await? == InternalFileType::File {
-                let mut file = memfs
-                    .as_ref()
-                    .new_open_options()
+                let mut file = MemOpenOptions::new()
                     .read(true)
-                    .open(&path)
+                    .open(memfs.as_ref(), &path)
                     .await?;
                 let mut buf = Vec::new();
                 file.read_to_end(&mut buf).await?;

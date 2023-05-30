@@ -48,6 +48,7 @@ async fn main() -> Result<()> {
         .compact()
         .finish();
     tracing::subscriber::set_global_default(subscriber).expect("setting default subscriber failed");
+    tracing_log::LogTracer::init()?;
 
     let args = Input::parse();
 

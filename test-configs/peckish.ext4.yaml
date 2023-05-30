@@ -1,0 +1,17 @@
+metadata:
+  name: "hello-world"
+  version: "0.0.1-1"
+  description: "Hello, world!"
+  author: "amy"
+  arch: "amd64"
+  license: "Apache-2.0"
+
+input:
+  name: "hello-world"
+  type: "docker"
+  image: "hello-world:latest"
+
+output:
+  - name: "ext image!!!"
+    type: "ext4"
+    path: "./test_output_pls_ignore/hello-world.ext4"

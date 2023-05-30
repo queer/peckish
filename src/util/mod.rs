@@ -33,14 +33,14 @@ pub async fn traverse_memfs(
         let metadata = entry.metadata().await?;
 
         #[allow(clippy::if_same_then_else)]
-        if metadata.is_dir().await {
+        if metadata.is_dir() {
             let mut sub_paths =
                 traverse_memfs(memfs, &entry.path(), push_directory_entries).await?;
             if let Some(true) = push_directory_entries {
                 paths.push(entry.path());
             }
             paths.append(&mut sub_paths);
-        } else if metadata.is_file().await {
+        } else if metadata.is_file() {
             paths.push(entry.path());
         } else if fs.read_link(entry.path()).await.is_ok() {
             paths.push(entry.path());

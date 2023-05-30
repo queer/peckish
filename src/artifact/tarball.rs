@@ -3,6 +3,7 @@ use std::time::SystemTime;
 
 use eyre::eyre;
 use eyre::Result;
+use floppy_disk::mem::MemOpenOptions;
 use floppy_disk::FloppyDisk;
 use floppy_disk::FloppyMetadata;
 use floppy_disk::FloppyOpenOptions;
@@ -187,12 +188,11 @@ impl ArtifactProducer for TarballProducer {
                 let metadata = fs.metadata(path).await?;
                 header.set_entry_type(EntryType::Directory);
                 header.set_size(0);
-                let permissions = metadata.permissions().await;
+                let permissions = metadata.permissions();
                 header.set_mode(permissions.mode());
                 header.set_mtime(util::maybe_clamp_timestamp(
                     metadata
-                        .modified()
-                        .await?
+                        .modified()?
                         .duration_since(SystemTime::UNIX_EPOCH)?
                         .as_secs(),
                 )?);
@@ -207,16 +207,15 @@ impl ArtifactProducer for TarballProducer {
             } else if file_type == InternalFileType::File {
                 let metadata = fs.metadata(path).await?;
                 let mut data = Vec::new();
-                let mut stream = fs.new_open_options().read(true).open(path).await?;
+                let mut stream = MemOpenOptions::new().read(true).open(fs, path).await?;
                 tokio::io::copy(&mut stream, &mut data).await?;
 
                 header.set_entry_type(EntryType::Regular);
                 header.set_size(data.len() as u64);
-                header.set_mode(metadata.permissions().await.mode());
+                header.set_mode(metadata.permissions().mode());
                 header.set_mtime(util::maybe_clamp_timestamp(
                     metadata
-                        .modified()
-                        .await?
+                        .modified()?
                         .duration_since(SystemTime::UNIX_EPOCH)?
                         .as_secs(),
                 )?);

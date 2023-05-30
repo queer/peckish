@@ -1,6 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use eyre::{eyre, Result};
+use floppy_disk::mem::MemOpenOptions;
 use floppy_disk::{FloppyDisk, FloppyMetadata, FloppyOpenOptions};
 use serde::{Deserialize, Serialize};
 use smoosh::CompressionType;
@@ -11,6 +12,7 @@ use tracing::*;
 use crate::artifact::arch::{ArchArtifact, ArchProducer};
 use crate::artifact::deb::{DebArtifact, DebProducer};
 use crate::artifact::docker::{DockerArtifact, DockerProducer};
+use crate::artifact::ext4::{Ext4Artifact, Ext4Producer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::rpm::{RpmArtifact, RpmProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
@@ -93,6 +95,10 @@ enum InputArtifact {
         name: String,
         path: PathBuf,
     },
+    Ext4 {
+        name: String,
+        path: PathBuf,
+    },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -137,6 +143,10 @@ impl Into<ConfiguredArtifact> for InputArtifact {
                 path,
                 spec: None,
             }),
+
+            InputArtifact::Ext4 { name, path } => {
+                ConfiguredArtifact::Ext4(Ext4Artifact { name, path })
+            }
         }
     }
 }
@@ -197,6 +207,13 @@ enum OutputProducer {
         path: PathBuf,
         #[serde(default)]
         spec: Option<String>,
+        #[serde(default)]
+        injections: Vec<Injection>,
+    },
+
+    Ext4 {
+        name: String,
+        path: PathBuf,
         #[serde(default)]
         injections: Vec<Injection>,
     },
@@ -300,6 +317,16 @@ impl OutputProducer {
                 dependencies: vec![],
                 injections: injections.clone(),
             }),
+
+            OutputProducer::Ext4 {
+                name,
+                path,
+                injections,
+            } => ConfiguredProducer::Ext4(Ext4Producer {
+                name: name.clone(),
+                path: path.clone(),
+                injections: injections.clone(),
+            }),
         }
     }
 
@@ -366,6 +393,7 @@ pub enum ConfiguredArtifact {
     Arch(ArchArtifact),
     Deb(DebArtifact),
     Rpm(RpmArtifact),
+    Ext4(Ext4Artifact),
 }
 
 #[derive(Debug, Clone)]
@@ -376,6 +404,7 @@ pub enum ConfiguredProducer {
     Arch(ArchProducer),
     Deb(DebProducer),
     Rpm(RpmProducer),
+    Ext4(Ext4Producer),
 }
 
 impl ConfiguredProducer {
@@ -387,6 +416,7 @@ impl ConfiguredProducer {
             ConfiguredProducer::Arch(producer) => &producer.name,
             ConfiguredProducer::Deb(producer) => &producer.name,
             ConfiguredProducer::Rpm(producer) => &producer.name,
+            ConfiguredProducer::Ext4(producer) => &producer.name,
         }
     }
 }
@@ -406,7 +436,7 @@ pub enum Injection {
 
 impl Injection {
     pub async fn inject(&self, memfs: &mut MemFS) -> Result<()> {
-        let fs = memfs.as_ref();
+        let fs = memfs.fs();
         match self {
             Injection::Move { src, dest } => {
                 debug!("moving {:?} to {:?}", src, dest);
@@ -431,17 +461,17 @@ impl Injection {
             Injection::Touch { path } => {
                 debug!("touching {:?}", path);
                 fs.create_dir_all(path.parent().unwrap()).await?;
-                fs.new_open_options()
+                MemOpenOptions::new()
                     .create(true)
                     .create_new(true)
-                    .open(path)
+                    .open(fs, path)
                     .await?;
             }
 
             Injection::Delete { path } => {
                 debug!("deleting {:?}", path);
                 let metadata = fs.metadata(path).await?;
-                if metadata.is_dir().await {
+                if metadata.is_dir() {
                     fs.remove_dir_all(path).await?;
                 } else {
                     fs.remove_file(path).await?;

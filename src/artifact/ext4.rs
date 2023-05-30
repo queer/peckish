@@ -1,11 +1,12 @@
 use std::path::PathBuf;
 
 use eyre::Result;
+use flail::ext::facade::ExtFacadeFloppyDisk;
 use tracing::*;
 
-use crate::fs::{InternalFileType, MemFS, TempDir};
+use crate::fs::disk::DiskDrive;
+use crate::fs::MemFS;
 use crate::util::config::Injection;
-use crate::util::{traverse_memfs, Fix};
 
 use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
@@ -22,9 +23,12 @@ impl Artifact for Ext4Artifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        let fs = MemFS::new();
+        let mut fs = MemFS::new();
 
-        todo!();
+        let floppy_disk = ExtFacadeFloppyDisk::new(&self.path)?;
+        let disk_drive = DiskDrive::new();
+
+        disk_drive.copy_between(&floppy_disk, fs.fs()).await?;
 
         Ok(fs)
     }
@@ -109,13 +113,13 @@ impl ArtifactProducer for Ext4Producer {
         info!("producing {}", self.path.display());
         let mut memfs = previous.extract().await?;
         let memfs = self.inject(&mut memfs).await?;
-        let paths = traverse_memfs(memfs, &PathBuf::from("/"), Some(true)).await?;
+        // we add 2M to the end *just* in case of space memes
+        let size = memfs.size().await? + (1_024 * 1_024 * 1_024 * 2);
 
-        if let Some(parent) = self.path.parent() {
-            tokio::fs::create_dir_all(parent).await?;
-        }
+        let output = ExtFacadeFloppyDisk::create(&self.path, size)?;
 
-        todo!();
+        let disk_drive = DiskDrive::new();
+        disk_drive.copy_between(memfs.as_ref(), &output).await?;
 
         Ok(Ext4Artifact {
             name: self.path.to_string_lossy().to_string(),

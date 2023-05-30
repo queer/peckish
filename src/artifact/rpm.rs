@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use eyre::{eyre, Result};
-use floppy_disk::mem::MemPermissions;
+use floppy_disk::mem::{MemOpenOptions, MemPermissions};
 use floppy_disk::{
     FloppyDisk, FloppyDiskUnixExt, FloppyFile, FloppyOpenOptions, FloppyUnixPermissions,
 };
@@ -63,11 +63,10 @@ impl Artifact for RpmArtifact {
             }
 
             debug!("extracting file: {:?}", path.display());
-            let mut mem_file = floppy_disk
-                .new_open_options()
+            let mut mem_file = MemOpenOptions::new()
                 .create(true)
                 .write(true)
-                .open(file.name())
+                .open(floppy_disk, file.name())
                 .await?;
             let rpm_file_content = file.file().to_vec();
             let mut buf = vec![];

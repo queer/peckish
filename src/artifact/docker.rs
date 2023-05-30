@@ -3,7 +3,8 @@ use std::path::PathBuf;
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
 use eyre::Result;
-use floppy_disk::{FloppyDisk, FloppyOpenOptions};
+use floppy_disk::mem::MemOpenOptions;
+use floppy_disk::FloppyOpenOptions;
 use regex::Regex;
 use smoosh::CompressionType;
 use tokio::fs::File;
@@ -91,10 +92,9 @@ impl Artifact for DockerArtifact {
 
         // Collect layers
         info!("gathering docker layers...");
-        let mut manifest = basic_tar_fs
-            .new_open_options()
+        let mut manifest = MemOpenOptions::new()
             .read(true)
-            .open("/manifest.json")
+            .open(basic_tar_fs, "/manifest.json")
             .await?;
         let mut buf = String::new();
         manifest.read_to_string(&mut buf).await?;
@@ -116,10 +116,9 @@ impl Artifact for DockerArtifact {
         let tmp = TempDir::new().await?;
         for layer in layers {
             // For each layer, extract it into the tmp directory.
-            let layer_tar = basic_tar_fs
-                .new_open_options()
+            let layer_tar = MemOpenOptions::new()
                 .read(true)
-                .open(&format!("/{}", layer))
+                .open(basic_tar_fs, &format!("/{}", layer))
                 .await?;
 
             let tmp_clone = tmp.path_view();
@@ -455,10 +454,9 @@ mod tests {
         {
             let fs = artifact.extract().await?;
             let fs = fs.as_ref();
-            assert!(fs
-                .new_open_options()
+            assert!(MemOpenOptions::new()
                 .read(true)
-                .open("/bin/sh")
+                .open(fs, "/bin/sh")
                 .await
                 .is_ok());
         }

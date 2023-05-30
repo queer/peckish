@@ -59,6 +59,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "android-tzdata"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e999941b234f3131b00bc13c22d06e8c5ff726d1b6318ac7eb276997bbb4fef0"
+
+[[package]]
 name = "android_system_properties"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -475,13 +481,13 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.24"
+version = "0.4.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e3c5919066adf22df73762e50cffcde3a758f2a848b113b586d1f86728b673b"
+checksum = "fdbc37d37da9e5bce8173f3a41b71d9bf3c674deebbaceacd0ebdabde76efb03"
 dependencies = [
+ "android-tzdata",
  "iana-time-zone",
  "js-sys",
- "num-integer",
  "num-traits",
  "serde",
  "time 0.1.45",
@@ -716,6 +722,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "dashmap"
+version = "5.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "907076dfda823b0b36d2a1bb5f90c96660a5bbcd7729e10727f07858f22c4edc"
+dependencies = [
+ "cfg-if",
+ "hashbrown",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core",
+]
+
+[[package]]
 name = "debug-ignore"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -923,9 +942,9 @@ dependencies = [
 
 [[package]]
 name = "flail"
-version = "0.2.5"
+version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "989495dcad576e9bb9933df0e36e8dbf46815c3dbcde30651cc6d850657ab835"
+checksum = "645c278f9d790ffc77429fc820225e3e7275292a4dccf040fb6701a88765bc1b"
 dependencies = [
  "async-trait",
  "bitflags 2.3.1",
@@ -961,9 +980,9 @@ dependencies = [
 
 [[package]]
 name = "floppy-disk"
-version = "0.1.3"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50f87d22b61786cdc54b4a27023b90bb2c748bf719376016bb6e20e3f1ddc1ab"
+checksum = "a70ccd9d50f4b1b89a6b362aeadf37e2316cf80489411ad4321daecaf0ce9901"
 dependencies = [
  "async-trait",
  "derivative",
@@ -1746,6 +1765,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "nyoom"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f43474fc94bd756a529dff0294aff78b3fe5ec4a0a2d4fd0f4bbe60901747567"
+dependencies = [
+ "color-eyre",
+ "dashmap",
+ "eyre",
+ "floppy-disk",
+ "futures",
+ "tokio",
+]
+
+[[package]]
 name = "object"
 version = "0.30.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1756,9 +1789,9 @@ dependencies = [
 
 [[package]]
 name = "once_cell"
-version = "1.17.1"
+version = "1.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b7e5500299e16ebb147ae15a00a942af264cf3688f47923b8fc2cd5858f23ad3"
+checksum = "9670a07f94779e00908f3e686eab508878ebb390ba6e604d3a284c00e8d0487b"
 
 [[package]]
 name = "opaque-debug"
@@ -1825,6 +1858,7 @@ dependencies = [
  "itertools",
  "md5",
  "nix",
+ "nyoom",
  "rand 0.8.5",
  "regex",
  "rpm",
@@ -1839,6 +1873,7 @@ dependencies = [
  "tokio-tar",
  "tokio-util",
  "tracing",
+ "tracing-log",
  "tracing-subscriber",
  "xz2",
  "zstd",

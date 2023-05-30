@@ -1,12 +1,10 @@
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use eyre::Result;
-use floppy_disk::{FloppyDisk, FloppyMetadata};
 use tracing::*;
 
 use crate::fs::MemFS;
 use crate::util::config::Injection;
-use crate::util::traverse_memfs;
 
 pub mod arch;
 pub mod deb;
@@ -78,16 +76,7 @@ pub trait SelfBuilder {
 
 pub async fn get_artifact_size(artifact: &dyn Artifact) -> Result<u64> {
     let memfs = artifact.extract().await?;
-    let paths = traverse_memfs(&memfs, Path::new("/"), Some(false)).await?;
-    let mut size = 0u64;
-
-    let fs = memfs.as_ref();
-    for path in paths {
-        let metadata = fs.metadata(&path).await?;
-        size += metadata.len().await;
-    }
-
-    Ok(size)
+    memfs.size().await
 }
 
 #[cfg(test)]

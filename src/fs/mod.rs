@@ -3,12 +3,14 @@ use std::path::{Path, PathBuf};
 
 use eyre::eyre;
 use eyre::Result;
-use floppy_disk::mem::MemPermissions;
+use floppy_disk::mem::{MemOpenOptions, MemPermissions};
 use floppy_disk::prelude::*;
 use tokio::fs::read_link;
 use tracing::*;
 
-use crate::util::Fix;
+use crate::util::{traverse_memfs, Fix};
+
+pub mod disk;
 
 pub struct TempDir {
     path: PathBuf,
@@ -73,6 +75,10 @@ impl MemFS {
         }
     }
 
+    pub fn fs(&mut self) -> &mut MemFloppyDisk {
+        &mut self.fs
+    }
+
     /// Copies files from the host filesystem to a memory filesystem
     /// Takes in a mapping of host paths -> memfs paths and a memfs.
     /// Allows an optional prefix to strip so that ex. temporary workdirs can
@@ -134,12 +140,10 @@ impl MemFS {
             self.fs.create_dir_all(memfs_parent).await?;
         }
 
-        let mut file_handle = self
-            .fs
-            .new_open_options()
+        let mut file_handle = MemOpenOptions::new()
             .create(true)
             .write(true)
-            .open(memfs_path)
+            .open(&self.fs, memfs_path)
             .await?;
         let path_clone = path.to_path_buf();
         let mut file = tokio::fs::File::open(path_clone).await?;
@@ -201,7 +205,7 @@ impl MemFS {
         match self.fs.read_link(path).await {
             Ok(_) => Ok(InternalFileType::Symlink),
             Err(_) => {
-                let file_type = self.fs.metadata(path).await?.file_type().await;
+                let file_type = self.fs.metadata(path).await?.file_type();
                 if file_type.is_symlink() {
                     Ok(InternalFileType::Symlink)
                 } else if file_type.is_dir() {
@@ -253,6 +257,18 @@ impl MemFS {
         } else {
             Ok(path.to_path_buf())
         }
+    }
+
+    pub async fn size(&self) -> Result<u64> {
+        let paths = traverse_memfs(self, Path::new("/"), Some(false)).await?;
+        let mut size = 0u64;
+
+        for path in paths {
+            let metadata = self.fs.metadata(&path).await?;
+            size += metadata.len();
+        }
+
+        Ok(size)
     }
 }
 

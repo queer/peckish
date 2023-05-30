@@ -20,15 +20,16 @@ color-eyre = { version = "0.6.2", features = ["issue-url"] }
 cpio_reader = "0.1.1"
 ctor = "0.1.26"
 eyre = "0.6.8"
-flail = "0.2.2"
+flail = "0.2.15"
 flate2 = "1.0.26"
-floppy-disk = "0.1.1"
+floppy-disk = "0.1.8"
 futures-util = "0.3.28"
 hyper = "0.14.26"
 indoc = "2.0.1"
 itertools = "0.10.5"
 md5 = "0.7.0"
 nix = "0.26.2"
+nyoom = "0.3.2"
 rand = "0.8.5"
 regex = "1.8.3"
 rpm = { version = "0.10.0", features = ["with-file-async-tokio"] }
@@ -43,6 +44,7 @@ tokio-stream = "0.1.14"
 tokio-tar = { git = "https://github.com/vorot93/tokio-tar", rev = "1bd30fbd1a219e8982571da48eb68f34317d1e15" }
 tokio-util = { version = "0.7.8", features = ["codec"] }
 tracing = "0.1.37"
+tracing-log = "0.1.3"
 tracing-subscriber = { version = "0.3.17", features = ["serde", "serde_json", "tracing", "env-filter", "fmt", "std"] }
 xz2 = "0.1.7"
 zstd = "0.12.3"

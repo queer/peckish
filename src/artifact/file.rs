@@ -2,6 +2,7 @@ use std::os::unix::prelude::PermissionsExt;
 use std::path::{Path, PathBuf};
 
 use eyre::Result;
+use floppy_disk::mem::MemOpenOptions;
 use floppy_disk::{
     FloppyDisk, FloppyFile, FloppyMetadata, FloppyOpenOptions, FloppyUnixMetadata,
     FloppyUnixPermissions,
@@ -208,18 +209,17 @@ impl ArtifactProducer for FileProducer {
             if file_type == InternalFileType::File {
                 debug!("writing file to {full_path:?}");
                 let mut file = tokio::fs::File::create(&full_path).await?;
-                let mut file_handle = fs
-                    .new_open_options()
+                let mut file_handle = MemOpenOptions::new()
                     .write(true)
                     .create(true)
-                    .open(path)
+                    .open(fs, path)
                     .await?;
                 tokio::io::copy(&mut file_handle, &mut file).await?;
 
                 // Set permissions
                 let metadata = file_handle.metadata().await?;
                 file.set_permissions(std::fs::Permissions::from_mode(
-                    metadata.permissions().await.mode(),
+                    metadata.permissions().mode(),
                 ))
                 .await?;
 
@@ -242,7 +242,7 @@ impl ArtifactProducer for FileProducer {
 
                 // Set permissions
                 let metadata = fs.metadata(path).await?;
-                let permissions = metadata.permissions().await;
+                let permissions = metadata.permissions();
                 tokio::fs::set_permissions(
                     &full_path,
                     std::fs::Permissions::from_mode(permissions.mode()),
