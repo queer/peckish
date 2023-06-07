@@ -15,7 +15,7 @@ async-recursion = "1.0.4"
 async-trait = "0.1.67"
 bollard = { git = "https://github.com/queer/bollard", rev = "628400c" }
 brotli = "3.3.4"
-clap = { version = "4.3.1", features = ["derive"] }
+clap = { version = "4.3.2", features = ["derive"] }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 cpio_reader = "0.1.1"
 ctor = "0.1.26"
