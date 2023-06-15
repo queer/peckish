@@ -40,8 +40,10 @@ impl Artifact for RpmArtifact {
         rpm_file.read_exact(&mut input).await?;
         debug!("read rpm into memory");
 
-        let mut buf_reader = futures_util::io::BufReader::new(input.as_slice());
-        let pkg = rpm::RPMPackage::parse_async(&mut buf_reader).await.unwrap();
+        let pkg = tokio::task::spawn_blocking(move || {
+            rpm::RPMPackage::parse(&mut input.as_slice()).unwrap()
+        })
+        .await?;
         let fs = MemFS::new();
 
         let mut cpio_data = vec![];
@@ -210,12 +212,12 @@ impl ArtifactProducer for RpmProducer {
         for path in &file_artifact.paths {
             let rpm_path = Path::join(Path::new("/"), path.strip_prefix(tmp.path_view())?);
             debug!("writing path to rpm: {}", rpm_path.display());
+            // TODO: This should be async... right?
             pkg = pkg
-                .with_file_async(
+                .with_file(
                     path,
                     rpm::RPMFileOptions::new(rpm_path.to_string_lossy().to_string()),
                 )
-                .await
                 .unwrap();
         }
 

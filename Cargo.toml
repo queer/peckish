@@ -33,7 +33,7 @@ nix = "0.26.2"
 nyoom = "0.3.2"
 rand = "0.8.5"
 regex = "1.8.4"
-rpm = { version = "0.10.0", features = ["with-file-async-tokio"] }
+rpm = { version = "0.11.0" }
 rsfs-tokio = "0.5.0"
 serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.96"
