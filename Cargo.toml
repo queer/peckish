@@ -13,16 +13,17 @@ anyhow = "1.0.71"
 ar = "0.9.0"
 async-recursion = "1.0.4"
 async-trait = "0.1.67"
-bollard = { git = "https://github.com/queer/bollard", rev = "628400c" }
+bollard = { git = "https://github.com/queer/bollard", rev = "2624ced" }
 brotli = "3.3.4"
 clap = { version = "4.3.0", features = ["derive"] }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 cpio_reader = "0.1.1"
 ctor = "0.1.26"
+disk-drive = "0.1.0"
 eyre = "0.6.8"
-flail = "0.2.15"
+flail = "0.2.1"
 flate2 = "1.0.26"
-floppy-disk = "0.1.8"
+floppy-disk = "0.2.0"
 futures-util = "0.3.28"
 hyper = "0.14.26"
 indoc = "2.0.1"

@@ -10,8 +10,6 @@ use tracing::*;
 
 use crate::util::{traverse_memfs, Fix};
 
-pub mod disk;
-
 pub struct TempDir {
     path: PathBuf,
 }

@@ -1,10 +1,10 @@
 use std::path::PathBuf;
 
+use disk_drive::DiskDrive;
 use eyre::Result;
 use flail::ext::facade::ExtFacadeFloppyDisk;
 use tracing::*;
 
-use crate::fs::disk::DiskDrive;
 use crate::fs::MemFS;
 use crate::util::config::Injection;
 
@@ -26,9 +26,7 @@ impl Artifact for Ext4Artifact {
         let mut fs = MemFS::new();
 
         let floppy_disk = ExtFacadeFloppyDisk::new(&self.path)?;
-        let disk_drive = DiskDrive::new();
-
-        disk_drive.copy_between(&floppy_disk, fs.fs()).await?;
+        DiskDrive::copy_between(&floppy_disk, fs.fs()).await?;
 
         Ok(fs)
     }
@@ -118,8 +116,7 @@ impl ArtifactProducer for Ext4Producer {
 
         let output = ExtFacadeFloppyDisk::create(&self.path, size)?;
 
-        let disk_drive = DiskDrive::new();
-        disk_drive.copy_between(memfs.as_ref(), &output).await?;
+        DiskDrive::copy_between(memfs.as_ref(), &output).await?;
 
         Ok(Ext4Artifact {
             name: self.path.to_string_lossy().to_string(),

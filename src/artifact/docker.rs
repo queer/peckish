@@ -296,7 +296,7 @@ impl ArtifactProducer for DockerProducer {
             if let Some(docker_cmd) = self.cmd.clone() {
                 let docker_cmd = format!("CMD {}", serde_json::to_string(&docker_cmd)?);
                 debug!("docker_cmd = {docker_cmd}");
-                Some(docker_cmd)
+                Some(vec!["ENV DEBUG=true".into(), docker_cmd])
             } else {
                 None
             }
