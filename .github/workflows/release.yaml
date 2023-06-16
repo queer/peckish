@@ -27,7 +27,7 @@ jobs:
       - name: "Install musl-tools"
         run: "sudo apt-get update && sudo apt-get install -y musl-tools wget"
       - name: "Install supported e2fs version"
-        run: "wget -O e2fs-base.deb http://http.us.debian.org/debian/pool/main/e/e2fsprogs/libext2fs2_1.47.0-2_amd64.deb && wget -O e2fs.deb http://http.us.debian.org/debian/pool/main/e/e2fsprogs/libext2fs-dev_1.47.0-2_amd64.deb && dpkg -i e2fs-base.deb e2fs.deb"
+        run: "wget -O e2fs-base.deb http://http.us.debian.org/debian/pool/main/e/e2fsprogs/libext2fs2_1.47.0-2_amd64.deb && wget -O e2fs.deb http://http.us.debian.org/debian/pool/main/e/e2fsprogs/libext2fs-dev_1.47.0-2_amd64.deb && sudo dpkg -i e2fs-base.deb e2fs.deb"
       - name: "Build static-linked release binary!"
         uses: "actions-rs/cargo@v1"
         with:
