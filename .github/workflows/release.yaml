@@ -25,7 +25,7 @@ jobs:
           key: "release"
           cache-on-failure: true
       - name: "Install musl-tools"
-        run: "sudo apt-get update && sudo apt-get install -y musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools e2fslibs-dev"
       - name: "Build static-linked release binary!"
         uses: "actions-rs/cargo@v1"
         with:

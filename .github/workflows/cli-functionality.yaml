@@ -31,7 +31,7 @@ jobs:
           key: "cli-functionality"
           cache-on-failure: true
       - name: "Install musl-tools"
-        run: "sudo apt-get update && sudo apt-get install -y musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools e2fslibs-dev"
       - name: "Build release binary!"
         uses: "actions-rs/cargo@v1"
         with:
@@ -40,23 +40,16 @@ jobs:
       - name: "Run release binary"
         run: "env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./peckish.ci.yaml"
       - name: "Validate release binary"
-        if: "success() || failure()"
         run: "file release/peckish | grep -q 'ELF 64-bit LSB pie executable, x86-64'"
       - name: "Validate Arch package"
-        if: "success() || failure()"
         run: 'docker run --rm -i -v "$(pwd)/release/peckish.arch.pkg.tar:/app/peckish.pkg.tar" archlinux:latest sh -c "pacman --noconfirm -U /app/peckish.pkg.tar && peckish --version"'
       - name: "Validate Debian package on Debian"
-        if: "success() || failure()"
         run: 'docker run --rm -i -v "$(pwd)/release/peckish.deb:/app/peckish.deb" debian:latest sh -c "dpkg -i /app/peckish.deb && peckish --version"'
       - name: "Validate Debian package on Ubuntu"
-        if: "success() || failure()"
         run: 'docker run --rm -i -v "$(pwd)/release/peckish.deb:/app/peckish.deb" ubuntu:latest sh -c "dpkg -i /app/peckish.deb && peckish --version"'
       - name: "Validate tarball"
-        if: "success() || failure()"
         run: "tar t -vf ./release/peckish.tar"
       - name: "Validate Docker image"
-        if: "success() || failure()"
         run: "docker run --rm queer/peckish:latest peckish --version"
       - name: "Validate RPM package on Fedora"
-        if: "success() || failure()"
         run: 'docker run --rm -i -v "$(pwd)/release/peckish.rpm:/app/peckish.rpm" fedora:latest sh -c "dnf install -y /app/peckish.rpm && peckish --version"'
