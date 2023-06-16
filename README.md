@@ -81,6 +81,7 @@ peckish lets you convert back and forth between all of these formats:
 - an installable Arch Linux package
 - a runnable Docker image
 - an installable RPM package
+- an ext4 image (wip)
 
 peckish is based around the concept of "artifacts" and "producers." An artifact
 is some metadata about a package that exists on your system, and a producer is
@@ -270,8 +271,9 @@ never be supported.
 - [ ] appimage `"appimage"`
   - https://crates.io/crates/appimage
     - Missing read support...
-- [ ] Filesystem and VM images (tbd)
-  - Working on `libguestfs` bindings: https://github.com/queer/libguestfs-rs
+- [x] Filesystem and VM images (`ext4`)
+  - WIP
+  - Lowest supported libe2fs version is **`1.47.0`**!
 - [ ] Flatpak?
   - More research needed
 
