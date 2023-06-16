@@ -31,7 +31,7 @@ jobs:
           key: "cli-functionality"
           cache-on-failure: true
       - name: "Install musl-tools"
-        run: "sudo apt-get update && sudo apt-get install -y musl-tools wget"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools comerr-dev wget"
       - name: "Install supported e2fs version"
         run: "wget -O e2fs-base.deb http://http.us.debian.org/debian/pool/main/e/e2fsprogs/libext2fs2_1.47.0-2_amd64.deb && wget -O e2fs.deb http://http.us.debian.org/debian/pool/main/e/e2fsprogs/libext2fs-dev_1.47.0-2_amd64.deb && sudo sudo sudo sudo sudo sudo sudo sudo dpkg -i e2fs-base.deb e2fs.deb"
       - name: "Build release binary!"
