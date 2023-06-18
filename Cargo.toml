@@ -18,7 +18,7 @@ clap = { version = "4.3.3", features = ["derive"] }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 cpio_reader = "0.1.1"
 ctor = "0.1.26"
-disk-drive = "0.1.0"
+disk-drive = "0.1.2"
 eyre = "0.6.8"
 flail = "0.2.34"
 floppy-disk = "0.2.0"
