@@ -11,6 +11,7 @@ use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig}
 
 /// A pipeline that can run a given config. This is the main entrypoint for
 /// running a peckish config.
+#[derive(Default)]
 pub struct Pipeline {
     report_file: Option<PathBuf>,
 }
@@ -79,7 +80,7 @@ impl Pipeline {
 
             next_artifact.validate().await?;
 
-            if config.pipeline {
+            if config.chain {
                 input_artifact = next_artifact.try_clone()?;
             }
 
@@ -142,7 +143,7 @@ mod tests {
         let tar = tmp.path_view().join("cargo.toml.tar");
 
         let config = PeckishConfig {
-            pipeline: true,
+            chain: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -169,7 +170,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
-            pipeline: true,
+            chain: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -209,7 +210,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
-            pipeline: true,
+            chain: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -249,7 +250,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
-            pipeline: true,
+            chain: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -289,7 +290,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
-            pipeline: true,
+            chain: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -328,7 +329,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
-            pipeline: true,
+            chain: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],
@@ -366,7 +367,7 @@ mod tests {
         let tmp = TempDir::new().await?;
 
         let config = PeckishConfig {
-            pipeline: true,
+            chain: true,
             input: ConfiguredArtifact::File(FileArtifact {
                 name: "cargo dot toml".into(),
                 paths: vec!["Cargo.toml".into()],

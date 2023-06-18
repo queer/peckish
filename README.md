@@ -128,9 +128,9 @@ If you like what I make, consider supporting me on Patreon:
 Create a `peckish.yaml` file in the root of your project.
 
 ```yaml
-# whether to run as a pipeline, ie each artifact output is the input to the
-# next producer. defaults to `false` if not specified.
-pipeline: false
+# whether to chain outputs, ie each artifact output is the input to the next
+# producer. defaults to `false` if not specified.
+chain: false
 
 # metadata about the package. required, even if you're only producing a file or
 # a tarball. this is because it's just easier than trying to play the "is there
@@ -228,7 +228,7 @@ let config = PeckishConfig {
         ConfiguredProducer::Tarball(tarball_producer),
         ConfiguredProducer::Deb(debian_producer),
     ],
-    pipeline: false,
+    chain: false,
 };
 
 let pipeline = Pipeline::new();

@@ -1,4 +1,4 @@
-pipeline: false
+chain: false
 
 metadata:
   name: "peckish"

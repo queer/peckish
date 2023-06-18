@@ -22,7 +22,7 @@ use crate::fs::{InternalFileType, MemFS};
 pub struct PeckishConfig {
     pub input: ConfiguredArtifact,
     pub output: Vec<ConfiguredProducer>,
-    pub pipeline: bool,
+    pub chain: bool,
 }
 
 impl PeckishConfig {
@@ -42,7 +42,7 @@ impl PeckishConfig {
                 .iter()
                 .map(|o| o.clone().convert(&config.metadata))
                 .collect(),
-            pipeline: config.pipeline,
+            chain: config.chain,
         })
     }
 }
@@ -60,7 +60,7 @@ struct PackageMetadata {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct InternalConfig {
     #[serde(default)]
-    pipeline: bool,
+    chain: bool,
     metadata: PackageMetadata,
     input: InputArtifact,
     output: Vec<OutputProducer>,

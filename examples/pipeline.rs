@@ -34,10 +34,10 @@ async fn main() -> Result<()> {
             ConfiguredProducer::Tarball(tarball_producer),
             ConfiguredProducer::Deb(debian_producer),
         ],
-        pipeline: false,
+        chain: false,
     };
 
-    let pipeline = Pipeline::new(None);
+    let pipeline = Pipeline::default();
 
     let out = pipeline.run(config).await?;
 
