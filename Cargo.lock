@@ -987,9 +987,9 @@ dependencies = [
 
 [[package]]
 name = "floppy-disk"
-version = "0.2.0"
+version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "61c1d1f5023ce8f2aa660b8cf5994604adf502c5fb3200d7c0f3e894c4374f56"
+checksum = "1a2a1fb09b228b60f4e0b4a4156c53b755a0083890cce3c2f133a376bba2bb12"
 dependencies = [
  "async-trait",
  "derivative",
@@ -999,6 +999,7 @@ dependencies = [
  "rand 0.8.5",
  "rsfs-tokio",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
@@ -2716,6 +2717,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8ce8c33a8d48bd45d624a6e523445fd21ec13d3653cd51f681abf67418f54eb8"
 dependencies = [
  "cfg-if",
+ "log",
  "pin-project-lite",
  "tracing-attributes",
  "tracing-core",
