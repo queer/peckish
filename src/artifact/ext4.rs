@@ -23,10 +23,10 @@ impl Artifact for Ext4Artifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        let mut fs = MemFS::new();
+        let fs = MemFS::new();
 
         let floppy_disk = ExtFacadeFloppyDisk::new(&self.path)?;
-        DiskDrive::copy_between(&floppy_disk, fs.fs()).await?;
+        DiskDrive::copy_between(&floppy_disk, fs.as_ref()).await?;
 
         Ok(fs)
     }

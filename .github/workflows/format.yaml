@@ -22,6 +22,8 @@ jobs:
           toolchain: "stable"
           override: true
           components: "rustfmt"
+      - name: "Install musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools comerr-dev wget"
       - uses: "Swatinem/rust-cache@v2"
         with:
           key: "format"

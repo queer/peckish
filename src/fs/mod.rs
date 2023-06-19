@@ -1,5 +1,6 @@
 use std::os::unix::prelude::{MetadataExt, PermissionsExt};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use eyre::eyre;
 use eyre::Result;
@@ -60,21 +61,17 @@ impl std::ops::Deref for TempDir {
 /// A `MemFS` is a memory-backed filesystem. It is a wrapper around
 /// `rsfs_tokio` that helps with manipulation of things like temporary paths
 /// that would otherwise be difficult to know about.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct MemFS {
-    fs: MemFloppyDisk,
+    fs: Arc<MemFloppyDisk>,
 }
 
 impl MemFS {
     #[allow(clippy::new_without_default)]
     pub fn new() -> Self {
         MemFS {
-            fs: MemFloppyDisk::new(),
+            fs: Arc::new(MemFloppyDisk::new()),
         }
-    }
-
-    pub fn fs(&mut self) -> &mut MemFloppyDisk {
-        &mut self.fs
     }
 
     /// Copies files from the host filesystem to a memory filesystem

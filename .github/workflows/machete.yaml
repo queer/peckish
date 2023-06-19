@@ -26,6 +26,8 @@ jobs:
         with:
           toolchain: "${{ matrix.version }}"
           override: true
+      - name: "Install musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools comerr-dev wget"
       - name: "Install cargo-machete"
         run: "cargo install cargo-machete"
       - uses: "Swatinem/rust-cache@v1"

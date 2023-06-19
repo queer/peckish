@@ -229,11 +229,16 @@ impl ArtifactProducer for FileProducer {
                 let gid = metadata.gid()?;
 
                 debug!("chown {full_path:?} to {uid}:{gid}");
-                nix::unistd::chown(
+                match nix::unistd::chown(
                     full_path.to_str().unwrap(),
                     Some(nix::unistd::Uid::from_raw(uid)),
                     Some(nix::unistd::Gid::from_raw(gid)),
-                )?;
+                ) {
+                    Ok(_) => {}
+                    Err(e) => {
+                        warn!("failed to chown {full_path:?} to {uid}:{gid}: {e}");
+                    }
+                }
             } else if file_type == InternalFileType::Dir {
                 debug!("creating dir {full_path:?}");
                 tokio::fs::create_dir_all(&full_path)

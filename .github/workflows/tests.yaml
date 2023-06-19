@@ -25,6 +25,8 @@ jobs:
           toolchain: "${{ matrix.version }}"
           override: true
           profile: "minimal"
+      - name: "Install musl-tools"
+        run: "sudo apt-get update && sudo apt-get install -y musl-tools comerr-dev wget"
       - uses: "Swatinem/rust-cache@v2"
         with:
           key: "test"

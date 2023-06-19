@@ -2,9 +2,11 @@ use std::path::PathBuf;
 
 use bollard::image::CreateImageOptions;
 use bollard::Docker;
+use disk_drive::DiskDrive;
 use eyre::Result;
 use floppy_disk::mem::MemOpenOptions;
-use floppy_disk::FloppyOpenOptions;
+use floppy_disk::tokio_fs::TokioFloppyDisk;
+use floppy_disk::{FloppyDisk, FloppyOpenOptions};
 use regex::Regex;
 use smoosh::CompressionType;
 use tokio::fs::File;
@@ -13,7 +15,7 @@ use tokio_stream::StreamExt;
 use tokio_util::codec::{BytesCodec, FramedRead};
 use tracing::*;
 
-use crate::artifact::file::{FileArtifact, FileProducer};
+use crate::artifact::memory::MemoryArtifact;
 use crate::fs::{MemFS, TempDir};
 use crate::util::config::Injection;
 
@@ -61,12 +63,12 @@ impl Artifact for DockerArtifact {
         }
 
         // Export image to a TAR file
-        let tmp = TempDir::new().await?;
+        let image_tar_export = TempDir::new().await?;
 
         info!("exporting to tarball...");
         let mut export = docker.export_image(&self.image);
         let export_name = format!("{}.tar", self.name.replace(['/', ':', ' '], "_"));
-        let export_path = tmp.path_view().join(&export_name);
+        let export_path = image_tar_export.path_view().join(&export_name);
         tokio::fs::create_dir_all(export_path.parent().unwrap())
             .await
             .unwrap();
@@ -88,7 +90,7 @@ impl Artifact for DockerArtifact {
         .await?;
         let basic_tar_fs = basic_tar_memfs.as_ref();
 
-        tokio::fs::remove_dir_all(&tmp).await?;
+        tokio::fs::remove_dir_all(&image_tar_export).await?;
 
         // Collect layers
         info!("gathering docker layers...");
@@ -113,30 +115,25 @@ impl Artifact for DockerArtifact {
             .collect();
 
         info!("extracting docker layers into memfs...");
-        let tmp = TempDir::new().await?;
+        let fs = MemFS::new();
+        let host = TokioFloppyDisk::new(Some(image_tar_export.path_view()));
+        host.create_dir("/").await?;
+
+        info!("copying base tarball contents to host...");
+        DiskDrive::copy_between(basic_tar_fs, &host).await?;
+
         for layer in layers {
-            // For each layer, extract it into the tmp directory.
-            let layer_tar = MemOpenOptions::new()
-                .read(true)
-                .open(basic_tar_fs, &format!("/{}", layer))
-                .await?;
-
-            let tmp_clone = tmp.path_view();
-            let mut layer_tar = tokio_tar::Archive::new(layer_tar);
-            layer_tar.unpack(&tmp_clone).await?;
-        }
-
-        // Read Docker layers into the memfs
-        // We don't reuse the file artifact here because we need to control how
-        // the file paths are computed.
-
-        let mut fs = MemFS::new();
-
-        debug!("copying docker layers to memfs!");
-
-        let memfs_paths = vec![tmp.path_view()];
-        fs.copy_files_from_paths(&memfs_paths, Some(tmp.path_view()), None)
+            debug!("copying layer: {layer}");
+            let layer_path = image_tar_export.path_view().join(layer);
+            let layer_memfs = TarballArtifact {
+                name: self.name.clone(),
+                path: layer_path,
+            }
+            .extract()
             .await?;
+            let layer_fs = layer_memfs.as_ref();
+            DiskDrive::copy_between(layer_fs, fs.as_ref()).await?;
+        }
 
         Ok(fs)
     }
@@ -227,43 +224,23 @@ impl ArtifactProducer for DockerProducer {
             // This is because Docker doesn't support importing a tarball of
             // layers directly.
 
-            let tmp = TempDir::new().await?;
+            let merged_fs = {
+                let out = MemFS::new();
 
-            {
-                // FileProducer extract Docker artifact of self.base_image into tmp
-                debug!(
-                    "extracting base image {base_image} to {:?}",
-                    tmp.path_view()
-                );
-                FileProducer {
-                    name: self.name.clone(),
-                    path: tmp.path_view(),
-                    preserve_empty_directories: Some(true),
-                    injections: vec![],
-                }
-                .produce_from(&DockerArtifact {
+                let base_fs = DockerArtifact {
                     name: self.name.clone(),
                     image: base_image.clone(),
-                })
-                .await?;
-            }
-
-            {
-                // FileProducer extract previous artifact into tmp
-                debug!(
-                    "extracting previous artifact {} to {:?}",
-                    previous.name(),
-                    tmp.path_view()
-                );
-                FileProducer {
-                    name: self.name.clone(),
-                    path: tmp.path_view(),
-                    preserve_empty_directories: Some(true),
-                    injections: vec![],
                 }
-                .produce_from(previous)
+                .extract()
                 .await?;
-            }
+
+                let added_fs = previous.extract().await?;
+
+                DiskDrive::copy_between(base_fs.as_ref(), out.as_ref()).await?;
+                DiskDrive::copy_between(added_fs.as_ref(), out.as_ref()).await?;
+
+                out
+            };
 
             TarballProducer {
                 name: self.name.clone(),
@@ -271,10 +248,9 @@ impl ArtifactProducer for DockerProducer {
                 compression: CompressionType::None,
                 injections: self.injections.clone(),
             }
-            .produce_from(&FileArtifact {
+            .produce_from(&MemoryArtifact {
                 name: self.name.clone(),
-                paths: vec![tmp.path_view()],
-                strip_path_prefixes: Some(true),
+                fs: merged_fs,
             })
             .await?
         } else {
@@ -305,7 +281,7 @@ impl ArtifactProducer for DockerProducer {
         let options = CreateImageOptions {
             from_src: "-".to_string(),
             repo: image.into(),
-            changes: docker_cmd,
+            changes: None, // docker_cmd,
             tag: tag.into(),
             ..Default::default()
         };

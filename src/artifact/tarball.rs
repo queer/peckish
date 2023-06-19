@@ -1,23 +1,14 @@
 use std::path::PathBuf;
-use std::time::SystemTime;
 
+use disk_drive::DiskDrive;
 use eyre::eyre;
 use eyre::Result;
-use floppy_disk::mem::MemOpenOptions;
-use floppy_disk::FloppyDisk;
-use floppy_disk::FloppyMetadata;
-use floppy_disk::FloppyOpenOptions;
-use floppy_disk::FloppyUnixMetadata;
-use floppy_disk::FloppyUnixPermissions;
+use flop::tar::TarFloppyDisk;
 use smoosh::CompressionType;
-use tokio::fs::File;
-use tokio_tar::{Archive, EntryType, Header};
 use tracing::*;
 
-use crate::fs::{InternalFileType, MemFS, TempDir};
-use crate::util;
+use crate::fs::MemFS;
 use crate::util::config::Injection;
-use crate::util::{traverse_memfs, Fix};
 
 use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
@@ -35,45 +26,12 @@ impl Artifact for TarballArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        let mut fs = MemFS::new();
+        let fs = MemFS::new();
 
-        // Unpack TAR to a temporary archive, then copy it to the memory
-        // filesystem.
-        // This is sadly necessary because Rust's tar libraries don't allow for
-        // in-memory manipulation.
         info!("unpacking {}", self.path.display());
-
-        let decompress_tmpdir = TempDir::new().await?;
-        let decompressed_tarball = decompress_tmpdir.path_view().join("decompressed.tar");
-        {
-            let mut decompress_file = File::create(&decompressed_tarball).await?;
-            let mut compressed_file = File::open(&self.path).await?;
-
-            smoosh::recompress(
-                &mut compressed_file,
-                &mut decompress_file,
-                CompressionType::None,
-            )
-            .await?;
-        }
-
-        let mut archive = Archive::new(File::open(&decompressed_tarball).await.map_err(Fix::Io)?);
-        let tmp = TempDir::new().await?;
-        debug!(
-            "unpacking archive {decompressed_tarball:?} to temporary directory: {:?}",
-            tmp.path_view()
-        );
-        archive.unpack(&tmp).await.map_err(Fix::Io)?;
-        let mut walk_results = tokio::fs::read_dir(tmp.path_view()).await?;
-        let mut paths = vec![];
-        while let Some(path) = walk_results.next_entry().await? {
-            paths.push(path.path());
-        }
-
-        debug!("copying {} paths to memfs!", paths.len());
-
-        fs.copy_files_from_paths(&paths, Some(tmp.path_view()), None)
-            .await?;
+        let tarball = TarFloppyDisk::open(&self.path).await?;
+        DiskDrive::copy_between(&tarball, fs.as_ref()).await?;
+        tarball.close().await?;
 
         Ok(fs)
     }
@@ -164,89 +122,14 @@ impl ArtifactProducer for TarballProducer {
         info!("producing {}", self.path.display());
         let mut memfs = previous.extract().await?;
         let memfs = self.inject(&mut memfs).await?;
-        let paths = traverse_memfs(memfs, &PathBuf::from("/"), Some(true)).await?;
 
         if let Some(parent) = self.path.parent() {
             tokio::fs::create_dir_all(parent).await?;
         }
 
-        let file = File::create(&self.path).await.map_err(Fix::Io)?;
-        let mut archive_builder = tokio_tar::Builder::new(file);
-        archive_builder.follow_symlinks(false);
-        for path in paths {
-            debug!("tarball producing path: {path:?}");
-            let path = path.strip_prefix("/")?;
-
-            // We use ustar headers because long paths get weird w/ gnu
-            let mut header = Header::new_ustar();
-            header.set_path(path).map_err(Fix::Io)?;
-
-            let file_type = memfs.determine_file_type(path).await?;
-            debug!("path is {file_type:?}");
-            let fs = memfs.as_ref();
-            if file_type == InternalFileType::Dir {
-                let metadata = fs.metadata(path).await?;
-                header.set_entry_type(EntryType::Directory);
-                header.set_size(0);
-                let permissions = metadata.permissions();
-                header.set_mode(permissions.mode());
-                header.set_mtime(util::maybe_clamp_timestamp(
-                    metadata
-                        .modified()?
-                        .duration_since(SystemTime::UNIX_EPOCH)?
-                        .as_secs(),
-                )?);
-                header.set_uid(metadata.uid()? as u64);
-                header.set_gid(metadata.gid()? as u64);
-                header.set_cksum();
-
-                debug!("copy dir {path:?} with perms: {:o}", header.mode()?);
-
-                let empty: &[u8] = &[];
-                archive_builder.append(&header, empty).await?;
-            } else if file_type == InternalFileType::File {
-                let metadata = fs.metadata(path).await?;
-                let mut data = Vec::new();
-                let mut stream = MemOpenOptions::new().read(true).open(fs, path).await?;
-                tokio::io::copy(&mut stream, &mut data).await?;
-
-                header.set_entry_type(EntryType::Regular);
-                header.set_size(data.len() as u64);
-                header.set_mode(metadata.permissions().mode());
-                header.set_mtime(util::maybe_clamp_timestamp(
-                    metadata
-                        .modified()?
-                        .duration_since(SystemTime::UNIX_EPOCH)?
-                        .as_secs(),
-                )?);
-                header.set_uid(metadata.uid()? as u64);
-                header.set_gid(metadata.gid()? as u64);
-                header.set_cksum();
-
-                debug!("copy file {path:?} with perms: {:o}", header.mode()?);
-
-                archive_builder
-                    .append_data(&mut header, path, data.as_slice())
-                    .await
-                    .map_err(Fix::Io)?;
-            } else if file_type == InternalFileType::Symlink {
-                let link = fs.read_link(path).await?;
-                let empty: &[u8] = &[];
-
-                header.set_entry_type(EntryType::Symlink);
-                header.set_link_name(link.to_str().unwrap())?;
-                header.set_size(empty.len() as u64);
-                header.set_cksum();
-
-                debug!("copy symlink {path:?}");
-
-                archive_builder.append(&header, empty).await?;
-            } else {
-                return Err(eyre!("Unsupported file type: {:?}", file_type));
-            }
-        }
-
-        archive_builder.into_inner().await?;
+        let tarball = TarFloppyDisk::open(&self.path).await?;
+        DiskDrive::copy_between(memfs.as_ref(), &tarball).await?;
+        tarball.close().await?;
 
         Ok(TarballArtifact {
             name: self.path.to_string_lossy().to_string(),

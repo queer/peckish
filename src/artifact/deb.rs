@@ -1,24 +1,24 @@
-use std::io::Cursor;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
+use disk_drive::DiskDrive;
 use eyre::Result;
+use flop::ar::ArFloppyDisk;
+use flop::tar::TarFloppyDisk;
 use floppy_disk::mem::MemOpenOptions;
-use floppy_disk::FloppyOpenOptions;
+use floppy_disk::tokio_fs::TokioFloppyDisk;
+use floppy_disk::{FloppyDisk, FloppyOpenOptions};
 use regex::Regex;
 use smoosh::CompressionType;
-use tokio::fs::File;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio_tar::Header;
+use tokio::io::AsyncReadExt;
 use tracing::*;
 
 use crate::artifact::get_artifact_size;
-use crate::artifact::tarball::TarballProducer;
+use crate::artifact::memory::EmptyArtifact;
+use crate::artifact::tarball::{TarballProducer, TarballProducerBuilder};
 use crate::fs::{InternalFileType, MemFS, TempDir};
 use crate::util::config::Injection;
 use crate::util::traverse_memfs;
 
-use super::file::FileProducer;
-use super::tarball::TarballArtifact;
 use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// A Debian package. This is a **non-compressed** ar archive.
@@ -54,8 +54,30 @@ impl Artifact for DebArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        let mut fs = MemFS::new();
-        self.extract_deb_to_memfs(&mut fs).await?;
+        let fs = MemFS::new();
+        let tmp = TempDir::new().await?;
+        let host = TokioFloppyDisk::new(Some(tmp.path_view()));
+        let deb = ArFloppyDisk::open(&self.path).await?;
+
+        let control_tar = deb
+            .find_in_dir("/", "control.tar")
+            .await?
+            .expect("control.tar was not present in deb!?");
+
+        let data_tar = deb
+            .find_in_dir("/", "data.tar")
+            .await?
+            .expect("data.tar was not present in deb!?");
+
+        DiskDrive::copy_from_src(&deb, &host, "/").await?;
+        DiskDrive::copy_from_src(&deb, &host, &control_tar).await?;
+        DiskDrive::copy_from_src(&deb, &host, &data_tar).await?;
+
+        let data = TarFloppyDisk::open(tmp.path_view().join(&data_tar)).await?;
+        DiskDrive::copy_between(&data, fs.as_ref()).await?;
+
+        data.close().await?;
+        deb.close().await?;
 
         Ok(fs)
     }
@@ -66,77 +88,6 @@ impl Artifact for DebArtifact {
 
     fn paths(&self) -> Option<Vec<PathBuf>> {
         Some(vec![self.path.clone()])
-    }
-}
-
-impl DebArtifact {
-    async fn extract_deb_to_memfs(&self, fs: &mut MemFS) -> Result<()> {
-        let mut archive = {
-            let path = self.path.clone();
-            debug!("decompressing deb into memory...");
-            let mut decompressed = vec![];
-            // Decompress deb into memory
-            let mut file = File::open(path).await?;
-            smoosh::recompress(&mut file, &mut decompressed, CompressionType::None).await?;
-            // Open Vec<u8> as ar archive
-            ar::Archive::new(Cursor::new(decompressed))
-        };
-        while let Some(entry) = archive.next_entry() {
-            let mut ar_entry = entry?;
-            let path = String::from_utf8_lossy(ar_entry.header().identifier()).to_string();
-            if path.starts_with("data.tar") {
-                debug!("found data.dar!");
-                let ar_buf = {
-                    use std::io::Read;
-                    let mut b = vec![];
-                    ar_entry.read_to_end(&mut b)?;
-                    b
-                };
-
-                let produce_from_tmp = TempDir::new().await?;
-                let produce_from_tarball = produce_from_tmp.path_view().join(path);
-                let decompressed_tarball = produce_from_tmp.path_view().join("decompressed.tar");
-                let output_tmp = TempDir::new().await?;
-
-                debug!("extracting to {}", produce_from_tarball.display());
-                // Write ar_buf to produce_from_tmp
-                let mut ar_file = File::create(&produce_from_tarball).await?;
-                ar_file.write_all(&ar_buf).await?;
-
-                let decompressed_artifact = TarballProducer {
-                    name: "deb data.tar decompressed".to_string(),
-                    path: decompressed_tarball,
-                    compression: CompressionType::None,
-                    injections: vec![],
-                }
-                .produce_from(&TarballArtifact {
-                    name: "deb data.tar compressed".to_string(),
-                    path: produce_from_tarball,
-                })
-                .await?;
-
-                let _decompressed_data_artifact = FileProducer {
-                    name: "deb data.tar decompressed files".to_string(),
-                    path: output_tmp.path_view(),
-                    preserve_empty_directories: Some(true),
-                    injections: vec![],
-                }
-                .produce_from(&decompressed_artifact)
-                .await?;
-
-                debug!("copying data artifact to memfs...");
-                // Copy decompressed_data_artifact to fs
-                fs.copy_files_from_paths(
-                    &vec![output_tmp.path_view()],
-                    Some(output_tmp.path_view()),
-                    None,
-                )
-                .await?;
-
-                break;
-            }
-        }
-        Ok(())
     }
 }
 
@@ -161,43 +112,30 @@ impl SelfValidation for DebArtifact {
         // /debian-binary
         // /control.tar.gz
         // /data.tar.gz
-        let mut archive = ar::Archive::new(std::fs::File::open(&self.path)?);
-        let mut found_debian_binary = false;
-        let mut found_control_tar_gz = false;
-        let mut found_data_tar_gz = false;
+        let deb = ArFloppyDisk::open(&self.path).await?;
 
-        while let Some(entry) = archive.next_entry() {
-            let ar_entry = entry?;
-            let path = String::from_utf8_lossy(ar_entry.header().identifier()).to_string();
-            if path == "debian-binary" {
-                found_debian_binary = true;
-            } else if path.contains("control.tar") {
-                found_control_tar_gz = true;
-            } else if path.contains("data.tar") {
-                found_data_tar_gz = true;
-            }
-        }
-
-        if !found_debian_binary {
+        if deb.find_in_dir("/", "debian-binary").await?.is_none() {
             errors.push(format!(
                 "deb artifact does not contain debian-binary: {:#?}",
                 self.path
             ));
         }
 
-        if !found_control_tar_gz {
+        if deb.find_in_dir("/", "control.tar").await?.is_none() {
             errors.push(format!(
                 "deb artifact does not contain control.tar: {:#?}",
                 self.path
             ));
         }
 
-        if !found_data_tar_gz {
+        if deb.find_in_dir("/", "data.tar").await?.is_none() {
             errors.push(format!(
                 "deb artifact does not contain data.tar: {:#?}",
                 self.path
             ));
         }
+
+        deb.close().await?;
 
         if !errors.is_empty() {
             return Err(eyre::eyre!(
@@ -305,7 +243,7 @@ impl ArtifactProducer for DebProducer {
         // Create data.tar from previous artifact in tmp using TarballProducer
         info!("packaging data files...");
         debug!("producing data.tar from previous artifact...");
-        let data_tar = tmp.path_view().join("data.tar");
+        let data_tar = tmp.path_view().join("data.tar.gz");
         let _tar_artifact = TarballProducer {
             name: "data.tar.gz".to_string(),
             path: data_tar.clone(),
@@ -318,13 +256,10 @@ impl ArtifactProducer for DebProducer {
         // Create control.tar from control file in tmp
         info!("packaging metadata files...");
         debug!("producing control.tar...");
-        let control_tar = tmp.path_view().join("control.tar");
-        let mut control_tar_builder = tokio_tar::Builder::new(File::create(&control_tar).await?);
+        let control_tar = tmp.path_view().join("control.tar.gz");
 
-        // Write self.control into control.tar as /control
+        // Write control file to control.tar
         let installed_size = get_artifact_size(previous).await?;
-        let mut control_header = Header::new_gnu();
-        control_header.set_entry_type(tokio_tar::EntryType::file());
         let control_data = indoc::formatdoc! {r#"
             Package: {name}
             Maintainer: {maintainer}
@@ -342,25 +277,34 @@ impl ArtifactProducer for DebProducer {
             description = self.package_description,
             installed_size = installed_size,
         };
-        control_header.set_size(control_data.len() as u64);
-        control_header.set_cksum();
-        control_tar_builder
-            .append_data(&mut control_header, "control", control_data.as_bytes())
-            .await?;
+
+        let control_tar_builder = TarballProducerBuilder::new("control.tar.gz")
+            .path(control_tar.clone())
+            .compression(CompressionType::Gzip)
+            .inject(Injection::Create {
+                path: "/control".into(),
+                content: control_data.into_bytes(),
+            });
 
         // Write self.prerm and self.postinst into control.tar if they exist
-        if let Some(prerm) = &self.prerm {
+        let control_tar_builder = if let Some(prerm) = &self.prerm {
+            debug!("wrote prerm file {:?} to control.tar", self.prerm);
+            control_tar_builder.inject(Injection::Copy {
+                src: prerm.clone(),
+                dest: "/prerm".into(),
+            })
+        } else {
             control_tar_builder
-                .append_path_with_name(prerm, "prerm")
-                .await?;
-            debug!("wrote prerm file {} to control.tar", prerm.display());
-        }
-        if let Some(postinst) = &self.postinst {
+        };
+        let control_tar_builder = if let Some(postinst) = &self.postinst {
+            debug!("wrote postinst file {:?} to control.tar", self.postinst);
+            control_tar_builder.inject(Injection::Copy {
+                src: postinst.clone(),
+                dest: "/postinst".into(),
+            })
+        } else {
             control_tar_builder
-                .append_path_with_name(postinst, "postinst")
-                .await?;
-            debug!("wrote postinst file {} to control.tar", postinst.display());
-        }
+        };
 
         info!("computing checksums...");
         // Compute the md5sums of every file in the memfs
@@ -392,37 +336,30 @@ impl ArtifactProducer for DebProducer {
 
         debug!("computed md5sums:\n{}", md5sums);
 
-        let mut md5_header = tokio_tar::Header::new_gnu();
-        md5_header.set_size(md5sums.len() as u64);
-        md5_header.set_entry_type(tokio_tar::EntryType::Regular);
-        md5_header.set_mode(0o644);
-        md5_header.set_cksum();
-
-        control_tar_builder
-            .append_data(&mut md5_header, "md5sums", &mut md5sums.as_bytes())
-            .await?;
+        let control_tar_builder = control_tar_builder.inject(Injection::Create {
+            path: "/md5sums".into(),
+            content: md5sums.into_bytes(),
+        });
         debug!("wrote md5sums to control.tar");
 
         // Finish control.tar
-        control_tar_builder.finish().await?;
+        control_tar_builder
+            .build()?
+            .produce_from(&EmptyArtifact::new("control.tar"))
+            .await?;
         debug!("finished control.tar");
-
-        // Create debian-binary in tmp
-        let debian_binary = tmp.path_view().join("debian-binary");
-        let mut debian_binary_file = File::create(&debian_binary).await?;
-        debian_binary_file.write_all(b"2.0\n").await?;
-
-        if let Some(parent) = self.path.parent() {
-            tokio::fs::create_dir_all(parent).await?;
-        }
 
         // Create .deb ar archive from debian-binary, control.tar, and data.tar
         info!("building final .deb...");
-        let mut deb_builder = ar::Builder::new(std::fs::File::create(&self.path)?);
 
-        deb_builder.append_path(&debian_binary)?;
-        deb_builder.append_path(&control_tar)?;
-        deb_builder.append_path(&data_tar)?;
+        let host = TokioFloppyDisk::new(Some(tmp.path_view()));
+        let debfs = ArFloppyDisk::open(&self.path).await?;
+        debug!("write debian-binary");
+        debfs.write(Path::new("/debian-binary"), b"2.0\n").await?;
+        debug!("write control tar");
+        DiskDrive::copy_from_src(&host, &debfs, control_tar.file_name().unwrap()).await?;
+        debug!("write data tar");
+        DiskDrive::copy_from_src(&host, &debfs, data_tar.file_name().unwrap()).await?;
 
         debug!("done!");
 
@@ -437,6 +374,8 @@ impl ArtifactProducer for DebProducer {
         } else {
             None
         };
+
+        debfs.close().await?;
 
         Ok(DebArtifact {
             name: self.name.clone(),

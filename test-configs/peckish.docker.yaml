@@ -10,15 +10,15 @@ input:
   name: "peckish release binary"
   type: "file"
   paths:
-    - "./target/release/peckish"
+    - "./target/x86_64-unknown-linux-musl/release/peckish"
 
 output:
   - name: "queer/peckish:latest docker image"
     type: "docker"
     image: "queer/peckish:latest"
-    base_image: "ubuntu:latest"
+    base_image: "alpine:latest"
     entrypoint: ["/usr/bin/peckish"]
     injections:
       - type: "move"
-        src: "/target/release/peckish"
+        src: "/target/x86_64-unknown-linux-musl/release/peckish"
         dest: "/usr/bin/peckish"

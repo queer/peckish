@@ -1,10 +1,11 @@
 use std::path::{Path, PathBuf};
 
+use disk_drive::DiskDrive;
 use eyre::{eyre, Result};
-use floppy_disk::mem::{MemOpenOptions, MemPermissions};
-use floppy_disk::{
-    FloppyDisk, FloppyDiskUnixExt, FloppyFile, FloppyOpenOptions, FloppyUnixPermissions,
-};
+use flop::cpio::CpioFloppyDisk;
+
+use floppy_disk::tokio_fs::{TokioFloppyDisk, TokioOpenOptions};
+use floppy_disk::FloppyOpenOptions;
 use regex::Regex;
 use smoosh::CompressionType;
 use tracing::*;
@@ -30,7 +31,7 @@ impl Artifact for RpmArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+        use tokio::io::AsyncReadExt;
 
         info!("extracting {}...", &self.path.display());
         let mut rpm_file = tokio::fs::File::open(&self.path).await?;
@@ -44,50 +45,28 @@ impl Artifact for RpmArtifact {
             rpm::RPMPackage::parse(&mut input.as_slice()).unwrap()
         })
         .await?;
-        let fs = MemFS::new();
 
-        let mut cpio_data = vec![];
+        let tmp = TempDir::new().await?;
+        let fs = MemFS::new();
+        let host = TokioFloppyDisk::new(Some(tmp.path_view()));
+
+        // Decompress cpio data to disk
+        let mut host_cpio = TokioOpenOptions::new()
+            .create(true)
+            .write(true)
+            .open(&host, "/rpm.cpio")
+            .await?;
 
         smoosh::recompress(
             &mut pkg.content.as_slice(),
-            &mut cpio_data,
+            &mut host_cpio,
             CompressionType::None,
         )
         .await?;
 
-        debug!("building cpio reader from {} bytes", cpio_data.len());
-
-        for file in cpio_reader::iter_files(&cpio_data) {
-            let floppy_disk = fs.as_ref();
-            let path = Path::join(Path::new("/"), Path::new(file.name()).strip_prefix(".")?);
-            if let Some(parent) = path.parent() {
-                floppy_disk.create_dir_all(parent).await?;
-            }
-
-            debug!("extracting file: {:?}", path.display());
-            let mut mem_file = MemOpenOptions::new()
-                .create(true)
-                .write(true)
-                .open(floppy_disk, file.name())
-                .await?;
-            let rpm_file_content = file.file().to_vec();
-            let mut buf = vec![];
-            smoosh::recompress(
-                &mut rpm_file_content.as_slice(),
-                &mut buf,
-                CompressionType::None,
-            )
-            .await?;
-            mem_file.write_all(&buf).await?;
-            mem_file
-                .set_permissions(MemPermissions::from_mode(file.mode().bits()))
-                .await?;
-
-            let uid = file.uid();
-            let gid = file.gid();
-            floppy_disk.chown(path, uid, gid).await?;
-            debug!("set uid and gid to {} and {}", uid, gid);
-        }
+        let cpio = CpioFloppyDisk::open(tmp.path_view().join("rpm.cpio")).await?;
+        DiskDrive::copy_between(&cpio, fs.as_ref()).await?;
+        cpio.close().await?;
 
         debug!("done!");
 
@@ -207,7 +186,7 @@ impl ArtifactProducer for RpmProducer {
             &self.package_arch,
             &self.package_description,
         )
-        .compression(rpm::CompressionType::Gzip);
+        .compression(rpm::CompressionType::None);
 
         for path in &file_artifact.paths {
             let rpm_path = Path::join(Path::new("/"), path.strip_prefix(tmp.path_view())?);
@@ -227,9 +206,10 @@ impl ArtifactProducer for RpmProducer {
         }
 
         info!("building final rpm...");
-        let pkg = pkg.build().unwrap();
         let path_clone = self.path.clone();
         let join_handle = tokio::task::spawn_blocking(move || {
+            debug!("digesting...");
+            let pkg = pkg.build().unwrap();
             debug!("writing package {path_clone:?}!");
             let mut f = std::fs::File::create(path_clone).unwrap();
             pkg.write(&mut f).unwrap();

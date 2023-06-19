@@ -436,7 +436,7 @@ pub enum Injection {
 
 impl Injection {
     pub async fn inject(&self, memfs: &mut MemFS) -> Result<()> {
-        let fs = memfs.fs();
+        let fs = memfs.as_ref();
         match self {
             Injection::Move { src, dest } => {
                 debug!("moving {:?} to {:?}", src, dest);

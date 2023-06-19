@@ -86,16 +86,3 @@ pub fn get_current_time() -> Result<u64> {
         Ok(now)
     }
 }
-
-pub fn maybe_clamp_timestamp(timestamp: u64) -> Result<u64> {
-    if let Ok(source_date_epoch) = std::env::var("SOURCE_DATE_EPOCH") {
-        let source_date_epoch = source_date_epoch.parse::<u64>()?;
-        if timestamp > source_date_epoch {
-            Ok(source_date_epoch)
-        } else {
-            Ok(timestamp)
-        }
-    } else {
-        Ok(timestamp)
-    }
-}

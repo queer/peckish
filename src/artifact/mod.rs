@@ -11,6 +11,7 @@ pub mod deb;
 pub mod docker;
 pub mod ext4;
 pub mod file;
+pub(crate) mod memory;
 pub mod rpm;
 pub mod tarball;
 
