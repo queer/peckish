@@ -454,7 +454,7 @@ impl Injection {
             }
 
             Injection::Symlink { src, dest } => {
-                debug!("symlinking {:?} to {:?}", src, dest);
+                debug!("symlinking {} to {}", dest.display(), src.display());
                 fs.symlink(src, dest).await?;
             }
 
@@ -463,7 +463,8 @@ impl Injection {
                 fs.create_dir_all(path.parent().unwrap()).await?;
                 MemOpenOptions::new()
                     .create(true)
-                    .create_new(true)
+                    .read(true)
+                    .write(true)
                     .open(fs, path)
                     .await?;
             }

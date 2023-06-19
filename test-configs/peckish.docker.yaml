@@ -16,7 +16,7 @@ output:
   - name: "queer/peckish:latest docker image"
     type: "docker"
     image: "queer/peckish:latest"
-    base_image: "alpine:latest"
+    base_image: "ubuntu:latest"
     entrypoint: ["/usr/bin/peckish"]
     injections:
       - type: "move"
