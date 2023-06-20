@@ -239,15 +239,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "baka"
-version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0db11e5552738b3786ceb3c80b619cf144cc40da32e07fba6bdcff2eb3889ad4"
-dependencies = [
- "futures",
-]
-
-[[package]]
 name = "base64"
 version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1012,15 +1003,14 @@ dependencies = [
 
 [[package]]
 name = "flop"
-version = "0.1.7"
+version = "0.1.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dfd61d84821d9d16a26fd30101709ff7bfc8adb7ec7cda259be05358a7d62fa"
+checksum = "11d31c9fb3a23c31c49e59ca99dabd4731ae3292a7e71a5e45a04d948f5b02d0"
 dependencies = [
  "ar",
  "async-recursion",
  "async-trait",
  "async_zip",
- "baka",
  "chrono",
  "cpio",
  "cpio_reader",
