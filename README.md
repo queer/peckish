@@ -197,6 +197,8 @@ For now, you can use peckish as a git dependency:
 peckish = { git = "https://github.com/queer/peckish.git" }
 ```
 
+MSRV 1.69.
+
 ```rust
 // artifacts
 use peckish::prelude::builder::*;
