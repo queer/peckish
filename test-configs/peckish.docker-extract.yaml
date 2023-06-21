@@ -9,14 +9,14 @@ metadata:
   license: "Apache-2.0"
 
 input:
-  name: "alpine"
+  name: "ubuntu"
   type: "docker"
-  image: "alpine:latest"
+  image: "ubuntu:latest"
 
 output:
   - name: "tarball"
     type: "tarball"
-    path: "./test_data_pls_ignore/alpine.docker.tar"
+    path: "./test_data_pls_ignore/ubuntu.docker.tar"
   - name: "wtf.docker"
     type: docker
-    image: "wtf-alpine:latest"
+    image: "wtf-ubuntu:latest"

@@ -1003,9 +1003,9 @@ dependencies = [
 
 [[package]]
 name = "flop"
-version = "0.2.3"
+version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0bbad9fd8a580ec2b33cff304e6c6c3002bac0ab5df72d1272a869792db116b8"
+checksum = "a2091b06ad394088b74fd28e3cb5a1ec6d0e6295b6046a7422a39db269a76f31"
 dependencies = [
  "ar",
  "async-recursion",

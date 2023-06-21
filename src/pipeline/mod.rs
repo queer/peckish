@@ -6,7 +6,7 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tracing::*;
 
-use crate::artifact::{Artifact, ArtifactProducer, SelfValidation};
+use crate::artifact::{Artifact, ArtifactProducer};
 use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig};
 
 /// A pipeline that can run a given config. This is the main entrypoint for
@@ -20,6 +20,16 @@ impl Pipeline {
     #[allow(clippy::new_without_default)]
     pub fn new(report_file: Option<PathBuf>) -> Self {
         Self { report_file }
+    }
+
+    async fn validate_producer(
+        &self,
+        producer: &impl ArtifactProducer,
+        previous: &dyn Artifact,
+    ) -> Result<()> {
+        producer.validate().await?;
+        producer.can_produce_from(previous).await?;
+        Ok(())
     }
 
     pub async fn run(&self, config: PeckishConfig) -> Result<Vec<Box<dyn Artifact>>> {
@@ -43,37 +53,44 @@ impl Pipeline {
             info!("* step {}: {}", i + 1, producer.name());
             let next_artifact: Box<dyn Artifact> = match producer {
                 ConfiguredProducer::File(producer) => {
-                    producer.validate().await?;
+                    self.validate_producer(producer, input_artifact.as_ref())
+                        .await?;
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Tarball(producer) => {
-                    producer.validate().await?;
+                    self.validate_producer(producer, input_artifact.as_ref())
+                        .await?;
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Docker(producer) => {
-                    producer.validate().await?;
+                    self.validate_producer(producer, input_artifact.as_ref())
+                        .await?;
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Arch(producer) => {
-                    producer.validate().await?;
+                    self.validate_producer(producer, input_artifact.as_ref())
+                        .await?;
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Deb(producer) => {
-                    producer.validate().await?;
+                    self.validate_producer(producer, input_artifact.as_ref())
+                        .await?;
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Rpm(producer) => {
-                    producer.validate().await?;
+                    self.validate_producer(producer, input_artifact.as_ref())
+                        .await?;
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Ext4(producer) => {
-                    producer.validate().await?;
+                    self.validate_producer(producer, input_artifact.as_ref())
+                        .await?;
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
             };

@@ -213,6 +213,14 @@ impl ArtifactProducer for DockerProducer {
         &self.injections
     }
 
+    async fn can_produce_from(&self, _previous: &dyn Artifact) -> Result<()> {
+        TokioFloppyDisk::new(None)
+            .metadata("/var/run/docker.sock")
+            .await
+            .map(|_| ())
+            .map_err(|e| e.into())
+    }
+
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<DockerArtifact> {
         // Produce a tarball artifact from the previous artifact
         let tmp = TempDir::new().await?;

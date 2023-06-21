@@ -3,6 +3,8 @@ use std::path::PathBuf;
 use disk_drive::DiskDrive;
 use eyre::Result;
 use flail::ext::facade::ExtFacadeFloppyDisk;
+use floppy_disk::tokio_fs::TokioFloppyDisk;
+use floppy_disk::FloppyDisk;
 use tracing::*;
 
 use crate::fs::MemFS;
@@ -105,6 +107,22 @@ impl ArtifactProducer for Ext4Producer {
 
     fn injections(&self) -> &[Injection] {
         &self.injections
+    }
+
+    async fn can_produce_from(&self, _previous: &dyn Artifact) -> Result<()> {
+        if TokioFloppyDisk::new(None)
+            .metadata(&self.path)
+            .await
+            .is_err()
+        {
+            Ok(())
+        } else {
+            Err(eyre::eyre!(
+                "cannot produce artifact '{}': path already exists: {}",
+                self.name,
+                self.path.display()
+            ))?
+        }
     }
 
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Ext4Artifact> {

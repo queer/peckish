@@ -57,6 +57,10 @@ impl ArtifactProducer for MemoryProducer {
         &self.injections
     }
 
+    async fn can_produce_from(&self, _previous: &dyn Artifact) -> Result<()> {
+        Ok(())
+    }
+
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
         let prev = previous.extract().await?;
         let fs = MemFS::new();
