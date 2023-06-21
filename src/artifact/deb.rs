@@ -239,7 +239,6 @@ impl ArtifactProducer for DebProducer {
 
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
         let tmp = TempDir::new().await?;
-
         // Create data.tar from previous artifact in tmp using TarballProducer
         info!("packaging data files...");
         debug!("producing data.tar from previous artifact...");

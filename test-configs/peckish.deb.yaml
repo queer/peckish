@@ -1,0 +1,23 @@
+metadata:
+  name: "peckish"
+  version: "0.0.1-1"
+  description: "peckish transforms software artifacts"
+  author: "amy"
+  arch: "amd64"
+  license: "Apache-2.0"
+
+input:
+  name: "peckish release binary"
+  type: "file"
+  paths:
+    - "./target/release/peckish"
+
+output:
+  - name: "peckish.deb"
+    type: "deb"
+    path: "./release/peckish.deb"
+    depends: "libc6"
+    injections:
+      - type: "move"
+        src: "/target/release/peckish"
+        dest: "/usr/bin/peckish"
