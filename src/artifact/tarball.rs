@@ -29,9 +29,9 @@ impl Artifact for TarballArtifact {
         let fs = MemFS::new();
 
         info!("unpacking {}", self.path.display());
-        let tarball = TarFloppyDisk::open(&self.path).await?;
+        let tarball = TarFloppyDisk::open(&self.path).await.unwrap();
         DiskDrive::copy_between(&tarball, fs.as_ref()).await?;
-        tarball.close().await?;
+        tarball.close().await.unwrap();
 
         Ok(fs)
     }
