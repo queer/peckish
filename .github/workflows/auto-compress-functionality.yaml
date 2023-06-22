@@ -40,4 +40,4 @@ jobs:
       - name: "Run release binary"
         run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.autocompress.yaml"
       - name: "Validate tarball extraction"
-        run: "ls -lah ./test_output_pls_ignore"
+        run: "ls -lah ./out/ci"

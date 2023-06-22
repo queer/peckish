@@ -14,7 +14,7 @@ input:
 output:
   - name: "files"
     type: "file"
-    path: "./test_output_pls_ignore/hello-world"
+    path: "./out/test/hello-world"
   - name: "goodbye-world"
     type: "docker"
     image: "goodbye-world:latest"

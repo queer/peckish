@@ -15,7 +15,7 @@ input:
 output:
   - name: "peckish rpm"
     type: "rpm"
-    path: "./release/peckish.rpm"
+    path: "./out/test/peckish.rpm"
     injections:
       - type: "move"
         src: "/target/release/peckish"

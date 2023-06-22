@@ -40,4 +40,4 @@ jobs:
       - name: "Run release binary"
         run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.docker-extract.yaml"
       - name: "Validate tarball extraction"
-        run: "tar -tf ./test_data_pls_ignore/ubuntu.docker.tar"
+        run: "tar -tf ./out/ci/ubuntu.docker.tar"

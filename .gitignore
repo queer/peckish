@@ -1,15 +1,18 @@
+# project files
 /target
-/test*
-!/test-configs
-/*.bak
-/NOTES.md
-/__*
-/*.tar
-/*.deb
 /release
-/test.tar.gz
-/test_output_pls_ignore
 /*.txt
 /fc
+
+# profiling / work
 /perf.*
 /flamegraph.svg
+/out
+
+# temp files for debugging
+/*.deb
+/*.rpm
+/*.tar*
+/*.zip
+/*.ext4
+/*.txt

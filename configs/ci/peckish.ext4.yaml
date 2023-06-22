@@ -14,4 +14,4 @@ input:
 output:
   - name: "ext image!!!"
     type: "ext4"
-    path: "./test_output_pls_ignore/hello-world.ext4"
+    path: "./out/ci/hello-world.ext4"

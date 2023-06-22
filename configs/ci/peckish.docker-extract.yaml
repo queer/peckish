@@ -16,7 +16,7 @@ input:
 output:
   - name: "tarball"
     type: "tarball"
-    path: "./test_data_pls_ignore/ubuntu.docker.tar"
+    path: "./out/ci/ubuntu.docker.tar"
   - name: "wtf.docker"
     type: docker
     image: "wtf-ubuntu:latest"
