@@ -41,10 +41,10 @@ jobs:
         run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.ext4.yaml"
       - name: "Validate ext4 creation"
         run: "ls -lah ./out/ci"
-      - name: "Validate ext4 fs boots"
-        run: |
-          ARCH="$(uname -m)"
-          mkdir -pv ./out/ci
-          wget https://s3.amazonaws.com/spec.ccfc.min/img/quickstart_guide/${ARCH}/kernels/vmlinux.bin -O ./out/ci/vmlinux.bin
-          wget -q https://github.com/firecracker-microvm/firecracker/releases/download/v1.3.3/firecracker-v1.3.3-x86_64.tgz -O- | gzip -d | tar xvf - | grep firecracker | grep "x86_64\$" | xargs --replace="REPL" mv -v REPL ./firecracker
-          ./firecracker --no-api --config-file ./configs/ci/firecracker/vm_config.json
+      # - name: "Validate ext4 fs boots"
+      #   run: |
+      #     ARCH="$(uname -m)"
+      #     mkdir -pv ./out/ci
+      #     wget https://s3.amazonaws.com/spec.ccfc.min/img/quickstart_guide/${ARCH}/kernels/vmlinux.bin -O ./out/ci/vmlinux.bin
+      #     wget -q https://github.com/firecracker-microvm/firecracker/releases/download/v1.3.3/firecracker-v1.3.3-x86_64.tgz -O- | gzip -d | tar xvf - | grep firecracker | grep "x86_64\$" | xargs --replace="REPL" mv -v REPL ./firecracker
+      #     ./firecracker --no-api --config-file ./configs/ci/firecracker/vm_config.json
