@@ -38,7 +38,7 @@ jobs:
           command: "build"
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Run release binary"
-        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.host_file_dir.yaml"
+        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.host-file-dir.yaml"
       - name: "Validate file contents"
         run: "tar -tvf ./test_output_pls_ignore/host_file_dir.tar | grep hosts2"
       - name: "Validate directory contents"

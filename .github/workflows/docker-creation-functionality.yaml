@@ -38,6 +38,6 @@ jobs:
           command: "build"
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Run release binary"
-        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.docker.yaml"
+        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.docker-create.yaml"
       - name: "Validate image creation"
         run: "docker run --rm queer/peckish:latest peckish -V"

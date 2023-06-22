@@ -38,6 +38,6 @@ jobs:
           command: "build"
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Run release binary"
-        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.ext4.yaml"
+        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.ext4.yaml"
       - name: "Validate tarball extraction"
         run: "ls -lah ./test_output_pls_ignore"
