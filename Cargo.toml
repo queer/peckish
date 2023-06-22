@@ -13,7 +13,7 @@ anyhow = "1.0.71"
 async-recursion = "1.0.4"
 async-trait = "0.1.67"
 bollard = { git = "https://github.com/queer/bollard", rev = "2624ced" }
-clap = { version = "4.3.3", features = ["derive"] }
+clap = { version = "4.3.5", features = ["derive"] }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 ctor = "0.1.26"
 disk-drive = "0.1.10"
@@ -23,14 +23,14 @@ flop = "0.2.4"
 floppy-disk = "0.2.5"
 hyper = "0.14.26"
 indoc = "2.0.1"
-itertools = "0.10.5"
+itertools = "0.11.0"
 md5 = "0.7.0"
 nyoom = "0.3.5"
 rand = "0.8.5"
 regex = "1.8.4"
 rpm = { version = "0.11.0" }
 serde = { version = "1.0.164", features = ["derive"] }
-serde_json = "1.0.96"
+serde_json = "1.0.97"
 serde_yaml = "0.9.21"
 smoosh = "0.2.0"
 thiserror = "1.0.40"
