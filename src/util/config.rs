@@ -460,12 +460,26 @@ impl Injection {
 
             Injection::HostFile { src, dest } => {
                 debug!("copying host file {:?} to {:?}", src, dest);
+                let src = if src.starts_with("./") {
+                    let mut out = std::env::current_dir()?;
+                    out.push(src.strip_prefix("./")?);
+                    out
+                } else {
+                    src.clone()
+                };
                 let host = TokioFloppyDisk::new(None);
                 DiskDrive::copy_from_src_to_dest(&host, fs, src, dest).await?;
             }
 
             Injection::HostDir { src, dest } => {
                 debug!("copying host directory {:?} to {:?}", src, dest);
+                let src = if src.starts_with("./") {
+                    let mut out = std::env::current_dir()?;
+                    out.push(src.strip_prefix("./")?);
+                    out
+                } else {
+                    src.clone()
+                };
                 let host = TokioFloppyDisk::new(None);
                 DiskDrive::copy_from_src_to_dest(&host, fs, src, dest).await?;
             }
