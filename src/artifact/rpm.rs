@@ -205,7 +205,12 @@ impl ArtifactProducer for RpmProducer {
 
         for path in &file_artifact.paths {
             let rpm_path = Path::join(Path::new("/"), path.strip_prefix(tmp.path_view())?);
+            if path.is_dir() {
+                debug!("skipping directory {}", path.display());
+                continue;
+            }
             debug!("writing path to rpm: {}", rpm_path.display());
+
             // TODO: This should be async... right?
             pkg = pkg
                 .with_file(
