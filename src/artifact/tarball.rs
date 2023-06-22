@@ -32,7 +32,7 @@ impl Artifact for TarballArtifact {
 
         info!("unpacking {}", self.path.display());
         let tarball = TarFloppyDisk::open(&self.path).await.unwrap();
-        DiskDrive::copy_between(&tarball, fs.as_ref()).await?;
+        DiskDrive::copy_between(&tarball, &*fs).await?;
         tarball.close().await.unwrap();
 
         Ok(fs)
@@ -146,7 +146,7 @@ impl ArtifactProducer for TarballProducer {
         }
 
         let tarball = TarFloppyDisk::open(&self.path).await?;
-        DiskDrive::copy_between(memfs.as_ref(), &tarball).await?;
+        DiskDrive::copy_between(&**memfs, &tarball).await?;
         tarball.close().await?;
 
         Ok(TarballArtifact {

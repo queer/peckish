@@ -65,7 +65,7 @@ impl Artifact for RpmArtifact {
         .await?;
 
         let cpio = CpioFloppyDisk::open(tmp.path_view().join("rpm.cpio")).await?;
-        DiskDrive::copy_between(&cpio, fs.as_ref()).await?;
+        DiskDrive::copy_between(&cpio, &*fs).await?;
         cpio.close().await?;
 
         debug!("done!");

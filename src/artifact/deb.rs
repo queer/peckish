@@ -6,7 +6,7 @@ use flop::ar::ArFloppyDisk;
 use flop::tar::TarFloppyDisk;
 use floppy_disk::mem::MemOpenOptions;
 use floppy_disk::tokio_fs::TokioFloppyDisk;
-use floppy_disk::{FloppyDisk, FloppyOpenOptions};
+use floppy_disk::{FloppyDisk, FloppyMetadata, FloppyOpenOptions};
 use regex::Regex;
 use smoosh::CompressionType;
 use tokio::io::AsyncReadExt;
@@ -15,7 +15,7 @@ use tracing::*;
 use crate::artifact::get_artifact_size;
 use crate::artifact::memory::EmptyArtifact;
 use crate::artifact::tarball::{TarballProducer, TarballProducerBuilder};
-use crate::fs::{InternalFileType, MemFS, TempDir};
+use crate::fs::{MemFS, TempDir};
 use crate::util::config::Injection;
 use crate::util::traverse_memfs;
 
@@ -74,7 +74,7 @@ impl Artifact for DebArtifact {
         DiskDrive::copy_from_src(&deb, &host, &data_tar).await?;
 
         let data = TarFloppyDisk::open(tmp.path_view().join(&data_tar)).await?;
-        DiskDrive::copy_between(&data, fs.as_ref()).await?;
+        DiskDrive::copy_between(&data, &*fs).await?;
 
         data.close().await?;
         deb.close().await?;
@@ -327,11 +327,8 @@ impl ArtifactProducer for DebProducer {
         let memfs = self.inject(&mut memfs).await?;
         let paths = traverse_memfs(memfs, &PathBuf::from("/"), None).await?;
         for path in paths {
-            if memfs.determine_file_type(&path).await? == InternalFileType::File {
-                let mut file = MemOpenOptions::new()
-                    .read(true)
-                    .open(memfs.as_ref(), &path)
-                    .await?;
+            if (*memfs).metadata(&path).await?.is_file() {
+                let mut file = MemOpenOptions::new().read(true).open(memfs, &path).await?;
                 let mut buf = Vec::new();
                 file.read_to_end(&mut buf).await?;
                 let md5sum = md5::compute(buf);

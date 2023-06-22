@@ -88,7 +88,7 @@ impl Artifact for DockerArtifact {
         }
         .extract()
         .await?;
-        let basic_tar_fs = basic_tar_memfs.as_ref();
+        let basic_tar_fs = &*basic_tar_memfs;
 
         tokio::fs::remove_dir_all(&image_tar_export).await?;
 
@@ -131,8 +131,7 @@ impl Artifact for DockerArtifact {
             }
             .extract()
             .await?;
-            let layer_fs = layer_memfs.as_ref();
-            DiskDrive::copy_between(layer_fs, fs.as_ref()).await?;
+            DiskDrive::copy_between(&*layer_memfs, &*fs).await?;
         }
 
         Ok(fs)
@@ -244,8 +243,8 @@ impl ArtifactProducer for DockerProducer {
 
                 let added_fs = previous.extract().await?;
 
-                DiskDrive::copy_between(base_fs.as_ref(), out.as_ref()).await?;
-                DiskDrive::copy_between(added_fs.as_ref(), out.as_ref()).await?;
+                DiskDrive::copy_between(&*base_fs, &*out).await?;
+                DiskDrive::copy_between(&*added_fs, &*out).await?;
 
                 out
             };
@@ -437,10 +436,9 @@ mod tests {
         };
         {
             let fs = artifact.extract().await?;
-            let fs = fs.as_ref();
             assert!(MemOpenOptions::new()
                 .read(true)
-                .open(fs, "/bin/sh")
+                .open(&*fs, "/bin/sh")
                 .await
                 .is_ok());
         }

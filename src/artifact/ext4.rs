@@ -28,7 +28,7 @@ impl Artifact for Ext4Artifact {
         let fs = MemFS::new();
 
         let floppy_disk = ExtFacadeFloppyDisk::new(&self.path)?;
-        DiskDrive::copy_between(&floppy_disk, fs.as_ref()).await?;
+        DiskDrive::copy_between(&floppy_disk, &*fs).await?;
 
         Ok(fs)
     }
@@ -134,7 +134,7 @@ impl ArtifactProducer for Ext4Producer {
 
         let output = ExtFacadeFloppyDisk::create(&self.path, size)?;
 
-        DiskDrive::copy_between(memfs.as_ref(), &output).await?;
+        DiskDrive::copy_between(&**memfs, &output).await?;
 
         Ok(Ext4Artifact {
             name: self.path.to_string_lossy().to_string(),

@@ -64,7 +64,7 @@ impl ArtifactProducer for MemoryProducer {
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
         let prev = previous.extract().await?;
         let fs = MemFS::new();
-        DiskDrive::copy_between(prev.as_ref(), fs.as_ref()).await?;
+        DiskDrive::copy_between(&*prev, &*fs).await?;
         Ok(MemoryArtifact {
             name: self.name.clone(),
             fs,

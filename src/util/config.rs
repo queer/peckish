@@ -1,7 +1,9 @@
 use std::path::{Path, PathBuf};
 
+use disk_drive::DiskDrive;
 use eyre::{eyre, Result};
 use floppy_disk::mem::MemOpenOptions;
+use floppy_disk::tokio_fs::TokioFloppyDisk;
 use floppy_disk::{FloppyDisk, FloppyMetadata, FloppyOpenOptions};
 use serde::{Deserialize, Serialize};
 use smoosh::CompressionType;
@@ -16,7 +18,7 @@ use crate::artifact::ext4::{Ext4Artifact, Ext4Producer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::rpm::{RpmArtifact, RpmProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
-use crate::fs::{InternalFileType, MemFS};
+use crate::fs::MemFS;
 
 #[derive(Debug)]
 pub struct PeckishConfig {
@@ -69,36 +71,13 @@ struct InternalConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 enum InputArtifact {
-    File {
-        name: String,
-        paths: Vec<PathBuf>,
-        #[serde(default)]
-        strip_path_prefixes: Option<bool>,
-    },
-    Tarball {
-        name: String,
-        path: PathBuf,
-    },
-    Docker {
-        name: String,
-        image: String,
-    },
-    Arch {
-        name: String,
-        path: PathBuf,
-    },
-    Deb {
-        name: String,
-        path: PathBuf,
-    },
-    Rpm {
-        name: String,
-        path: PathBuf,
-    },
-    Ext4 {
-        name: String,
-        path: PathBuf,
-    },
+    File { name: String, paths: Vec<PathBuf> },
+    Tarball { name: String, path: PathBuf },
+    Docker { name: String, image: String },
+    Arch { name: String, path: PathBuf },
+    Deb { name: String, path: PathBuf },
+    Rpm { name: String, path: PathBuf },
+    Ext4 { name: String, path: PathBuf },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -106,15 +85,9 @@ enum InputArtifact {
 impl Into<ConfiguredArtifact> for InputArtifact {
     fn into(self) -> ConfiguredArtifact {
         match self {
-            InputArtifact::File {
-                name,
-                paths,
-                strip_path_prefixes,
-            } => ConfiguredArtifact::File(FileArtifact {
-                name,
-                paths,
-                strip_path_prefixes,
-            }),
+            InputArtifact::File { name, paths } => {
+                ConfiguredArtifact::File(FileArtifact { name, paths })
+            }
 
             InputArtifact::Tarball { name, path } => {
                 ConfiguredArtifact::Tarball(TarballArtifact { name, path })
@@ -436,7 +409,7 @@ pub enum Injection {
 
 impl Injection {
     pub async fn inject(&self, memfs: &mut MemFS) -> Result<()> {
-        let fs = memfs.as_ref();
+        let fs = &**memfs;
         match self {
             Injection::Move { src, dest } => {
                 debug!("moving {:?} to {:?}", src, dest);
@@ -487,12 +460,14 @@ impl Injection {
 
             Injection::HostFile { src, dest } => {
                 debug!("copying host file {:?} to {:?}", src, dest);
-                memfs.copy_file_to_memfs(src, dest).await?;
+                let host = TokioFloppyDisk::new(None);
+                DiskDrive::copy_from_src_to_dest(&host, fs, src, dest).await?;
             }
 
             Injection::HostDir { src, dest } => {
                 debug!("copying host directory {:?} to {:?}", src, dest);
-                memfs.copy_dir_to_memfs(src, dest).await?;
+                let host = TokioFloppyDisk::new(None);
+                DiskDrive::copy_from_src_to_dest(&host, fs, src, dest).await?;
             }
         }
 
@@ -503,7 +478,7 @@ impl Injection {
     async fn do_move_file(memfs: &MemFS, src: &Path, dest: &Path, depth: u8) -> Result<()> {
         // if src doesn't exist in the memfs, return an error, without an exists() method
         // code goes here:
-        let fs = memfs.as_ref();
+        let fs = &**memfs;
         if fs.metadata(src).await.is_err() {
             return Err(eyre!("source path {src:?} does not exist"));
         }
@@ -524,36 +499,34 @@ impl Injection {
         // src is symlink, dest is file. unimplemented!("resolve symlink, treat as respective case")
         // src is symlink, dest is dir. unimplemented!("resolve symlink, treat as respective case")
         // src is symlink, dest is symlink. unimplemented!("resolve symlink, treat as respective case")
-        let src_type = memfs.determine_file_type(src).await?;
+        let src_type = fs.metadata(src).await?;
         let dest_exists = fs.metadata(dest).await.is_ok();
 
         if dest_exists {
-            let dest_type = memfs.determine_file_type(dest).await?;
+            let dest_type = fs.metadata(dest).await?;
 
-            if src_type == InternalFileType::File && dest_type == InternalFileType::File {
+            if src_type.is_file() && dest_type.is_file() {
                 fs.rename(src, dest).await?;
-            } else if src_type == InternalFileType::File && dest_type == InternalFileType::Dir {
+            } else if src_type.is_file() && dest_type.is_dir() {
                 let file_name = src.file_name().unwrap();
                 fs.rename(src, &dest.join(file_name)).await?;
-            } else if src_type == InternalFileType::File && dest_type == InternalFileType::Symlink {
+            } else if src_type.is_file() && dest_type.is_symlink() {
                 let dest = memfs.resolve_symlink(dest).await?;
                 Self::do_move_file(memfs, src, &dest, depth + 1).await?;
-            } else if src_type == InternalFileType::Dir && dest_type == InternalFileType::File {
+            } else if src_type.is_dir() && dest_type.is_file() {
                 return Err(eyre!("cannot move directory {:?} to file {:?}", src, dest));
-            } else if src_type == InternalFileType::Dir && dest_type == InternalFileType::Dir {
+            } else if src_type.is_dir() && dest_type.is_dir() {
                 panic!("aaaaaaaa")
-            } else if src_type == InternalFileType::Dir && dest_type == InternalFileType::Symlink {
+            } else if src_type.is_dir() && dest_type.is_symlink() {
                 let dest = memfs.resolve_symlink(dest).await?;
                 Self::do_move_file(memfs, src, &dest, depth + 1).await?;
-            } else if src_type == InternalFileType::Symlink && dest_type == InternalFileType::File {
+            } else if src_type.is_symlink() && dest_type.is_file() {
                 let src = memfs.resolve_symlink(src).await?;
                 Self::do_move_file(memfs, &src, dest, depth + 1).await?;
-            } else if src_type == InternalFileType::Symlink && dest_type == InternalFileType::Dir {
+            } else if src_type.is_symlink() && dest_type.is_dir() {
                 let src = memfs.resolve_symlink(src).await?;
                 Self::do_move_file(memfs, &src, dest, depth + 1).await?;
-            } else if src_type == InternalFileType::Symlink
-                && dest_type == InternalFileType::Symlink
-            {
+            } else if src_type.is_symlink() && dest_type.is_symlink() {
                 let src = memfs.resolve_symlink(src).await?;
                 let dest = memfs.resolve_symlink(dest).await?;
                 Self::do_move_file(memfs, &src, &dest, depth + 1).await?;

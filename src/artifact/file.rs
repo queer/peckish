@@ -1,15 +1,17 @@
 use std::os::unix::prelude::PermissionsExt;
 use std::path::{Path, PathBuf};
 
+use disk_drive::DiskDrive;
 use eyre::Result;
 use floppy_disk::mem::MemOpenOptions;
+use floppy_disk::tokio_fs::TokioFloppyDisk;
 use floppy_disk::{
     FloppyDisk, FloppyFile, FloppyMetadata, FloppyOpenOptions, FloppyUnixMetadata,
     FloppyUnixPermissions,
 };
 use tracing::*;
 
-use crate::fs::{InternalFileType, MemFS};
+use crate::fs::MemFS;
 use crate::util::config::Injection;
 use crate::util::{is_in_tmp_dir, traverse_memfs, Fix};
 
@@ -20,14 +22,6 @@ use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 pub struct FileArtifact {
     pub name: String,
     pub paths: Vec<PathBuf>,
-    /// Whether or not the contents of a path should be stripped of itself as a
-    /// prefix. For example:
-    ///
-    /// ```text
-    /// /a/b/c -> /c
-    /// /a/b/c/d/e/... -> /...
-    /// ```
-    pub strip_path_prefixes: Option<bool>,
 }
 
 #[async_trait::async_trait]
@@ -37,26 +31,12 @@ impl Artifact for FileArtifact {
     }
 
     async fn extract(&self) -> Result<MemFS> {
-        let mut fs = MemFS::new();
-
+        let fs = MemFS::new();
+        let host = TokioFloppyDisk::new(None);
         debug!("copying {} paths to memfs!", self.paths.len());
-
-        if let Some(true) = self.strip_path_prefixes {
-            for path in &self.paths {
-                let prefix = if path.is_dir() {
-                    path
-                } else if let Some(parent) = path.parent() {
-                    parent
-                } else {
-                    path
-                };
-                fs.copy_files_from_paths(&vec![path.clone()], Some(prefix.into()), None)
-                    .await?;
-            }
-        } else {
-            fs.copy_files_from_paths(&self.paths, None, None).await?;
+        for path in &self.paths {
+            DiskDrive::copy_from_src(&host, &*fs, path).await?;
         }
-
         Ok(fs)
     }
 
@@ -96,24 +76,12 @@ impl SelfValidation for FileArtifact {
 pub struct FileArtifactBuilder {
     name: String,
     paths: Vec<PathBuf>,
-    strip_path_prefixes: Option<bool>,
-    preserve_empty_directories: Option<bool>,
 }
 
 #[allow(unused)]
 impl FileArtifactBuilder {
     pub fn add_path<P: Into<PathBuf>>(&mut self, path: P) -> &mut Self {
         self.paths.push(path.into());
-        self
-    }
-
-    pub fn strip_path_prefixes(&mut self, strip: bool) -> &mut Self {
-        self.strip_path_prefixes = Some(strip);
-        self
-    }
-
-    pub fn preserve_empty_directories(&mut self, preserve: bool) -> &mut Self {
-        self.preserve_empty_directories = Some(preserve);
         self
     }
 }
@@ -125,8 +93,6 @@ impl SelfBuilder for FileArtifactBuilder {
         Self {
             name: name.into(),
             paths: vec![],
-            strip_path_prefixes: None,
-            preserve_empty_directories: None,
         }
     }
 
@@ -134,7 +100,6 @@ impl SelfBuilder for FileArtifactBuilder {
         Ok(FileArtifact {
             name: self.name.clone(),
             paths: self.paths.clone(),
-            strip_path_prefixes: self.strip_path_prefixes,
         })
     }
 }
@@ -206,11 +171,10 @@ impl ArtifactProducer for FileProducer {
                 tokio::fs::create_dir_all(parent).await.map_err(Fix::Io)?;
             }
 
-            let file_type = memfs.determine_file_type(path).await?;
-            debug!("{path:?} is {file_type:?}");
+            let metadata = (*memfs).metadata(path).await?;
 
-            let fs = memfs.as_ref();
-            if file_type == InternalFileType::File {
+            let fs = &**memfs;
+            if metadata.is_file() {
                 debug!("writing file to {full_path:?}");
                 let mut file = tokio::fs::File::create(&full_path).await?;
                 let mut file_handle = MemOpenOptions::new()
@@ -243,7 +207,7 @@ impl ArtifactProducer for FileProducer {
                         warn!("failed to chown {full_path:?} to {uid}:{gid}: {e}");
                     }
                 }
-            } else if file_type == InternalFileType::Dir {
+            } else if metadata.is_dir() {
                 debug!("creating dir {full_path:?}");
                 tokio::fs::create_dir_all(&full_path)
                     .await
@@ -257,7 +221,7 @@ impl ArtifactProducer for FileProducer {
                     std::fs::Permissions::from_mode(permissions.mode()),
                 )
                 .await?;
-            } else if file_type == InternalFileType::Symlink {
+            } else if metadata.is_symlink() {
                 let symlink_target = fs.read_link(path).await?;
                 debug!("creating symlink {full_path:?} -> {symlink_target:?}");
                 tokio::fs::symlink(symlink_target, full_path)
@@ -280,7 +244,6 @@ impl ArtifactProducer for FileProducer {
                     }
                 })
                 .collect(),
-            strip_path_prefixes: Some(true),
         })
     }
 }

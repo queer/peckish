@@ -845,9 +845,9 @@ dependencies = [
 
 [[package]]
 name = "disk-drive"
-version = "0.1.8"
+version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eecb3fb32494490d6c339562ec89612206bc649f1304fcf09e41d80ece608852"
+checksum = "a63118af6c4d628af0f43e0ff96b1d721eac9eb7ce49577c7038dabf149e0b75"
 dependencies = [
  "eyre",
  "floppy-disk",
