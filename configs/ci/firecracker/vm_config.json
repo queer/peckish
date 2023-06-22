@@ -1,0 +1,23 @@
+{
+  "boot-source": {
+    "kernel_image_path": "./out/ci/vmlinux.bin",
+    "boot_args": "console=ttyS0 reboot=k panic=1 pci=off init=/hello",
+    "initrd_path": null
+  },
+  "drives": [
+    {
+      "drive_id": "rootfs",
+      "path_on_host": "./out/ci/hello-world.ext4",
+      "is_root_device": true,
+      "is_read_only": false
+    }
+  ],
+  "machine-config": {
+    "vcpu_count": 1,
+    "mem_size_mib": 128,
+    "smt": false,
+    "track_dirty_pages": false
+  },
+  "network-interfaces": [
+  ]
+}

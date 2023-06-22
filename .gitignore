@@ -2,7 +2,6 @@
 /target
 /release
 /*.txt
-/fc
 
 # profiling / work
 /perf.*
@@ -16,3 +15,6 @@
 /*.zip
 /*.ext4
 /*.txt
+
+# biiiiiig files
+/configs/ci/firecracker/vmlinux.bin

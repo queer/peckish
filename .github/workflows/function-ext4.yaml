@@ -39,5 +39,11 @@ jobs:
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Run release binary"
         run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.ext4.yaml"
-      - name: "Validate tarball extraction"
+      - name: "Validate ext4 creation"
         run: "ls -lah ./out/ci"
+      - name: "Validate ext4 fs boots"
+        run: |
+          ARCH="$(uname -m)"
+          mkdir -pv ./out/ci
+          wget https://s3.amazonaws.com/spec.ccfc.min/img/quickstart_guide/${ARCH}/kernels/vmlinux.bin -O ./out/ci/vmlinux.bin
+          firecracker --no-api --config-file ./configs/ci/firecracker/vm_config.json
