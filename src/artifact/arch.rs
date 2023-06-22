@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 
 use eyre::Result;
+use flop::tar::TarFloppyDisk;
 use floppy_disk::tokio_fs::TokioFloppyDisk;
 use floppy_disk::FloppyDisk;
 use regex::Regex;
@@ -85,25 +86,15 @@ impl SelfValidation for ArchArtifact {
         }
 
         // Validate that the .PKGINFO file exists in the tarball
-        // TODO: This check needs to handle compression correctly.
-        // let mut tarball = tokio_tar::Archive::new(File::open(&self.path).await?);
-        // let mut pkginfo_exists = false;
+        let tarball = TarFloppyDisk::open(&self.path).await?;
+        let pkginfo_exists = tarball.metadata("/.PKGINFO").await;
 
-        // let mut entries = tarball.entries()?;
-        // while let Some(gz_entry) = entries.try_next().await? {
-        //     let path = gz_entry.path()?;
-        //     if path.ends_with(".PKGINFO") {
-        //         pkginfo_exists = true;
-        //         break;
-        //     }
-        // }
-
-        // if !pkginfo_exists {
-        //     errors.push(format!(
-        //         "{} does not contain a .PKGINFO file",
-        //         self.path.display()
-        //     ));
-        // }
+        if pkginfo_exists.is_err() {
+            errors.push(format!(
+                "{} does not contain a .PKGINFO file",
+                self.path.display()
+            ));
+        }
 
         if !errors.is_empty() {
             Err(eyre::eyre!(
