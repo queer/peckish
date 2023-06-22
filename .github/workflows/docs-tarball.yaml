@@ -1,17 +1,17 @@
-name: "Check file package docs"
+name: "Docs: Tarball"
 on:
   pull_request:
     branches:
       - "mistress"
     paths:
-      - "src/artifact/file.rs"
+      - "src/artifact/tarball.rs"
 
 jobs:
-  check-file-docs:
+  docs-tarball:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "marocchino/sticky-pull-request-comment@v2"
         with:
-          header: "File packages"
-          message: "Don't forget to update the file docs!"
+          header: "Tarball packages"
+          message: "Don't forget to update the tarball docs!"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

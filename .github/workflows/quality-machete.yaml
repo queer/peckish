@@ -1,36 +1,34 @@
-name: "Run clippy lints"
+name: "Quality: `cargo machete`"
 on:
   push:
     branches:
       - "mistress"
     paths:
       - "**.rs"
-      - "Cargo.toml"
+      - "**.toml"
   pull_request:
     branches:
       - "mistress"
     paths:
       - "**.rs"
-      - "Cargo.toml"
+      - "**.toml"
 
 jobs:
-  run-clippy:
-    strategy:
-      matrix:
-        version: ["stable", "1.69"]
+  quality-cargo-machete:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
       - name: "Install latest stable Rust"
         uses: "actions-rs/toolchain@v1"
         with:
-          toolchain: "${{ matrix.version }}"
+          toolchain: "stable"
           override: true
-          components: "clippy"
       - name: "Install musl-tools"
         run: "sudo apt-get update && sudo apt-get install -y musl-tools comerr-dev wget"
-      - uses: "Swatinem/rust-cache@v2"
+      - name: "Install cargo-machete"
+        run: "cargo install cargo-machete"
+      - uses: "Swatinem/rust-cache@v1"
         with:
-          key: "clippy"
-      - name: "Run clippy"
-        run: "cargo clippy --all-targets --all-features -- -D warnings"
+          key: "cargo-machete"
+      - name: "Run cargo-machete"
+        run: "cargo machete"

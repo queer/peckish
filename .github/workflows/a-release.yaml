@@ -1,4 +1,4 @@
-name: Release
+name: "Release"
 
 permissions:
   contents: write
@@ -9,7 +9,7 @@ on:
       - "v[0-9]+.*"
 
 jobs:
-  create-release:
+  release:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout"

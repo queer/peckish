@@ -1,4 +1,4 @@
-name: "Validate autocompression functionality"
+name: "Function: Docker extract"
 on:
   push:
     branches:
@@ -15,7 +15,7 @@ on:
       - "**.yaml"
       - "**.toml"
 jobs:
-  run-autocompress-functionality-tests:
+  function-docker-extract:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
@@ -28,7 +28,7 @@ jobs:
           target: "x86_64-unknown-linux-musl"
       - uses: "Swatinem/rust-cache@v2"
         with:
-          key: "autocompress-functionality"
+          key: "docker-extract-functionality"
           cache-on-failure: true
       - name: "Install musl-tools"
         run: "sudo apt-get update && sudo apt-get install -y musl-tools comerr-dev wget"
@@ -38,6 +38,6 @@ jobs:
           command: "build"
           args: "--release --target=x86_64-unknown-linux-musl"
       - name: "Run release binary"
-        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.autocompress.yaml"
+        run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.docker-extract.yaml"
       - name: "Validate tarball extraction"
-        run: "ls -lah ./out/ci"
+        run: "tar -tf ./out/ci/ubuntu.docker.tar"

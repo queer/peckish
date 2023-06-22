@@ -1,4 +1,4 @@
-name: "Check Arch package docs"
+name: "Docs: Arch"
 on:
   pull_request:
     branches:
@@ -7,7 +7,7 @@ on:
       - "src/artifact/arch.rs"
 
 jobs:
-  check-arch-docs:
+  docs-arch:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "marocchino/sticky-pull-request-comment@v2"

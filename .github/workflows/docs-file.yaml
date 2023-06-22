@@ -1,17 +1,17 @@
-name: "Check RPM package docs"
+name: "Docs: File"
 on:
   pull_request:
     branches:
       - "mistress"
     paths:
-      - "src/artifact/rpm.rs"
+      - "src/artifact/file.rs"
 
 jobs:
-  check-arch-docs:
+  docs-file:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "marocchino/sticky-pull-request-comment@v2"
         with:
-          header: "RPM packages"
-          message: "Don't forget to update the RPM docs!"
+          header: "File packages"
+          message: "Don't forget to update the file docs!"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

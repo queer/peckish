@@ -1,4 +1,4 @@
-name: "Check Docker package docs"
+name: "Docs: Docker"
 on:
   pull_request:
     branches:
@@ -7,7 +7,7 @@ on:
       - "src/artifact/docker.rs"
 
 jobs:
-  check-docker-docs:
+  docs-docker:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "marocchino/sticky-pull-request-comment@v2"

@@ -1,20 +1,18 @@
-name: "Run cargo machete"
+name: "Quality: Formatting"
 on:
   push:
     branches:
       - "mistress"
     paths:
       - "**.rs"
-      - "**.toml"
   pull_request:
     branches:
       - "mistress"
     paths:
       - "**.rs"
-      - "**.toml"
 
 jobs:
-  run-cargo-machete:
+  quality-formatting:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
@@ -23,12 +21,11 @@ jobs:
         with:
           toolchain: "stable"
           override: true
+          components: "rustfmt"
       - name: "Install musl-tools"
         run: "sudo apt-get update && sudo apt-get install -y musl-tools comerr-dev wget"
-      - name: "Install cargo-machete"
-        run: "cargo install cargo-machete"
-      - uses: "Swatinem/rust-cache@v1"
+      - uses: "Swatinem/rust-cache@v2"
         with:
-          key: "cargo-machete"
-      - name: "Run cargo-machete"
-        run: "cargo machete"
+          key: "format"
+      - name: "Run tests"
+        run: "cargo fmt --all --check"

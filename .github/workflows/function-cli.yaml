@@ -1,4 +1,4 @@
-name: "Validate CLI functionality"
+name: "Function: CLI"
 on:
   push:
     branches:
@@ -16,7 +16,7 @@ on:
       - "**.toml"
 
 jobs:
-  run-cli-functionality-tests:
+  function-cli:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"

@@ -1,22 +1,23 @@
-name: "Build docs"
+name: "Quality: Clippy"
 on:
   push:
     branches:
       - "mistress"
     paths:
       - "**.rs"
+      - "Cargo.toml"
   pull_request:
     branches:
       - "mistress"
     paths:
       - "**.rs"
+      - "Cargo.toml"
 
 jobs:
-  build-docs:
+  quality-clippy:
     strategy:
       matrix:
-        version: ["stable", "1.69", "nightly"]
-    if: "github.actor != 'dependabot'"
+        version: ["stable", "1.69"]
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
@@ -25,10 +26,11 @@ jobs:
         with:
           toolchain: "${{ matrix.version }}"
           override: true
+          components: "clippy"
       - name: "Install musl-tools"
         run: "sudo apt-get update && sudo apt-get install -y musl-tools comerr-dev wget"
       - uses: "Swatinem/rust-cache@v2"
         with:
-          key: "doc"
-      - name: "Run cargo doc"
-        run: "cargo doc --workspace --all-features --examples --no-deps --locked"
+          key: "clippy"
+      - name: "Run clippy"
+        run: "cargo clippy --all-targets --all-features -- -D warnings"
