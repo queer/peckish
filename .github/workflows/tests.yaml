@@ -5,11 +5,13 @@ on:
       - "mistress"
     paths:
       - "**.rs"
+      - "Cargo.toml"
   pull_request:
     branches:
       - "mistress"
     paths:
       - "**.rs"
+      - "Cargo.toml"
 
 jobs:
   run-tests:
