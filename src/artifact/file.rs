@@ -34,7 +34,13 @@ impl Artifact for FileArtifact {
         let fs = MemFS::new();
         let host = TokioFloppyDisk::new(None);
         debug!("copying {} paths to memfs!", self.paths.len());
+        let pwd = std::env::current_dir()?;
         for path in &self.paths {
+            let path = if !path.starts_with("/") {
+                Path::join(&pwd, path)
+            } else {
+                path.to_path_buf()
+            };
             DiskDrive::copy_from_src(&host, &*fs, path).await?;
         }
         Ok(fs)
