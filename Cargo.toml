@@ -18,7 +18,7 @@ color-eyre = { version = "0.6.2", features = ["issue-url"] }
 ctor = "0.2.0"
 disk-drive = "0.1.10"
 eyre = "0.6.8"
-flail = "0.2.35"
+flail = "0.2.36"
 flop = "0.2.4"
 floppy-disk = "0.2.5"
 hyper = "0.14.26"

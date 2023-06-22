@@ -955,9 +955,9 @@ dependencies = [
 
 [[package]]
 name = "flail"
-version = "0.2.35"
+version = "0.2.36"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a84affa5350b16e572692cc3d771cafb0abe4edd66e54f44c7841a3da151b46"
+checksum = "e2a74268e597aa59ddbd198cd3ee5cd3b9606d9708e2e0e8c108475fbde87011"
 dependencies = [
  "async-trait",
  "bitflags 2.3.1",
