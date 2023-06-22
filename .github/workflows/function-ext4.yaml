@@ -47,4 +47,4 @@ jobs:
           mkdir -pv ./out/ci
           wget https://s3.amazonaws.com/spec.ccfc.min/img/quickstart_guide/${ARCH}/kernels/vmlinux.bin -O ./out/ci/vmlinux.bin
           wget -q https://github.com/firecracker-microvm/firecracker/releases/download/v1.3.3/firecracker-v1.3.3-x86_64.tgz -O- | gzip -d | tar xvf - | grep firecracker | grep "x86_64\$" | xargs --replace="REPL" mv -v REPL ./
-          firecracker --no-api --config-file ./configs/ci/firecracker/vm_config.json
+          ./firecracker --no-api --config-file ./configs/ci/firecracker/vm_config.json
