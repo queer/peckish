@@ -15,7 +15,7 @@ on:
       - "**.yaml"
       - "**.toml"
 jobs:
-  run-autocompress-functionality-tests:
+  run-docker-creation-functionality-tests:
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
