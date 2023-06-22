@@ -50,10 +50,6 @@ pub async fn traverse_memfs(
     Ok(paths)
 }
 
-pub fn is_in_tmp_dir(path: &Path) -> Result<bool> {
-    Ok(path.starts_with("/tmp/peckish-"))
-}
-
 #[cfg(test)]
 #[allow(unused_must_use)]
 pub fn test_init() {
