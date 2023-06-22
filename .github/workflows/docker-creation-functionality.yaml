@@ -40,4 +40,4 @@ jobs:
       - name: "Run release binary"
         run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./test-configs/peckish.docker.yaml"
       - name: "Validate image creation"
-        run: "docker run --rm -it queer/peckish:latest peckish -V"
+        run: "docker run --rm queer/peckish:latest peckish -V"
