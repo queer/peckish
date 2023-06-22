@@ -184,7 +184,7 @@ impl ArtifactProducer for RpmProducer {
         info!("producing {}", self.path.display());
         debug!("extracting previous artifact to tmpdir");
         let tmp = TempDir::new().await?;
-        let file_artifact = FileProducer {
+        FileProducer {
             name: self.name.clone(),
             path: tmp.path_view(),
             preserve_empty_directories: None,
@@ -192,6 +192,9 @@ impl ArtifactProducer for RpmProducer {
         }
         .produce_from(previous)
         .await?;
+        debug!("reading host files...");
+        let host_dir = TokioFloppyDisk::new(Some(tmp.path_view()));
+        let file_paths = nyoom::walk_ordered(&host_dir, "/").await?;
 
         debug!("building rpm from tmpdir {}", tmp.display());
         let mut pkg = rpm::RPMBuilder::new(
@@ -203,7 +206,7 @@ impl ArtifactProducer for RpmProducer {
         )
         .compression(rpm::CompressionType::None);
 
-        for path in &file_artifact.paths {
+        for path in &file_paths {
             let rpm_path = Path::join(Path::new("/"), path.strip_prefix(tmp.path_view())?);
             if path.is_dir() {
                 debug!("skipping directory {}", path.display());

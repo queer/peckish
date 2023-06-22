@@ -6,7 +6,7 @@ use disk_drive::DiskDrive;
 use eyre::Result;
 use floppy_disk::mem::MemOpenOptions;
 use floppy_disk::tokio_fs::TokioFloppyDisk;
-use floppy_disk::{FloppyDisk, FloppyMetadata, FloppyOpenOptions};
+use floppy_disk::{FloppyDisk, FloppyOpenOptions};
 use regex::Regex;
 use smoosh::CompressionType;
 use tokio::fs::File;
@@ -125,8 +125,6 @@ impl Artifact for DockerArtifact {
         for layer in layers {
             debug!("copying layer: {layer}");
             let layer_path = image_tar_export.path_view().join(layer);
-            let m = host.metadata(PathBuf::from("/").join(layer)).await?;
-            dbg!(m.len());
             let layer_memfs = TarballArtifact {
                 name: self.name.clone(),
                 path: layer_path,
