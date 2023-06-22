@@ -1901,7 +1901,6 @@ dependencies = [
  "indoc",
  "itertools",
  "md5",
- "nix",
  "nyoom",
  "rand 0.8.5",
  "regex",
