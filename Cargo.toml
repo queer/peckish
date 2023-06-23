@@ -1,6 +1,6 @@
 [package]
 name = "peckish"
-version = "0.0.4"
+version = "0.0.5"
 description = "Create, manipulate, and transform Linux package formats!"
 license = "Apache-2.0"
 edition = "2021"
