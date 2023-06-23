@@ -1,11 +1,6 @@
-use std::path::{Path, PathBuf};
-
 use eyre::{eyre, Result};
-use floppy_disk::{FloppyDirEntry, FloppyDisk, FloppyMetadata, FloppyReadDir};
 use thiserror::Error;
 use tracing::*;
-
-use crate::fs::MemFS;
 
 pub mod config;
 
@@ -16,38 +11,6 @@ pub enum Fix {
 
     #[error(transparent)]
     Io(#[from] std::io::Error),
-}
-
-#[async_recursion::async_recursion]
-pub async fn traverse_memfs(
-    memfs: &MemFS,
-    root_path: &Path,
-    push_directory_entries: Option<bool>,
-) -> Result<Vec<PathBuf>> {
-    let fs = memfs.as_ref();
-    let mut paths = Vec::new();
-    debug!("traversing memfs from {root_path:?}");
-
-    let mut read_dir = fs.read_dir(root_path).await?;
-    while let Some(entry) = read_dir.next_entry().await? {
-        let metadata = entry.metadata().await?;
-
-        #[allow(clippy::if_same_then_else)]
-        if metadata.is_dir() {
-            let mut sub_paths =
-                traverse_memfs(memfs, &entry.path(), push_directory_entries).await?;
-            if let Some(true) = push_directory_entries {
-                paths.push(entry.path());
-            }
-            paths.append(&mut sub_paths);
-        } else if metadata.is_file() {
-            paths.push(entry.path());
-        } else if fs.read_link(entry.path()).await.is_ok() {
-            paths.push(entry.path());
-        }
-    }
-
-    Ok(paths)
 }
 
 #[cfg(test)]

@@ -5,7 +5,7 @@ use eyre::Result;
 use floppy_disk::prelude::*;
 use tracing::*;
 
-use crate::util::{traverse_memfs, Fix};
+use crate::util::Fix;
 
 pub struct TempDir {
     path: PathBuf,
@@ -69,7 +69,7 @@ impl MemFS {
     }
 
     pub async fn size(&self) -> Result<u64> {
-        let paths = traverse_memfs(self, Path::new("/"), Some(false)).await?;
+        let paths = nyoom::walk(self.fs.as_ref(), "/").await?;
         let mut size = 0u64;
 
         for path in paths {

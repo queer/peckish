@@ -17,7 +17,6 @@ use crate::artifact::memory::EmptyArtifact;
 use crate::artifact::tarball::{TarballProducer, TarballProducerBuilder};
 use crate::fs::{MemFS, TempDir};
 use crate::util::config::Injection;
-use crate::util::traverse_memfs;
 
 use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
@@ -310,7 +309,7 @@ impl ArtifactProducer for DebProducer {
         let mut md5sums = vec![];
         let mut memfs = previous.extract().await?;
         let memfs = self.inject(&mut memfs).await?;
-        let paths = traverse_memfs(memfs, &PathBuf::from("/"), None).await?;
+        let paths = nyoom::walk(&**memfs, "/").await?;
         for path in paths {
             if (*memfs).metadata(&path).await?.is_file() {
                 let mut file = MemOpenOptions::new().read(true).open(memfs, &path).await?;
