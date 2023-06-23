@@ -237,21 +237,6 @@ impl ArtifactProducer for DebProducer {
         &self.injections
     }
 
-    async fn can_produce_from(&self, _previous: &dyn Artifact) -> Result<()> {
-        if TokioFloppyDisk::new(None)
-            .metadata(&self.path)
-            .await
-            .is_err()
-        {
-            Ok(())
-        } else {
-            Err(eyre::eyre!(
-                "cannot produce artifact '{}': path already exists: {}",
-                self.name,
-                self.path.display()
-            ))?
-        }
-    }
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
         let tmp = TempDir::new().await?;
         // Create data.tar from previous artifact in tmp using TarballProducer
@@ -416,6 +401,18 @@ impl SelfValidation for DebProducer {
     async fn validate(&self) -> Result<()> {
         if let Some(parent) = self.path.parent() {
             tokio::fs::create_dir_all(parent).await?;
+        }
+
+        if TokioFloppyDisk::new(None)
+            .metadata(&self.path)
+            .await
+            .is_ok()
+        {
+            return Err(eyre::eyre!(
+                "cannot produce artifact '{}': path already exists: {}",
+                self.name,
+                self.path.display()
+            ))?;
         }
 
         let package_name_regex = Regex::new(r"^[a-z0-9][a-z0-9+-\.]+$")?;

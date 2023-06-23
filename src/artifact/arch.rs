@@ -174,22 +174,6 @@ impl ArtifactProducer for ArchProducer {
         &self.injections
     }
 
-    async fn can_produce_from(&self, _previous: &dyn Artifact) -> Result<()> {
-        if TokioFloppyDisk::new(None)
-            .metadata(&self.path)
-            .await
-            .is_err()
-        {
-            Ok(())
-        } else {
-            Err(eyre::eyre!(
-                "cannot produce artifact '{}': path already exists: {}",
-                self.name,
-                self.path.display()
-            ))?
-        }
-    }
-
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
         let size = get_artifact_size(previous).await?;
         let builddate = util::get_current_time()?;
@@ -258,6 +242,18 @@ impl SelfValidation for ArchProducer {
     async fn validate(&self) -> Result<()> {
         if let Some(parent) = self.path.parent() {
             tokio::fs::create_dir_all(parent).await?;
+        }
+
+        if TokioFloppyDisk::new(None)
+            .metadata(&self.path)
+            .await
+            .is_ok()
+        {
+            return Err(eyre::eyre!(
+                "cannot produce artifact '{}': path already exists: {}",
+                self.name,
+                self.path.display()
+            ));
         }
 
         let mut errors = vec![];

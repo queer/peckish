@@ -42,11 +42,6 @@ pub trait ArtifactProducer: SelfValidation {
 
     fn injections(&self) -> &[Injection];
 
-    /// Return whether or not this producer is capable of producing an
-    /// artifact, given the previous artifact. This is primarily used to
-    /// determine whether or not the producer can be run in a [`Pipeline`].
-    async fn can_produce_from(&self, previous: &dyn Artifact) -> Result<()>;
-
     /// Produce a new artifact, given a previous artifact.
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output>;
 

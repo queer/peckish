@@ -119,22 +119,6 @@ impl ArtifactProducer for TarballProducer {
         &self.injections
     }
 
-    async fn can_produce_from(&self, _previous: &dyn Artifact) -> Result<()> {
-        if TokioFloppyDisk::new(None)
-            .metadata(&self.path)
-            .await
-            .is_err()
-        {
-            Ok(())
-        } else {
-            Err(eyre::eyre!(
-                "cannot produce artifact '{}': path already exists: {}",
-                self.name,
-                self.path.display()
-            ))?
-        }
-    }
-
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
         info!("producing {}", self.path.display());
         let mut memfs = previous.extract().await?;
@@ -162,7 +146,19 @@ impl SelfValidation for TarballProducer {
             tokio::fs::create_dir_all(parent).await?;
         }
 
-        Ok(())
+        if TokioFloppyDisk::new(None)
+            .metadata(&self.path)
+            .await
+            .is_err()
+        {
+            Ok(())
+        } else {
+            Err(eyre::eyre!(
+                "cannot produce artifact '{}': path already exists: {}",
+                self.name,
+                self.path.display()
+            ))
+        }
     }
 }
 

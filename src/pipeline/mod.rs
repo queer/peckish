@@ -25,11 +25,15 @@ impl Pipeline {
     async fn validate_producer(
         &self,
         producer: &impl ArtifactProducer,
-        previous: &dyn Artifact,
+        _previous: &dyn Artifact,
     ) -> Result<()> {
-        producer.validate().await?;
-        producer.can_produce_from(previous).await?;
-        Ok(())
+        match producer.validate().await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                error!("`{}` is not valid: {}", producer.name(), e);
+                Err(e)
+            }
+        }
     }
 
     pub async fn run(&self, config: PeckishConfig) -> Result<Vec<Box<dyn Artifact>>> {
@@ -53,44 +57,100 @@ impl Pipeline {
             info!("* step {}: {}", i + 1, producer.name());
             let next_artifact: Box<dyn Artifact> = match producer {
                 ConfiguredProducer::File(producer) => {
-                    self.validate_producer(producer, input_artifact.as_ref())
-                        .await?;
+                    if let Err(e) = self
+                        .validate_producer(producer, input_artifact.as_ref())
+                        .await
+                    {
+                        if config.chain {
+                            return Err(e);
+                        } else {
+                            continue;
+                        }
+                    }
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Tarball(producer) => {
-                    self.validate_producer(producer, input_artifact.as_ref())
-                        .await?;
+                    if let Err(e) = self
+                        .validate_producer(producer, input_artifact.as_ref())
+                        .await
+                    {
+                        if config.chain {
+                            return Err(e);
+                        } else {
+                            continue;
+                        }
+                    }
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Docker(producer) => {
-                    self.validate_producer(producer, input_artifact.as_ref())
-                        .await?;
+                    if let Err(e) = self
+                        .validate_producer(producer, input_artifact.as_ref())
+                        .await
+                    {
+                        if config.chain {
+                            return Err(e);
+                        } else {
+                            continue;
+                        }
+                    }
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Arch(producer) => {
-                    self.validate_producer(producer, input_artifact.as_ref())
-                        .await?;
+                    if let Err(e) = self
+                        .validate_producer(producer, input_artifact.as_ref())
+                        .await
+                    {
+                        if config.chain {
+                            return Err(e);
+                        } else {
+                            continue;
+                        }
+                    }
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Deb(producer) => {
-                    self.validate_producer(producer, input_artifact.as_ref())
-                        .await?;
+                    if let Err(e) = self
+                        .validate_producer(producer, input_artifact.as_ref())
+                        .await
+                    {
+                        if config.chain {
+                            return Err(e);
+                        } else {
+                            continue;
+                        }
+                    }
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Rpm(producer) => {
-                    self.validate_producer(producer, input_artifact.as_ref())
-                        .await?;
+                    if let Err(e) = self
+                        .validate_producer(producer, input_artifact.as_ref())
+                        .await
+                    {
+                        if config.chain {
+                            return Err(e);
+                        } else {
+                            continue;
+                        }
+                    }
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
 
                 ConfiguredProducer::Ext4(producer) => {
-                    self.validate_producer(producer, input_artifact.as_ref())
-                        .await?;
+                    if let Err(e) = self
+                        .validate_producer(producer, input_artifact.as_ref())
+                        .await
+                    {
+                        if config.chain {
+                            return Err(e);
+                        } else {
+                            continue;
+                        }
+                    }
                     Box::new(producer.produce_from(input_artifact.as_ref()).await?)
                 }
             };

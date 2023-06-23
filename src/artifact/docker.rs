@@ -212,14 +212,6 @@ impl ArtifactProducer for DockerProducer {
         &self.injections
     }
 
-    async fn can_produce_from(&self, _previous: &dyn Artifact) -> Result<()> {
-        TokioFloppyDisk::new(None)
-            .metadata("/var/run/docker.sock")
-            .await
-            .map(|_| ())
-            .map_err(|e| e.into())
-    }
-
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<DockerArtifact> {
         // Produce a tarball artifact from the previous artifact
         let tmp = TempDir::new().await?;
@@ -319,7 +311,10 @@ impl ArtifactProducer for DockerProducer {
 #[async_trait::async_trait]
 impl SelfValidation for DockerProducer {
     async fn validate(&self) -> Result<()> {
-        // validate self.image format
+        TokioFloppyDisk::new(None)
+            .metadata("/var/run/docker.sock")
+            .await
+            .map(|_| ())?;
 
         let docker_image_name_with_tag_and_repo_regex =
             Regex::new(r"^(?P<repo>[a-z0-9]+(?:[._-][a-z0-9]+)*/)?(?P<name>[a-z0-9]+(?:[._-][a-z0-9]+)*):(?P<tag>[a-z0-9]+(?:[._-][a-z0-9]+)*)$")
