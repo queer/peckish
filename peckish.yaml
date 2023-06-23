@@ -1,6 +1,6 @@
 metadata:
   name: "peckish"
-  version: "0.0.1-1"
+  version: "0.0.5-1"
   description: "peckish transforms software artifacts"
   author: "amy"
   arch: "amd64"
@@ -16,6 +16,10 @@ output:
   - name: "peckish.tar"
     type: "tarball"
     path: "./release/peckish.tar"
+    injections:
+      - type: "move"
+        src: "/target/release/peckish"
+        dest: "/peckish"
 
   - name: "peckish.arch.pkg.tar"
     type: "arch"
