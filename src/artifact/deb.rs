@@ -202,12 +202,7 @@ impl SelfBuilder for DebArtifactBuilder {
     }
 }
 
-/// A Debian package producer. This is a **non-compressed** ar archive.
-///
-/// ## Caveats
-///
-/// - The data and control archives are **not** compressed
-///
+/// A Debian package producer. This is ultimately an ar archive.
 /// TODO: Support all control file features
 #[derive(Debug, Clone)]
 pub struct DebProducer {
