@@ -955,9 +955,9 @@ dependencies = [
 
 [[package]]
 name = "flail"
-version = "0.2.36"
+version = "0.2.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2a74268e597aa59ddbd198cd3ee5cd3b9606d9708e2e0e8c108475fbde87011"
+checksum = "ce6db8ded7d6f52c0b44236a1aceca18b09e03f8a7e279c85cd1499525624892"
 dependencies = [
  "async-trait",
  "bitflags 2.3.1",
@@ -1505,9 +1505,9 @@ checksum = "2b00cc1c228a6782d0f076e7b232802e0c5689d41bb5df366f2a6b6621cfdfe1"
 
 [[package]]
 name = "libe2fs-sys"
-version = "0.2.25"
+version = "0.2.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3dab1474fd457c9008613607ebd2ed6d1304a8fd45e11a4fec820571d12eaac3"
+checksum = "5e45ac39a871081d15d1efc2d4aeafff911b95a74a569488f8eb179873b412a5"
 dependencies = [
  "bindgen",
 ]
