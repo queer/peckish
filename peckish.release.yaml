@@ -49,6 +49,8 @@ output:
       - type: "move"
         src: "/target/x86_64-unknown-linux-musl/release/peckish"
         dest: "/"
+      - type: "delete"
+        path: "/target"
 
   - name: "rpm: peckish rpm package"
     type: "rpm"

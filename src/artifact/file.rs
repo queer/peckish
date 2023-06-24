@@ -136,20 +136,24 @@ impl ArtifactProducer for FileProducer {
 
         let out_disk = TokioFloppyDisk::new(Some(self.path.clone()));
         DiskDrive::copy_between(&**memfs, &out_disk).await?;
-        let output_paths = nyoom::walk_ordered(&out_disk, "/").await?;
+        let output_paths = nyoom::walk_ordered(&**memfs, "/").await?;
+        let paths = output_paths
+            .iter()
+            .map(|p| {
+                let p = if p.starts_with("/") {
+                    Path::join(&PathBuf::from("./"), p.strip_prefix("/").unwrap())
+                } else if !p.starts_with("./") {
+                    Path::join(&PathBuf::from("./"), p)
+                } else {
+                    p.to_path_buf()
+                };
+                Path::join(&self.path, p)
+            })
+            .collect();
 
         Ok(FileArtifact {
             name: self.path.to_string_lossy().to_string(),
-            paths: output_paths
-                .iter()
-                .map(|p| {
-                    if !p.starts_with("./") {
-                        Path::join(&PathBuf::from("./"), p)
-                    } else {
-                        p.to_path_buf()
-                    }
-                })
-                .collect(),
+            paths,
         })
     }
 }
