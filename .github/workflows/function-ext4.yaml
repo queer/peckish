@@ -42,7 +42,7 @@ jobs:
       - name: "Validate ext4 creation"
         run: "ls -lah ./out/ci"
       - name: "Validate ext4 filesystem"
-        run: "sudo apt-get update && sudo apt-get install -y e2fsprogs && e2fsck -f ./out/ci/ext4.img"
+        run: "sudo apt-get update && sudo apt-get install -y e2fsprogs && e2fsck -fvn ./out/ci/ext4.img"
       # - name: "Validate ext4 fs boots"
       #   run: |
       #     ARCH="$(uname -m)"
