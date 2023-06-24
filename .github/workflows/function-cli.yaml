@@ -52,4 +52,4 @@ jobs:
       - name: "Validate Docker image"
         run: "docker run --rm queer/peckish:latest peckish --version"
       - name: "Validate RPM package on Fedora"
-        run: 'docker run --rm -i -v "$(pwd)/release/peckish.rpm:/app/peckish.rpm" fedora:latest sh -c "dnf install -y /app/peckish.rpm && peckish --version"'
+        run: 'docker run --rm -i -v "$(pwd)/release/peckish.rpm:/app/peckish.rpm" fedora:latest sh -c "rpm -i /app/peckish.rpm && peckish --version"'
