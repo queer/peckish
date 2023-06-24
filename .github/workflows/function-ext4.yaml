@@ -41,6 +41,8 @@ jobs:
         run: "pwd && ls -lah && env RUST_LOG=debug ./target/x86_64-unknown-linux-musl/release/peckish -c ./configs/ci/peckish.ext4.yaml"
       - name: "Validate ext4 creation"
         run: "ls -lah ./out/ci"
+      - name: "Validate ext4 filesystem"
+        run: "sudo apt-get update && sudo apt-get install -y e2fsprogs && e2fsck -f ./out/ci/ext4.img"
       # - name: "Validate ext4 fs boots"
       #   run: |
       #     ARCH="$(uname -m)"
