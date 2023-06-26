@@ -92,6 +92,20 @@ taking a tarball and producing a DEB or RPM package.
 - [peckish concepts](#concepts)
 - [artifact and producer docs](https://github.com/queer/peckish/tree/mistress/docs)
 
+## features
+
+- convert between package formats
+  - flat files
+  - tarballs
+  - `.deb` packages
+  - Arch Linux packages
+  - Docker images
+  - `.rpm` packages
+  - ext4 filesystem images
+- [GitHub Actions support](#github-actions)
+- [library support](#library)
+- (WIP) [reproducible builds support](#reproducible-builds)
+
 ## caveats
 
 - peckish is `0.x.y`! Treat it accordingly. Maybe don't run it in prod.
@@ -251,7 +265,7 @@ GitHub Actions for peckish can be found at [queer/actions](https://github.com/qu
   uses: "queer/actions/peckish_run@mistress"
 ```
 
-### reproducibile builds
+### reproducible builds
 
 peckish tries to respect [`SOURCE_DATE_EPOCH`](https://reproducible-builds.org/docs/source-date-epoch/).
 Please open issues or PRs if you find places where it doesn't!
@@ -318,6 +332,15 @@ needed beyond its in-memory filesystem representation.
 ### why is it called peckish?
 
 If you pretend really hard, "peckish" sounds kinda sorta a bit like "package."
+
+### related libraries
+
+- [`floppy-disk`](https://github.com/queer/floppy-disk): async filesystem facade
+- [`disk-drive`](https://github.com/queer/disk-drive): multi-`floppy-disk` utils
+- [`flop`](https://github.com/queer/flop): `floppy-disk` archive facade
+- [`smoosh`](https://github.com/queer/smoosh): automagic async (re)compression
+- [`nyoom`](https://github.com/queer/nyoom): filesystem walker for `floppy-disk`
+- [`flail`](https://github.com/queer/flail): `floppy-disk` facade for ext4
 
 ### license
 
