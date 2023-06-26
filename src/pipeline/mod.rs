@@ -6,8 +6,22 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tracing::*;
 
-use crate::artifact::{Artifact, ArtifactProducer};
-use crate::util::config::{ConfiguredArtifact, ConfiguredProducer, PeckishConfig};
+use crate::artifact::Artifact;
+use crate::util::config::{ConfiguredArtifact, PeckishConfig};
+
+#[macro_export]
+macro_rules! validate {
+    ($config:expr, $validator:expr) => {
+        if let Err(e) = $validator.validate().await {
+            error!("{}: validation failed: {}", $validator.name(), e);
+            if $config.chain {
+                return Err(e);
+            } else {
+                continue;
+            }
+        }
+    };
+}
 
 /// A pipeline that can run a given config. This is the main entrypoint for
 /// running a peckish config.
@@ -20,20 +34,6 @@ impl Pipeline {
     #[allow(clippy::new_without_default)]
     pub fn new(report_file: Option<PathBuf>) -> Self {
         Self { report_file }
-    }
-
-    async fn validate_producer(
-        &self,
-        producer: &impl ArtifactProducer,
-        _previous: &dyn Artifact,
-    ) -> Result<()> {
-        match producer.validate().await {
-            Ok(_) => Ok(()),
-            Err(e) => {
-                error!("`{}` is not valid: {}", producer.name(), e);
-                Err(e)
-            }
-        }
     }
 
     pub async fn run(&self, config: PeckishConfig) -> Result<Vec<Box<dyn Artifact>>> {
@@ -55,107 +55,11 @@ impl Pipeline {
 
         for (i, producer) in config.output.iter().enumerate() {
             info!("* step {}: {}", i + 1, producer.name());
-            let next_artifact: Box<dyn Artifact> = match producer {
-                ConfiguredProducer::File(producer) => {
-                    if let Err(e) = self
-                        .validate_producer(producer, input_artifact.as_ref())
-                        .await
-                    {
-                        if config.chain {
-                            return Err(e);
-                        } else {
-                            continue;
-                        }
-                    }
-                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
-                }
+            validate!(config, producer);
 
-                ConfiguredProducer::Tarball(producer) => {
-                    if let Err(e) = self
-                        .validate_producer(producer, input_artifact.as_ref())
-                        .await
-                    {
-                        if config.chain {
-                            return Err(e);
-                        } else {
-                            continue;
-                        }
-                    }
-                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
-                }
+            let next_artifact = producer.produce_from(input_artifact.as_ref()).await?;
 
-                ConfiguredProducer::Docker(producer) => {
-                    if let Err(e) = self
-                        .validate_producer(producer, input_artifact.as_ref())
-                        .await
-                    {
-                        if config.chain {
-                            return Err(e);
-                        } else {
-                            continue;
-                        }
-                    }
-                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
-                }
-
-                ConfiguredProducer::Arch(producer) => {
-                    if let Err(e) = self
-                        .validate_producer(producer, input_artifact.as_ref())
-                        .await
-                    {
-                        if config.chain {
-                            return Err(e);
-                        } else {
-                            continue;
-                        }
-                    }
-                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
-                }
-
-                ConfiguredProducer::Deb(producer) => {
-                    if let Err(e) = self
-                        .validate_producer(producer, input_artifact.as_ref())
-                        .await
-                    {
-                        if config.chain {
-                            return Err(e);
-                        } else {
-                            continue;
-                        }
-                    }
-                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
-                }
-
-                ConfiguredProducer::Rpm(producer) => {
-                    if let Err(e) = self
-                        .validate_producer(producer, input_artifact.as_ref())
-                        .await
-                    {
-                        if config.chain {
-                            return Err(e);
-                        } else {
-                            continue;
-                        }
-                    }
-                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
-                }
-
-                ConfiguredProducer::Ext4(producer) => {
-                    if let Err(e) = self
-                        .validate_producer(producer, input_artifact.as_ref())
-                        .await
-                    {
-                        if config.chain {
-                            return Err(e);
-                        } else {
-                            continue;
-                        }
-                    }
-                    Box::new(producer.produce_from(input_artifact.as_ref()).await?)
-                }
-            };
-
-            next_artifact.validate().await?;
+            validate!(config, next_artifact);
 
             if config.chain {
                 input_artifact = next_artifact.try_clone()?;
@@ -205,7 +109,7 @@ mod tests {
     use crate::artifact::file::{FileArtifact, FileProducer};
     use crate::artifact::tarball::TarballProducer;
     use crate::fs::TempDir;
-    use crate::util::config::Injection;
+    use crate::util::config::{ConfiguredProducer, Injection};
 
     use super::*;
 

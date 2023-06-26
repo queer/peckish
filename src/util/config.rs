@@ -19,6 +19,7 @@ use crate::artifact::ext4::{Ext4Artifact, Ext4Producer};
 use crate::artifact::file::{FileArtifact, FileProducer};
 use crate::artifact::rpm::{RpmArtifact, RpmProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
+use crate::artifact::{Artifact, ArtifactProducer, SelfValidation};
 use crate::fs::MemFS;
 
 #[derive(Debug)]
@@ -404,6 +405,8 @@ pub enum ConfiguredProducer {
     Ext4(Ext4Producer),
 }
 
+// We can't make transparent enum variants or similar easily here, so this
+// ugly shitfuckery happens instead.
 impl ConfiguredProducer {
     pub fn name(&self) -> &str {
         match self {
@@ -414,6 +417,44 @@ impl ConfiguredProducer {
             ConfiguredProducer::Deb(producer) => &producer.name,
             ConfiguredProducer::Rpm(producer) => &producer.name,
             ConfiguredProducer::Ext4(producer) => &producer.name,
+        }
+    }
+
+    pub async fn validate(&self) -> Result<()> {
+        match self {
+            ConfiguredProducer::File(producer) => producer.validate().await,
+            ConfiguredProducer::Tarball(producer) => producer.validate().await,
+            ConfiguredProducer::Docker(producer) => producer.validate().await,
+            ConfiguredProducer::Arch(producer) => producer.validate().await,
+            ConfiguredProducer::Deb(producer) => producer.validate().await,
+            ConfiguredProducer::Rpm(producer) => producer.validate().await,
+            ConfiguredProducer::Ext4(producer) => producer.validate().await,
+        }
+    }
+
+    pub async fn produce_from(&self, previous: &dyn Artifact) -> Result<Box<dyn Artifact>> {
+        match self {
+            ConfiguredProducer::File(producer) => {
+                Ok(producer.produce_from(previous).await.map(Box::new)?)
+            }
+            ConfiguredProducer::Tarball(producer) => {
+                Ok(producer.produce_from(previous).await.map(Box::new)?)
+            }
+            ConfiguredProducer::Docker(producer) => {
+                Ok(producer.produce_from(previous).await.map(Box::new)?)
+            }
+            ConfiguredProducer::Arch(producer) => {
+                Ok(producer.produce_from(previous).await.map(Box::new)?)
+            }
+            ConfiguredProducer::Deb(producer) => {
+                Ok(producer.produce_from(previous).await.map(Box::new)?)
+            }
+            ConfiguredProducer::Rpm(producer) => {
+                Ok(producer.produce_from(previous).await.map(Box::new)?)
+            }
+            ConfiguredProducer::Ext4(producer) => {
+                Ok(producer.produce_from(previous).await.map(Box::new)?)
+            }
         }
     }
 }
