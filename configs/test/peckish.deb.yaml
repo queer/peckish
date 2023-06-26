@@ -24,7 +24,7 @@ output:
 injections:
   move-binary:
     type: "move"
-    src: "/target/x86_86-unknown-linux-musl/release/peckish"
+    src: "/target/x86_64-unknown-linux-musl/release/peckish"
     dest: "/usr/bin/peckish"
   cleanup-binary-directory:
     type: "delete"
