@@ -17,6 +17,14 @@ output:
     type: "rpm"
     path: "./out/test/peckish.rpm"
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/usr/bin/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
+
+injections:
+  move-binary:
+    type: "move"
+    src: "/target/release/peckish"
+    dest: "/usr/bin/peckish"
+  cleanup-binary-directory:
+    type: "delete"
+    path: "/target"

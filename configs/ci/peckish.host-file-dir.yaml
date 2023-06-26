@@ -19,9 +19,15 @@ output:
     type: "tarball"
     path: "./out/ci/host_file_dir.tar"
     injections:
-      - type: "host_file"
-        src: "/etc/hosts"
-        dest: "/etc/hosts2"
-      - type: "host_dir"
-        src: "./docs"
-        dest: "/docs2"
+      - "host-file"
+      - "host-dir"
+
+injections:
+  host-file:
+    type: "host_file"
+    src: "/etc/hosts"
+    dest: "/etc/hosts2"
+  host-dir:
+    type: "host_dir"
+    src: "./docs"
+    dest: "/docs2"

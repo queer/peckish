@@ -18,6 +18,14 @@ output:
     path: "./out/test/peckish.deb"
     depends: "libc6"
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/usr/bin/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
+
+injections:
+  move-binary:
+    type: "move"
+    src: "/target/x86_86-unknown-linux-musl/release/peckish"
+    dest: "/usr/bin/peckish"
+  cleanup-binary-directory:
+    type: "delete"
+    path: "/target"

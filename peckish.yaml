@@ -17,42 +17,37 @@ output:
     type: "tarball"
     path: "./release/peckish.tar"
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
 
   - name: "peckish.arch.pkg.tar"
     type: "arch"
     path: "./release/peckish.arch.pkg.tar"
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/usr/bin/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
 
   - name: "peckish.deb"
     type: "deb"
     path: "./release/peckish.deb"
     depends: "libc6"
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/usr/bin/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
 
   - name: "peckish exe"
     type: "file"
     path: "./release"
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
 
   - name: "peckish rpm"
     type: "rpm"
     path: "./release/peckish.rpm"
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/usr/bin/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
 
   - name: "queer/peckish:latest docker image"
     type: "docker"
@@ -60,6 +55,14 @@ output:
     base_image: "ubuntu:jammy"
     entrypoint: ["/usr/bin/peckish"]
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/usr/bin/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
+
+injections:
+  move-binary:
+    type: "move"
+    src: "/target/release/peckish"
+    dest: "/usr/bin/peckish"
+  cleanup-binary-directory:
+    type: "delete"
+    path: "/target"

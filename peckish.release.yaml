@@ -19,43 +19,47 @@ output:
     type: "tarball"
     path: "./release/peckish.tar"
     injections:
-      - type: "move"
-        src: "/target/x86_64-unknown-linux-musl/release/peckish"
-        dest: "/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
 
   - name: "arch: peckish arch package"
     type: "arch"
     path: "./release/peckish.arch.pkg.tar"
     injections:
-      - type: "move"
-        src: "/target/x86_64-unknown-linux-musl/release/peckish"
-        dest: "/usr/bin/peckish"
-      - type: "delete"
-        path: "/target"
+      - "move-binary"
+      - "cleanup-binary-directory"
 
   - name: "deb: peckish debian package"
     type: "deb"
     path: "./release/peckish.deb"
     depends: "libc6"
     injections:
-      - type: "move"
-        src: "/target/x86_64-unknown-linux-musl/release/peckish"
-        dest: "/usr/bin/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
 
   - name: "file: peckish release binary"
     type: "file"
     path: "./release"
     injections:
-      - type: "move"
-        src: "/target/x86_64-unknown-linux-musl/release/peckish"
-        dest: "/"
-      - type: "delete"
-        path: "/target"
+      - "move-binary-to-root"
+      - "cleanup-binary-directory"
 
   - name: "rpm: peckish rpm package"
     type: "rpm"
     path: "./release/peckish.rpm"
     injections:
-      - type: "move"
-        src: "/target/x86_64-unknown-linux-musl/release/peckish"
-        dest: "/usr/bin/peckish"
+      - "move-binary"
+      - "cleanup-binary-directory"
+
+injections:
+  move-binary:
+    type: "move"
+    src: "/target/x86_86-unknown-linux-musl/release/peckish"
+    dest: "/usr/bin/peckish"
+  move-binary-to-root:
+    type: "move"
+    src: "/target/x86_86-unknown-linux-musl/release/peckish"
+    dest: "/"
+  cleanup-binary-directory:
+    type: "delete"
+    path: "/target"

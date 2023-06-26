@@ -186,9 +186,19 @@ output:
     # copy, symlink, etc. files and directories within the artifact before it's
     # written to disk. see `docs/injections.md` for more info.
     injections:
-      - type: "move"
-        src: "/path/to/original/file"
-        dest: "/new/path/to/file"
+      - "move-file"
+      - "cleanup"
+
+# the actual injections that are applied to output artifacts. these are
+# specified in their own group to allow for reuse between multiple producers.
+injections:
+  move-file:
+    type: "move"
+    src: "/path/to/file"
+    dest: "/new/path/to/file"
+  cleanup:
+    type: "delete"
+    path: "/path"
 ```
 
 ### suggested use-cases

@@ -27,15 +27,18 @@ output:
     type: "arch"
     path: "./release/peckish.arch.pkg.tar"
     injections:
-      - type: "move"
-        src: "/target/release/peckish"
-        dest: "/usr/bin/peckish"
-```
+      - "move-binary"
+      - "clean-up-target"
 
-As you can see, the `arch` package output has an `injections` key. This is a
-list of injections that will be applied to the artifact before it's written to
-the filesystem. In this case, we're moving the file from
-`/target/release/peckish` to `/usr/bin/peckish`.
+injections:
+  move-binary:
+    type: "move"
+    src: "/target/release/peckish"
+    dest: "/usr/bin/peckish"
+  clean-up-target:
+    type: "delete"
+    path: "/target
+```
 
 Note that when doing things like moving files, the parent directories will
 remain in the artifact's memfs. Cleaning up empty directories is your
@@ -50,7 +53,8 @@ responsibility.
 
   ```yaml
   injections:
-    - type: "move"
+    move-binary:
+    type: "move"
       src: "/target/release/peckish"
       dest: "/usr/bin/peckish"
   ```
@@ -62,7 +66,8 @@ responsibility.
 
   ```yaml
   injections:
-    - type: "copy"
+    copy-binary:
+      type: "copy"
       src: "/target/release/peckish"
       dest: "/usr/bin/peckish"
   ```
@@ -75,7 +80,8 @@ responsibility.
   ```yaml
   injections:
     # Creates a symlink at `dest` that points to `src`.
-    - type: "symlink"
+    symlink-binary:
+      type: "symlink"
       src: "/target/release/peckish"
       dest: "/usr/bin/peckish"
   ```
@@ -86,7 +92,8 @@ responsibility.
 
   ```yaml
   injections:
-    - type: "touch"
+    touch-path:
+      type: "touch"
       path: "/usr/bin/peckish"
   ```
 
@@ -97,7 +104,8 @@ responsibility.
 
   ```yaml
   injections:
-    - type: "delete"
+    delete-path:
+      type: "delete"
       path: "/usr/bin/peckish"
   ```
 
@@ -108,7 +116,8 @@ responsibility.
 
   ```yaml
   injections:
-    - type: "create"
+    create-file:
+      type: "create"
       path: "/hello.txt"
       content: "hello world"
   ```
@@ -119,7 +128,8 @@ responsibility.
 
   ```yaml
   injections:
-    - type: "host_file"
+    copy-host-file:
+      type: "host_file"
       src: "/etc/hosts"
       dest: "/etc/hosts2"
   ```
@@ -130,7 +140,8 @@ responsibility.
 
   ```yaml
   injections:
-    - type: "host_dir"
+    copy-host-dir:
+      type: "host_dir"
       src: "/etc"
       dest: "/etc2"
   ```

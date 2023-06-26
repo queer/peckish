@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use disk_drive::DiskDrive;
@@ -38,11 +39,11 @@ impl PeckishConfig {
         let config: InternalConfig = serde_yaml::from_str(&config_str)?;
 
         Ok(Self {
-            input: config.input.into(),
+            input: config.input.clone().into(),
             output: config
                 .output
                 .iter()
-                .map(|o| o.clone().convert(&config.metadata))
+                .map(|o| o.clone().convert(&config))
                 .collect(),
             chain: config.chain,
         })
@@ -66,6 +67,7 @@ struct InternalConfig {
     metadata: PackageMetadata,
     input: InputArtifact,
     output: Vec<OutputProducer>,
+    injections: HashMap<String, Injection>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -133,7 +135,7 @@ enum OutputProducer {
         #[serde(default)]
         preserve_empty_directories: Option<bool>,
         #[serde(default)]
-        injections: Vec<Injection>,
+        injections: Vec<String>,
     },
 
     Tarball {
@@ -141,7 +143,7 @@ enum OutputProducer {
         path: PathBuf,
         compression: Option<ConfigCompression>,
         #[serde(default)]
-        injections: Vec<Injection>,
+        injections: Vec<String>,
     },
 
     Docker {
@@ -151,14 +153,14 @@ enum OutputProducer {
         #[serde(default)]
         entrypoint: Option<Vec<String>>,
         #[serde(default)]
-        injections: Vec<Injection>,
+        injections: Vec<String>,
     },
 
     Arch {
         name: String,
         path: PathBuf,
         #[serde(default)]
-        injections: Vec<Injection>,
+        injections: Vec<String>,
     },
 
     Deb {
@@ -172,7 +174,7 @@ enum OutputProducer {
         depends: String,
 
         #[serde(default)]
-        injections: Vec<Injection>,
+        injections: Vec<String>,
     },
 
     Rpm {
@@ -181,21 +183,21 @@ enum OutputProducer {
         #[serde(default)]
         spec: Option<String>,
         #[serde(default)]
-        injections: Vec<Injection>,
+        injections: Vec<String>,
     },
 
     Ext4 {
         name: String,
         path: PathBuf,
         #[serde(default)]
-        injections: Vec<Injection>,
+        injections: Vec<String>,
     },
 }
 
 // This is intended to be a one-way conversion
 #[allow(clippy::from_over_into)]
 impl OutputProducer {
-    fn convert(&self, metadata: &PackageMetadata) -> ConfiguredProducer {
+    fn convert(&self, config: &InternalConfig) -> ConfiguredProducer {
         match self {
             OutputProducer::File {
                 name,
@@ -206,7 +208,10 @@ impl OutputProducer {
                 name: name.clone(),
                 path: path.clone(),
                 preserve_empty_directories: *preserve_empty_directories,
-                injections: injections.clone(),
+                injections: injections
+                    .iter()
+                    .map(|i| config.injections[i].clone())
+                    .collect(),
             }),
 
             OutputProducer::Tarball {
@@ -221,7 +226,10 @@ impl OutputProducer {
                     .clone()
                     .unwrap_or(ConfigCompression::None)
                     .into(),
-                injections: injections.clone(),
+                injections: injections
+                    .iter()
+                    .map(|i| config.injections[i].clone())
+                    .collect(),
             }),
 
             OutputProducer::Docker {
@@ -235,7 +243,10 @@ impl OutputProducer {
                 image: image.clone(),
                 base_image: base_image.clone(),
                 cmd: entrypoint.clone(),
-                injections: injections.clone(),
+                injections: injections
+                    .iter()
+                    .map(|i| config.injections[i].clone())
+                    .collect(),
             }),
 
             OutputProducer::Arch {
@@ -244,13 +255,16 @@ impl OutputProducer {
                 injections,
             } => ConfiguredProducer::Arch(ArchProducer {
                 name: name.clone(),
-                package_name: metadata.name.clone(),
-                package_desc: metadata.description.clone(),
-                package_ver: metadata.version.clone(),
-                package_author: metadata.author.clone(),
-                package_arch: self.convert_architecture(metadata),
+                package_name: config.metadata.name.clone(),
+                package_desc: config.metadata.description.clone(),
+                package_ver: config.metadata.version.clone(),
+                package_author: config.metadata.author.clone(),
+                package_arch: self.convert_architecture(&config.metadata),
                 path: path.clone(),
-                injections: injections.clone(),
+                injections: injections
+                    .iter()
+                    .map(|i| config.injections[i].clone())
+                    .collect(),
             }),
 
             OutputProducer::Deb {
@@ -265,13 +279,16 @@ impl OutputProducer {
                 path: path.clone(),
                 prerm: prerm.clone(),
                 postinst: postinst.clone(),
-                package_name: metadata.name.clone(),
-                package_maintainer: metadata.author.clone(),
-                package_architecture: self.convert_architecture(metadata),
-                package_version: metadata.version.clone(),
+                package_name: config.metadata.name.clone(),
+                package_maintainer: config.metadata.author.clone(),
+                package_architecture: self.convert_architecture(&config.metadata),
+                package_version: config.metadata.version.clone(),
                 package_depends: depends.clone(),
-                package_description: metadata.description.clone(),
-                injections: injections.clone(),
+                package_description: config.metadata.description.clone(),
+                injections: injections
+                    .iter()
+                    .map(|i| config.injections[i].clone())
+                    .collect(),
             }),
 
             OutputProducer::Rpm {
@@ -282,13 +299,16 @@ impl OutputProducer {
             } => ConfiguredProducer::Rpm(RpmProducer {
                 name: name.clone(),
                 path: path.clone(),
-                package_name: metadata.name.clone(),
-                package_version: metadata.version.clone(),
-                package_license: metadata.license.clone(),
-                package_arch: self.convert_architecture(metadata),
-                package_description: metadata.description.clone(),
+                package_name: config.metadata.name.clone(),
+                package_version: config.metadata.version.clone(),
+                package_license: config.metadata.license.clone(),
+                package_arch: self.convert_architecture(&config.metadata),
+                package_description: config.metadata.description.clone(),
                 dependencies: vec![],
-                injections: injections.clone(),
+                injections: injections
+                    .iter()
+                    .map(|i| config.injections[i].clone())
+                    .collect(),
             }),
 
             OutputProducer::Ext4 {
@@ -298,7 +318,10 @@ impl OutputProducer {
             } => ConfiguredProducer::Ext4(Ext4Producer {
                 name: name.clone(),
                 path: path.clone(),
-                injections: injections.clone(),
+                injections: injections
+                    .iter()
+                    .map(|i| config.injections[i].clone())
+                    .collect(),
             }),
         }
     }
