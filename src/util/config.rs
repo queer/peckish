@@ -67,6 +67,7 @@ struct InternalConfig {
     metadata: PackageMetadata,
     input: InputArtifact,
     output: Vec<OutputProducer>,
+    #[serde(default)]
     injections: HashMap<String, Injection>,
 }
 
