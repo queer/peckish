@@ -105,6 +105,7 @@ taking a tarball and producing a DEB or RPM package.
 - [GitHub Actions support](#github-actions)
 - [library support](#library)
 - (WIP) [reproducible builds support](#reproducible-builds)
+- statically-linked release binaries
 
 ## caveats
 
