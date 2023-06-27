@@ -303,11 +303,14 @@ impl ArtifactProducer for DebProducer {
         // Compute the md5sums of every file in the memfs
         let mut md5sums = vec![];
         let mut memfs = previous.extract().await?;
-        let memfs = self.inject(&mut memfs).await?;
-        let paths = nyoom::walk(&**memfs, "/").await?;
+        self.inject(&mut memfs).await?;
+        let paths = nyoom::walk(&*memfs, "/").await?;
         for path in paths {
             if (*memfs).metadata(&path).await?.is_file() {
-                let mut file = MemOpenOptions::new().read(true).open(memfs, &path).await?;
+                let mut file = MemOpenOptions::new()
+                    .read(true)
+                    .open(&*memfs, &path)
+                    .await?;
                 let mut buf = Vec::new();
                 file.read_to_end(&mut buf).await?;
                 let md5sum = md5::compute(buf);

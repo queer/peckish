@@ -15,7 +15,7 @@ pub(crate) mod memory;
 pub mod rpm;
 pub mod tarball;
 
-/// An artifact is the result of some build process.
+/// An artifact is (usually) the result of some build process.
 #[async_trait::async_trait]
 pub trait Artifact: Send + Sync + SelfValidation {
     fn name(&self) -> &str;
@@ -46,13 +46,13 @@ pub trait ArtifactProducer: SelfValidation {
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output>;
 
     /// Inject this producer's custom changes into the memfs.
-    async fn inject<'a>(&self, fs: &'a mut MemFS) -> Result<&'a MemFS> {
+    async fn inject<'a>(&self, fs: &'a mut MemFS) -> Result<()> {
         for injection in self.injections() {
             debug!("applying injection {injection:?}");
             injection.inject(fs).await?;
         }
 
-        Ok(fs)
+        Ok(())
     }
 }
 

@@ -112,13 +112,13 @@ impl ArtifactProducer for Ext4Producer {
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Ext4Artifact> {
         info!("producing {}", self.path.display());
         let mut memfs = previous.extract().await?;
-        let memfs = self.inject(&mut memfs).await?;
+        self.inject(&mut memfs).await?;
         // we add 2M to the end *just* in case of space memes
         let size = memfs.size().await? + (1_024 * 1_024 * 1_024 * 2);
 
         let output = ExtFacadeFloppyDisk::create(&self.path, size)?;
 
-        DiskDrive::copy_between(&**memfs, &output).await?;
+        DiskDrive::copy_between(&*memfs, &output).await?;
 
         Ok(Ext4Artifact {
             name: self.path.to_string_lossy().to_string(),

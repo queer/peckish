@@ -122,14 +122,14 @@ impl ArtifactProducer for TarballProducer {
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<TarballArtifact> {
         info!("producing {}", self.path.display());
         let mut memfs = previous.extract().await?;
-        let memfs = self.inject(&mut memfs).await?;
+        self.inject(&mut memfs).await?;
 
         if let Some(parent) = self.path.parent() {
             tokio::fs::create_dir_all(parent).await?;
         }
 
         let tarball = TarFloppyDisk::open(&self.path).await?;
-        DiskDrive::copy_between(&**memfs, &tarball).await?;
+        DiskDrive::copy_between(&*memfs, &tarball).await?;
         tarball.close().await?;
 
         Ok(TarballArtifact {

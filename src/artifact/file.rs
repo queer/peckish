@@ -128,15 +128,15 @@ impl ArtifactProducer for FileProducer {
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<FileArtifact> {
         let mut memfs = previous.extract().await?;
         debug!("injecting memfs");
-        let memfs = self.inject(&mut memfs).await?;
+        self.inject(&mut memfs).await?;
 
         if let Some(parent) = self.path.parent() {
             tokio::fs::create_dir_all(parent).await?;
         }
 
         let out_disk = TokioFloppyDisk::new(Some(self.path.clone()));
-        DiskDrive::copy_between(&**memfs, &out_disk).await?;
-        let output_paths = nyoom::walk_ordered(&**memfs, "/").await?;
+        DiskDrive::copy_between(&*memfs, &out_disk).await?;
+        let output_paths = nyoom::walk_ordered(&*memfs, "/").await?;
         let paths = output_paths
             .iter()
             .map(|p| {
