@@ -2,6 +2,7 @@
 
 ```yaml
 name: "my rpm artifact"
+type: "rpm"
 path: "./path-to-artifact.rpm"
 ```
 

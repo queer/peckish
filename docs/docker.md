@@ -2,6 +2,7 @@
 
 ```yaml
 name: "my docker artifact"
+type: "docker"
 image: "my/image:latest"
 ```
 

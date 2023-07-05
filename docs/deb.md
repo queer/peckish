@@ -2,6 +2,7 @@
 
 ```yaml
 name: "my deb artifact"
+type: "deb"
 path: "./path-to-artifact.deb"
 ```
 

@@ -2,6 +2,7 @@
 
 ```yaml
 name: "my tarball artifact"
+type: "tarball"
 path: "./path-to-artifact.tar"
 ```
 

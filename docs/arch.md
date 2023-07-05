@@ -2,6 +2,7 @@
 
 ```yaml
 name: "my arch artifact"
+type: "arch"
 path: "./path-to-artifact.pkg.tar"
 ```
 
