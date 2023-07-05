@@ -596,7 +596,7 @@ impl Injection {
             } else if src_type.is_dir() && dest_type.is_file() {
                 return Err(eyre!("cannot move directory {:?} to file {:?}", src, dest));
             } else if src_type.is_dir() && dest_type.is_dir() {
-                panic!("aaaaaaaa")
+                panic!("move dir to dir not yet implemented")
             } else if src_type.is_dir() && dest_type.is_symlink() {
                 let dest = memfs.resolve_symlink(dest).await?;
                 Self::do_move_file(memfs, src, &dest, depth + 1).await?;
