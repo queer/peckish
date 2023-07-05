@@ -470,6 +470,7 @@ pub enum Injection {
     Create { path: PathBuf, content: Vec<u8> },
     HostFile { src: PathBuf, dest: PathBuf },
     HostDir { src: PathBuf, dest: PathBuf },
+    // TODO: chown, chmod
 }
 
 impl Injection {
