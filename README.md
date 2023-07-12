@@ -295,12 +295,12 @@ never be supported.
 - [x] debian package `"deb"`
 - [x] docker image `"docker"`
 - [x] rpm package `"rpm"`
-- [ ] appimage `"appimage"`
-  - https://crates.io/crates/appimage
-    - Missing read support...
 - [x] Filesystem and VM images (`ext4`)
   - WIP
   - Lowest supported libe2fs version is **`1.47.0`**!
+- [ ] appimage `"appimage"`
+  - squashfs: https://crates.io/crates/backhand
+  - unpacker: ???
 - [ ] Flatpak?
   - More research needed
 

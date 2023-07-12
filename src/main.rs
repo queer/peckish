@@ -53,9 +53,7 @@ async fn main() -> Result<()> {
     let args = Input::parse();
 
     debug!("starting peckish");
-
     let config = PeckishConfig::load(args.config_file).await?;
-
     Pipeline::new(args.report_file).run(config).await?;
 
     Ok(())
