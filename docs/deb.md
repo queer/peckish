@@ -4,6 +4,7 @@
 name: "my deb artifact"
 type: "deb"
 path: "./path-to-artifact.deb"
+compression: "none" # any valid peckish compression
 ```
 
 # producer

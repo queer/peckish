@@ -208,6 +208,7 @@ impl SelfBuilder for DebArtifactBuilder {
 pub struct DebProducer {
     pub name: String,
     pub path: PathBuf,
+    pub compression: CompressionType,
     pub prerm: Option<PathBuf>,
     pub postinst: Option<PathBuf>,
     pub injections: Vec<Injection>,
@@ -217,6 +218,15 @@ pub struct DebProducer {
     pub package_version: String,
     pub package_depends: String,
     pub package_description: String,
+}
+
+impl DebProducer {
+    fn tar_file_extension(&self) -> String {
+        match self.compression {
+            CompressionType::None => "".into(),
+            ct => format!(".{}", ct.file_extension()),
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -236,11 +246,13 @@ impl ArtifactProducer for DebProducer {
         // Create data.tar from previous artifact in tmp using TarballProducer
         info!("packaging data files...");
         debug!("producing data.tar from previous artifact...");
-        let data_tar = tmp.path_view().join("data.tar.gz");
+        let data_tar = tmp
+            .path_view()
+            .join(format!("data.tar{}", self.tar_file_extension()));
         let _tar_artifact = TarballProducer {
             name: "data.tar.gz".to_string(),
             path: data_tar.clone(),
-            compression: CompressionType::Gzip,
+            compression: self.compression,
             injections: self.injections.clone(),
         }
         .produce_from(previous)
@@ -249,7 +261,9 @@ impl ArtifactProducer for DebProducer {
         // Create control.tar from control file in tmp
         info!("packaging metadata files...");
         debug!("producing control.tar...");
-        let control_tar = tmp.path_view().join("control.tar.gz");
+        let control_tar = tmp
+            .path_view()
+            .join(format!("control.tar{}", self.tar_file_extension()));
 
         // Write control file to control.tar
         let installed_size = get_artifact_size(previous).await?;
@@ -273,7 +287,7 @@ impl ArtifactProducer for DebProducer {
 
         let control_tar_builder = TarballProducerBuilder::new("control.tar.gz")
             .path(control_tar.clone())
-            .compression(CompressionType::Gzip)
+            .compression(self.compression)
             .inject(Injection::Create {
                 path: "/control".into(),
                 content: control_data.into_bytes(),
@@ -470,6 +484,7 @@ impl SelfValidation for DebProducer {
 pub struct DebProducerBuilder {
     name: String,
     path: PathBuf,
+    compression: CompressionType,
     prerm: Option<PathBuf>,
     postinst: Option<PathBuf>,
     injections: Vec<Injection>,
@@ -485,6 +500,11 @@ pub struct DebProducerBuilder {
 impl DebProducerBuilder {
     pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
         self.path = path.into();
+        self
+    }
+
+    pub fn compression_type(mut self, ct: CompressionType) -> Self {
+        self.compression = ct;
         self
     }
 
@@ -541,6 +561,7 @@ impl SelfBuilder for DebProducerBuilder {
         Self {
             name: name.into(),
             path: PathBuf::from("package.deb"),
+            compression: CompressionType::None,
             prerm: None,
             postinst: None,
             injections: vec![],
@@ -557,6 +578,7 @@ impl SelfBuilder for DebProducerBuilder {
         Ok(DebProducer {
             name: self.name.clone(),
             path: self.path.clone(),
+            compression: self.compression,
             prerm: self.prerm.clone(),
             postinst: self.postinst.clone(),
             injections: self.injections.clone(),

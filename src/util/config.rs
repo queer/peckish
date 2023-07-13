@@ -168,6 +168,7 @@ enum OutputProducer {
     Deb {
         name: String,
         path: PathBuf,
+        compression: Option<ConfigCompression>,
         #[serde(default)]
         prerm: Option<PathBuf>,
         #[serde(default)]
@@ -272,6 +273,7 @@ impl OutputProducer {
             OutputProducer::Deb {
                 name,
                 path,
+                compression,
                 prerm,
                 postinst,
                 depends,
@@ -279,6 +281,10 @@ impl OutputProducer {
             } => ConfiguredProducer::Deb(DebProducer {
                 name: name.clone(),
                 path: path.clone(),
+                compression: compression
+                    .clone()
+                    .map(|c| c.into())
+                    .unwrap_or(CompressionType::None),
                 prerm: prerm.clone(),
                 postinst: postinst.clone(),
                 package_name: config.metadata.name.clone(),
@@ -357,7 +363,7 @@ impl OutputProducer {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
+#[serde(rename_all = "snake_case")]
 enum ConfigCompression {
     None,
     Bzip,

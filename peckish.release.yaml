@@ -2,7 +2,7 @@ chain: false
 
 metadata:
   name: "peckish"
-  version: "0.0.5-1"
+  version: "0.0.7-1"
   description: "peckish transforms software artifacts"
   author: "amy null"
   arch: "amd64"
