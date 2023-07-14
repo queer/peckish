@@ -42,7 +42,7 @@ impl Artifact for RpmArtifact {
         debug!("read rpm into memory");
 
         let pkg = tokio::task::spawn_blocking(move || {
-            rpm::RPMPackage::parse(&mut input.as_slice()).unwrap()
+            rpm::Package::parse(&mut input.as_slice()).unwrap()
         })
         .await?;
 
@@ -181,7 +181,7 @@ impl ArtifactProducer for RpmProducer {
         let file_paths = nyoom::walk_ordered(&host_dir, "/").await?;
 
         debug!("building rpm from tmpdir {}", tmp.display());
-        let mut pkg = rpm::RPMBuilder::new(
+        let mut pkg = rpm::PackageBuilder::new(
             &self.package_name,
             &self.package_version,
             &self.package_license,
@@ -202,7 +202,7 @@ impl ArtifactProducer for RpmProducer {
             pkg = pkg
                 .with_file(
                     path,
-                    rpm::RPMFileOptions::new(rpm_path.to_string_lossy().to_string()),
+                    rpm::FileOptions::new(rpm_path.to_string_lossy().to_string()),
                 )
                 .unwrap();
         }
