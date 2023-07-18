@@ -13,7 +13,7 @@ anyhow = "1.0.71"
 async-recursion = "1.0.4"
 async-trait = "0.1.71"
 bollard = { git = "https://github.com/queer/bollard", rev = "2624ced" }
-clap = { version = "4.3.11", features = ["derive"] }
+clap = { version = "4.3.15", features = ["derive"] }
 color-eyre = { version = "0.6.2", features = ["issue-url"] }
 ctor = "0.2.4"
 disk-drive = "0.1.10"
