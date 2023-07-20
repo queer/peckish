@@ -12,6 +12,7 @@ pub mod docker;
 pub mod ext4;
 pub mod file;
 pub(crate) mod memory;
+pub mod oci;
 pub mod rpm;
 pub mod tarball;
 

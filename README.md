@@ -295,9 +295,10 @@ never be supported.
 - [x] debian package `"deb"`
 - [x] docker image `"docker"`
 - [x] rpm package `"rpm"`
-- [x] Filesystem and VM images (`ext4`)
+- [x] Filesystem and VM images `"ext4"`
   - WIP
-  - Lowest supported libe2fs version is **`1.47.0`**!
+- [x] OCI images `"oci"`
+  - WIP
 - [ ] appimage `"appimage"`
   - squashfs: https://crates.io/crates/backhand
   - unpacker: ???

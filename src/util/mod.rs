@@ -1,5 +1,10 @@
+use std::path::Path;
+
 use eyre::{eyre, Result};
+use sha2::Sha256;
 use thiserror::Error;
+use tokio::fs::File;
+use tokio::io::{AsyncReadExt, BufReader};
 use tracing::*;
 
 pub mod config;
@@ -44,4 +49,34 @@ pub fn get_current_time() -> Result<u64> {
             .as_secs();
         Ok(now)
     }
+}
+
+pub async fn sha256_digest(path: &Path) -> Result<String> {
+    let input = File::open(path).await?;
+    let mut reader = BufReader::new(input);
+
+    let digest = {
+        use sha2::Digest;
+        let mut hasher = Sha256::new();
+        let mut buffer = [0; 1024];
+        loop {
+            let count = reader.read(&mut buffer).await?;
+            if count == 0 {
+                break;
+            }
+            hasher.update(&buffer[..count]);
+        }
+        hasher.finalize()
+    };
+    Ok(format!("{:x}", digest))
+}
+
+pub fn sha256_digest_string<S: Into<String>>(string: S) -> Result<String> {
+    let digest = {
+        use sha2::Digest;
+        let mut hasher = Sha256::new();
+        hasher.update(string.into().as_bytes());
+        hasher.finalize()
+    };
+    Ok(format!("{:x}", digest))
 }

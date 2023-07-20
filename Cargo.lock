@@ -1129,9 +1129,9 @@ dependencies = [
 
 [[package]]
 name = "floppy-disk"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dc320d97230d304c3961ac7d9cc5d592208f3a537b0238e5dc40ebd743c6ed0"
+checksum = "e9994f0c7e41c4e6217247e8ce4fc3680baad2e5d3cdd3ec32060d77d34d4b1e"
 dependencies = [
  "async-trait",
  "derivative",
@@ -1983,6 +1983,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "oci-spec"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9421b067205c68dc80af7c68599a9c1eb113f975aafeb874cea7f4d5d41ce3fb"
+dependencies = [
+ "derive_builder",
+ "getset",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.17.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2074,12 +2087,14 @@ dependencies = [
  "itertools",
  "md5",
  "nyoom",
+ "oci-spec",
  "rand",
  "regex",
  "rpm",
  "serde",
  "serde_json",
  "serde_yaml",
+ "sha2",
  "smoosh",
  "thiserror",
  "tokio",
@@ -2654,9 +2669,9 @@ dependencies = [
 
 [[package]]
 name = "sha2"
-version = "0.10.6"
+version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "82e6b795fe2e3b1e845bafcb27aa35405c4d47cdfc92af5fc8d3002f76cebdc0"
+checksum = "479fb9d862239e610720565ca91403019f2f00410f1864c5aa7479b950a76ed8"
 dependencies = [
  "cfg-if",
  "cpufeatures",

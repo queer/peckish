@@ -29,7 +29,7 @@ impl Drop for TempDir {
     fn drop(&mut self) {
         debug!("!!! DROPPING TEMP DIR {:?}", self.path);
         if self.path.exists() {
-            std::fs::remove_dir_all(&self.path).unwrap();
+            // std::fs::remove_dir_all(&self.path).unwrap();
         }
     }
 }
@@ -112,5 +112,57 @@ impl std::ops::Deref for MemFS {
 impl AsRef<MemFloppyDisk> for MemFS {
     fn as_ref(&self) -> &MemFloppyDisk {
         &self.fs
+    }
+}
+
+#[cfg(test)]
+pub(crate) mod test_utils {
+    use std::path::PathBuf;
+
+    use tracing::debug;
+
+    use super::TempDir;
+
+    pub struct Fixture {
+        pub which: String,
+        #[allow(dead_code)]
+        temp_dir: TempDir,
+    }
+
+    impl Fixture {
+        pub async fn new(which: &str) -> Fixture {
+            let temp_dir = TempDir::new().await.unwrap();
+            let path = Self::path(which);
+            debug!("copying {:?} to {:?}", path, temp_dir.path_view());
+            // create the file in the temp dir
+            tokio::fs::copy(path, temp_dir.path_view().join(which))
+                .await
+                .unwrap();
+
+            Fixture {
+                which: which.to_string(),
+                temp_dir,
+            }
+        }
+
+        fn path(which: &str) -> PathBuf {
+            let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            path.push("test");
+            path.push("fixtures");
+            path.push(which);
+            path
+        }
+
+        pub fn path_view(&self) -> PathBuf {
+            let mut path = self.temp_dir.path_view();
+            path.push(&self.which);
+            path
+        }
+    }
+
+    impl Drop for Fixture {
+        fn drop(&mut self) {
+            debug!("!!! DROPPING FIXTURE {:?}", self.which);
+        }
     }
 }
