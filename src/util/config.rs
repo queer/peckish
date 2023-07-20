@@ -17,6 +17,7 @@ use crate::artifact::deb::{DebArtifact, DebProducer};
 use crate::artifact::docker::{DockerArtifact, DockerProducer};
 use crate::artifact::ext4::{Ext4Artifact, Ext4Producer};
 use crate::artifact::file::{FileArtifact, FileProducer};
+use crate::artifact::oci::{OciArtifact, OciProducer};
 use crate::artifact::rpm::{RpmArtifact, RpmProducer};
 use crate::artifact::tarball::{TarballArtifact, TarballProducer};
 use crate::artifact::{Artifact, ArtifactProducer, SelfValidation};
@@ -82,6 +83,7 @@ enum InputArtifact {
     Deb { name: String, path: PathBuf },
     Rpm { name: String, path: PathBuf },
     Ext4 { name: String, path: PathBuf },
+    Oci { name: String, path: PathBuf },
 }
 
 // Safety: This is intended to be a one-way conversion
@@ -123,6 +125,10 @@ impl Into<ConfiguredArtifact> for InputArtifact {
 
             InputArtifact::Ext4 { name, path } => {
                 ConfiguredArtifact::Ext4(Ext4Artifact { name, path })
+            }
+
+            InputArtifact::Oci { name, path } => {
+                ConfiguredArtifact::Oci(OciArtifact { name, path })
             }
         }
     }
@@ -192,6 +198,14 @@ enum OutputProducer {
     Ext4 {
         name: String,
         path: PathBuf,
+        #[serde(default)]
+        injections: Vec<String>,
+    },
+
+    Oci {
+        name: String,
+        path: String,
+        architecture: String,
         #[serde(default)]
         injections: Vec<String>,
     },
@@ -331,6 +345,21 @@ impl OutputProducer {
                     .map(|i| config.injections[i].clone())
                     .collect(),
             }),
+
+            OutputProducer::Oci {
+                name,
+                path,
+                architecture,
+                injections,
+            } => ConfiguredProducer::Oci(OciProducer {
+                name: name.clone(),
+                path: path.clone().into(),
+                architecture: architecture.clone(),
+                injections: injections
+                    .iter()
+                    .map(|i| config.injections[i].clone())
+                    .collect(),
+            }),
         }
     }
 
@@ -398,6 +427,7 @@ pub enum ConfiguredArtifact {
     Deb(DebArtifact),
     Rpm(RpmArtifact),
     Ext4(Ext4Artifact),
+    Oci(OciArtifact),
 }
 
 #[derive(Debug, Clone)]
@@ -409,6 +439,7 @@ pub enum ConfiguredProducer {
     Deb(DebProducer),
     Rpm(RpmProducer),
     Ext4(Ext4Producer),
+    Oci(OciProducer),
 }
 
 // We can't make transparent enum variants or similar easily here, so this
@@ -423,6 +454,7 @@ impl ConfiguredProducer {
             ConfiguredProducer::Deb(producer) => &producer.name,
             ConfiguredProducer::Rpm(producer) => &producer.name,
             ConfiguredProducer::Ext4(producer) => &producer.name,
+            ConfiguredProducer::Oci(producer) => &producer.name,
         }
     }
 
@@ -435,6 +467,7 @@ impl ConfiguredProducer {
             ConfiguredProducer::Deb(producer) => producer.validate().await,
             ConfiguredProducer::Rpm(producer) => producer.validate().await,
             ConfiguredProducer::Ext4(producer) => producer.validate().await,
+            ConfiguredProducer::Oci(producer) => producer.validate().await,
         }
     }
 
@@ -459,6 +492,9 @@ impl ConfiguredProducer {
                 Ok(producer.produce_from(previous).await.map(Box::new)?)
             }
             ConfiguredProducer::Ext4(producer) => {
+                Ok(producer.produce_from(previous).await.map(Box::new)?)
+            }
+            ConfiguredProducer::Oci(producer) => {
                 Ok(producer.produce_from(previous).await.map(Box::new)?)
             }
         }

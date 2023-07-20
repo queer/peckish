@@ -22,7 +22,7 @@ use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use tracing::{debug, info};
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct OciArtifact {
     pub name: String,
     pub path: PathBuf,
@@ -139,6 +139,7 @@ impl SelfValidation for OciArtifact {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct OciProducer {
     pub name: String,
     pub path: PathBuf,

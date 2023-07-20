@@ -46,6 +46,7 @@ impl Pipeline {
             ConfiguredArtifact::Deb(deb) => Box::new(deb),
             ConfiguredArtifact::Rpm(rpm) => Box::new(rpm),
             ConfiguredArtifact::Ext4(ext4) => Box::new(ext4),
+            ConfiguredArtifact::Oci(oci) => Box::new(oci),
         };
         info!("input: {}", input_artifact.name());
 
