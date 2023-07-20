@@ -1129,9 +1129,9 @@ dependencies = [
 
 [[package]]
 name = "floppy-disk"
-version = "0.2.5"
+version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5dc320d97230d304c3961ac7d9cc5d592208f3a537b0238e5dc40ebd743c6ed0"
+checksum = "e9994f0c7e41c4e6217247e8ce4fc3680baad2e5d3cdd3ec32060d77d34d4b1e"
 dependencies = [
  "async-trait",
  "derivative",
