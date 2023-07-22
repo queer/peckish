@@ -29,7 +29,7 @@ impl Drop for TempDir {
     fn drop(&mut self) {
         debug!("!!! DROPPING TEMP DIR {:?}", self.path);
         if self.path.exists() {
-            // std::fs::remove_dir_all(&self.path).unwrap();
+            std::fs::remove_dir_all(&self.path).unwrap();
         }
     }
 }
@@ -147,7 +147,6 @@ pub(crate) mod test_utils {
 
         fn path(which: &str) -> PathBuf {
             let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            path.push("test");
             path.push("fixtures");
             path.push(which);
             path
