@@ -1,8 +1,9 @@
 use std::path::{Path, PathBuf};
 
-use bollard::container::CreateContainerOptions;
+use bollard::container::{CreateContainerOptions, WaitContainerOptions};
 use bollard::service::Mount;
 use eyre::Result;
+use itertools::Itertools;
 use tracing::{error, info, warn};
 
 use crate::util::config::PeckishConfig;
@@ -16,7 +17,7 @@ pub async fn test_packages(config: PeckishConfig) -> Result<()> {
                     "tar".into(),
                     producer.path.clone(),
                     file_name(&producer.path),
-                    vec!["tar".into(), "tfv".into(), app_path(&producer.path)],
+                    vec!["tar".into(), "fv".into(), app_path(&producer.path)],
                     "alpine:latest".into(),
                 )
                 .await?;
@@ -124,15 +125,30 @@ async fn run_command_in_docker_with_mount(
         .await?;
 
     use futures_util::TryStreamExt;
+    let mut needs_logs = false;
     // wait for the container to finish
-    let results = docker
-        .wait_container::<String>(&container.id, None)
+    match docker
+        .wait_container::<String>(
+            &container.id,
+            Some(WaitContainerOptions {
+                condition: "next-exit".into(),
+            }),
+        )
         .try_collect::<Vec<_>>()
-        .await?;
+        .await
+    {
+        Ok(results) => {
+            if results[0].status_code != 0 {
+                needs_logs = true;
+            }
+        }
 
-    // assert container exited successfully
-    // if it didn't, dump logs
-    if results[0].status_code != 0 {
+        Err(e) => {
+            needs_logs = true;
+            error!("error waiting for container: {}", e);
+        }
+    }
+    if needs_logs {
         let logs = docker
             .logs::<String>(
                 &container.id,
@@ -143,8 +159,12 @@ async fn run_command_in_docker_with_mount(
                 }),
             )
             .try_collect::<Vec<_>>()
-            .await?;
-        error!("logs: {:?}", logs);
+            .await?
+            .iter()
+            .map(|l| l.to_string())
+            .join("");
+
+        error!("\n{logs}");
     }
 
     docker.remove_container(&name, None).await?;
