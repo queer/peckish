@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use color_eyre::Result;
 use tracing::*;
 
@@ -10,6 +10,7 @@ use crate::util::config::PeckishConfig;
 mod artifact;
 mod fs;
 mod pipeline;
+mod tester;
 mod util;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -31,6 +32,19 @@ struct Input {
         help = "Name of the file to generate artifact file output report to."
     )]
     report_file: Option<PathBuf>,
+
+    #[command(subcommand)]
+    pub command: Option<PeckishSubcommand>,
+}
+
+#[derive(Subcommand)]
+pub enum PeckishSubcommand {
+    #[command(
+        name = "test",
+        about = "Test all packages and ensure they install.",
+        subcommand_negates_reqs = true
+    )]
+    Test,
 }
 
 #[tokio::main]
@@ -54,7 +68,15 @@ async fn main() -> Result<()> {
 
     debug!("starting peckish");
     let config = PeckishConfig::load(args.config_file).await?;
-    Pipeline::new(args.report_file).run(config).await?;
+
+    match args.command {
+        Some(PeckishSubcommand::Test) => {
+            tester::test_packages(config).await?;
+        }
+        _ => {
+            Pipeline::new(args.report_file).run(config).await?;
+        }
+    }
 
     Ok(())
 }

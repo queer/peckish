@@ -2082,6 +2082,7 @@ dependencies = [
  "flail",
  "flop",
  "floppy-disk",
+ "futures-util",
  "hyper",
  "indoc",
  "itertools",
