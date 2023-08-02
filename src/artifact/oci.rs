@@ -160,10 +160,6 @@ impl ArtifactProducer for OciProducer {
     }
 
     async fn produce_from(&self, previous: &dyn Artifact) -> Result<Self::Output> {
-        // /index.json
-        // /oci-layout
-        // /blobs
-
         // Produce fs blob tarball
         let oci_layout = r#"{"imageLayoutVersion": "1.0.0"}"#;
         let blob_out_dir = TempDir::new().await?;
