@@ -3,7 +3,7 @@
 peckish (case-sensitive) is a tool for repackaging Linux software artifacts.
 
 For example, suppose you're an application developer. You just made something
-cool and want to distribute it. However, packaging is *hard*. Different package
+cool and want to distribute it. However, packaging is _hard_. Different package
 formats do things differently -- ex. Arch has `x86_64` and `any` as
 architectures, but Debian has over a dozen and calls "`x86_64`" "`amd64`" --
 and it's hard to remember all the specifics. This is compounded by having to
@@ -48,7 +48,7 @@ This problem is fairly common:
 >
 > https://news.ycombinator.com/item?id=34788350
 
-> >  If my package manager had an Oh My Zsh package
+> > If my package manager had an Oh My Zsh package
 >
 > This is the author missing the point. The reason `curl | bash` is common is
 > because devs don't like packaging for every distro under the sun, and MacOS,
@@ -65,7 +65,7 @@ This problem is fairly common:
 peckish aims to solve this. Instead of mangling your files with various arcane
 tools, spinning up Docker containers or VMs to try to build packages and make
 sure they install or are even valid, and all the other pains, you can just
-write a basic YAML file, and you're done! peckish does the rest, *without*
+write a basic YAML file, and you're done! peckish does the rest, _without_
 shelling out to distro-specific tools!
 
 Additionally, peckish makes repackaging software easy. You can take a DEB and
@@ -87,7 +87,6 @@ peckish is based around the concept of "artifacts" and "producers." An artifact
 is some metadata about a package that exists on your system, and a producer is
 something that takes in an artifact and produces a new artifact. For example,
 taking a tarball and producing a DEB or RPM package.
-
 
 - [peckish concepts](#concepts)
 - [artifact and producer docs](https://github.com/queer/peckish/tree/mistress/docs)
@@ -171,7 +170,7 @@ input:
   name: "some file"
   type: "file"
   paths:
-  - "./path/to/file"
+    - "./path/to/file"
 
 # the producers being used as outputs. see `docs/` for more info about each
 # producer.
@@ -222,7 +221,7 @@ For now, you can use peckish as a git dependency:
 peckish = { git = "https://github.com/queer/peckish.git" }
 ```
 
-MSRV 1.69.
+MSRV 1.70.
 
 ```rust
 // artifacts
@@ -317,7 +316,7 @@ never be supported.
 
 ## concepts
 
-peckish is built around the concepts of *artifacts* and *producers*.
+peckish is built around the concepts of _artifacts_ and _producers_.
 
 Artifacts are some sort of data that exists on your system that can be
 packaged; artifacts themselves do not contain any of that data, just metadata.
