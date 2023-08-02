@@ -363,6 +363,7 @@ mod tests {
 
         let oci_artifact = oci_producer.produce_from(&oci_artifact).await?;
 
+        // TODO: Why this borken
         let memfs = oci_artifact.extract().await?;
         let handle = MemOpenOptions::new()
             .read(true)

@@ -221,7 +221,7 @@ For now, you can use peckish as a git dependency:
 peckish = { git = "https://github.com/queer/peckish.git" }
 ```
 
-MSRV 1.70.
+MSRV 1.71.
 
 ```rust
 // artifacts

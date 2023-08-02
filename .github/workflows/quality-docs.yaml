@@ -15,7 +15,7 @@ jobs:
   quality-docs:
     strategy:
       matrix:
-        version: ["stable", "1.70", "nightly"]
+        version: ["stable", "1.71", "nightly"]
     runs-on: "ubuntu-latest"
     steps:
       - uses: "actions/checkout@v2"
