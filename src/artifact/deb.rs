@@ -75,9 +75,6 @@ impl Artifact for DebArtifact {
         let data = TarFloppyDisk::open(tmp.path_view().join(&data_tar)).await?;
         DiskDrive::copy_between(&data, &*fs).await?;
 
-        data.close().await?;
-        deb.close().await?;
-
         Ok(fs)
     }
 
