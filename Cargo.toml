@@ -9,7 +9,7 @@ categories = ["command-line-utilities", "development-tools", "filesystem"]
 keywords = ["packages", "linux", "deb", "tarball", "docker"]
 
 [dependencies]
-anyhow = "1.0.72"
+anyhow = "1.0.75"
 async-recursion = "1.0.4"
 async-trait = "0.1.73"
 bollard = { git = "https://github.com/queer/bollard", rev = "2624ced" }
