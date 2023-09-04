@@ -10,7 +10,7 @@ keywords = ["packages", "linux", "deb", "tarball", "docker"]
 
 [dependencies]
 anyhow = "1.0.75"
-async-recursion = "1.0.4"
+async-recursion = "1.0.5"
 async-trait = "0.1.73"
 bollard = { git = "https://github.com/queer/bollard", rev = "2624ced" }
 clap = { version = "4.3.23", features = ["derive"] }
