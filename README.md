@@ -68,7 +68,7 @@ sure they install or are even valid, and all the other pains, you can just
 write a basic YAML file, and you're done! peckish does the rest, _without_
 shelling out to distro-specific tools!
 
-Additionally, peckish makes repackaging software easy. You can take a DEB and
+Additionally, peckish makes repackaging software easier. You can take a DEB and
 convert it into an RPM, or a Docker image to flat files on the filesystem, or
 turn a tarball into an installable package for DEB-based, RPM-based, or
 Arch-based distros.
