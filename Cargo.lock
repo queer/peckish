@@ -458,6 +458,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "capctl"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1bee5dac8774a3495f734563416fe6de9ac762ccf762ec7653df52914435da86"
+dependencies = [
+ "bitflags 1.3.2",
+ "cfg-if",
+ "libc",
+]
+
+[[package]]
 name = "cast5"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2381,11 +2392,12 @@ dependencies = [
 
 [[package]]
 name = "rpm"
-version = "0.12.0"
+version = "0.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "208ee39485736e9d66b0d887bfeca8848e9399bd21cd87e4814f58a9f893fb2e"
+checksum = "50c507939ac7c688ddd594942c18c25b27290b7e113c57913f5010d86120a268"
 dependencies = [
  "bitflags 2.3.1",
+ "capctl",
  "chrono",
  "cpio",
  "digest 0.10.7",
