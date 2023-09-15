@@ -267,20 +267,25 @@ impl ArtifactProducer for DockerProducer {
         // Import the tarball into Docker
         let (image, tag) = split_image_name_into_repo_and_tag(&self.image);
         let docker = Docker::connect_with_local_defaults()?;
-        let docker_cmd = {
-            if let Some(docker_cmd) = self.cmd.clone() {
-                let docker_cmd = format!("CMD {}", serde_json::to_string(&docker_cmd)?);
-                debug!("docker_cmd = {docker_cmd}");
-                Some(vec!["ENV DEBUG=true".into(), docker_cmd])
-            } else {
-                None
-            }
+
+        // TODO: Stupid, but bollard takes a Vec<&'a str> here instead of a Vec<String>, so we go on a trip to hell
+        let docker_cmd = if let Some(docker_cmd) = self.cmd.clone() {
+            format!("CMD {}", serde_json::to_string(&docker_cmd)?)
+        } else {
+            "".into()
         };
-        debug!("docker_cmd = {docker_cmd:?}");
+
+        let changes = if self.cmd.clone().is_some() {
+            debug!("docker_cmd = {docker_cmd:?}");
+            vec!["ENV DEBUG=true", docker_cmd.as_str()]
+        } else {
+            vec![]
+        };
         let options = CreateImageOptions {
             from_src: "-".to_string(),
             repo: image.into(),
-            changes: None, // docker_cmd,
+            // TODO: Stupid, I wish this was a Vec<String>
+            changes,
             tag: tag.into(),
             ..Default::default()
         };
@@ -418,6 +423,7 @@ mod tests {
 
     use eyre::Result;
 
+    #[allow(non_snake_case)]
     #[ctor::ctor]
     fn init() {
         crate::util::test_init();
