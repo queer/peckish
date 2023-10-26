@@ -31,7 +31,7 @@ oci-spec = "0.6.3"
 rand = "0.8.5"
 regex = "1.10.0"
 rpm = "0.12.1"
-serde = { version = "1.0.188", features = ["derive"] }
+serde = { version = "1.0.190", features = ["derive"] }
 serde_json = "1.0.107"
 serde_yaml = "0.9.25"
 sha2 = "0.10.8"
