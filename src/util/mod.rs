@@ -24,6 +24,7 @@ pub fn test_init() {
     // std::env::set_var("RUST_LOG", "DEBUG");
     std::env::set_var("RUST_BACKTRACE", "full");
     std::panic::catch_unwind(|| {
+        #[allow(unknown_lints, clippy::needless_if)]
         if color_eyre::install().is_ok() {}
         let subscriber = tracing_subscriber::FmtSubscriber::builder()
             .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
