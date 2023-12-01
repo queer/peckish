@@ -32,7 +32,7 @@ nyoom = "0.3.5"
 oci-spec = "0.6.3"
 rand = "0.8.5"
 regex = "1.10.0"
-rpm = "0.12.1"
+rpm = "0.13.0"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = "1.0.107"
 serde_yaml = "0.9.25"
