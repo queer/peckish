@@ -142,8 +142,8 @@ dependencies = [
  "pin-project-lite",
  "tokio",
  "xz2",
- "zstd 0.13.0",
- "zstd-safe 7.0.0",
+ "zstd",
+ "zstd-safe",
 ]
 
 [[package]]
@@ -459,17 +459,6 @@ checksum = "3264e2574e9ef2b53ce6f536dea83a69ac0bc600b762d1523ff83fe07230ce30"
 dependencies = [
  "byteorder",
  "cipher",
-]
-
-[[package]]
-name = "capctl"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1bee5dac8774a3495f734563416fe6de9ac762ccf762ec7653df52914435da86"
-dependencies = [
- "bitflags 1.3.2",
- "cfg-if",
- "libc",
 ]
 
 [[package]]
@@ -981,13 +970,13 @@ dependencies = [
 
 [[package]]
 name = "enum-primitive-derive"
-version = "0.2.2"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c375b9c5eadb68d0a6efee2999fef292f45854c3444c86f09d8ab086ba942b0e"
+checksum = "ba7795da175654fe16979af73f81f26a8ea27638d8d9823d317016888a63dc4c"
 dependencies = [
  "num-traits",
  "quote",
- "syn 1.0.109",
+ "syn 2.0.39",
 ]
 
 [[package]]
@@ -1567,6 +1556,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "itertools"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25db6b064527c5d482d0423354fcd07a89a2dfe07b67892e62411946db7f07b0"
+dependencies = [
+ "either",
+]
+
+[[package]]
 name = "itoa"
 version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2028,7 +2026,7 @@ dependencies = [
  "futures-util",
  "hyper",
  "indoc",
- "itertools",
+ "itertools 0.11.0",
  "md5",
  "nyoom",
  "oci-spec",
@@ -2398,12 +2396,12 @@ dependencies = [
 
 [[package]]
 name = "rpm"
-version = "0.12.1"
+version = "0.13.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50c507939ac7c688ddd594942c18c25b27290b7e113c57913f5010d86120a268"
+checksum = "8a681f5d3dc43f62b636c8e2d0b709e85673cf12eb036cde5a48b26e930a6777"
 dependencies = [
  "bitflags 2.4.1",
- "capctl",
+ "bzip2",
  "chrono",
  "cpio",
  "digest",
@@ -2411,7 +2409,7 @@ dependencies = [
  "enum-primitive-derive",
  "flate2",
  "hex",
- "itertools",
+ "itertools 0.12.0",
  "log",
  "md-5",
  "nom",
@@ -2423,7 +2421,7 @@ dependencies = [
  "sha2",
  "thiserror",
  "xz2",
- "zstd 0.12.4",
+ "zstd",
 ]
 
 [[package]]
@@ -3394,30 +3392,11 @@ dependencies = [
 
 [[package]]
 name = "zstd"
-version = "0.12.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a27595e173641171fc74a1232b7b1c7a7cb6e18222c11e9dfb9888fa424c53c"
-dependencies = [
- "zstd-safe 6.0.6",
-]
-
-[[package]]
-name = "zstd"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bffb3309596d527cfcba7dfc6ed6052f1d39dfbd7c867aa2e865e4a449c10110"
 dependencies = [
- "zstd-safe 7.0.0",
-]
-
-[[package]]
-name = "zstd-safe"
-version = "6.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee98ffd0b48ee95e6c5168188e44a54550b1564d9d530ee21d5f0eaed1069581"
-dependencies = [
- "libc",
- "zstd-sys",
+ "zstd-safe",
 ]
 
 [[package]]
