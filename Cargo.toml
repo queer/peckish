@@ -11,7 +11,7 @@ repository = "https://github.com/queer/peckish"
 homepage = "https://github.com/queer/peckish"
 
 [dependencies]
-anyhow = "1.0.75"
+anyhow = "1.0.76"
 async-recursion = "1.0.5"
 async-trait = "0.1.75"
 bollard = "0.15.0"
