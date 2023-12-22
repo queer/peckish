@@ -277,9 +277,13 @@ impl ArtifactProducer for DockerProducer {
 
         let changes = if self.cmd.clone().is_some() {
             debug!("docker_cmd = {docker_cmd:?}");
-            vec!["ENV DEBUG=true", docker_cmd.as_str()]
+            vec![
+                "ENV MADE_WITH_PECKISH=true",
+                "ENV DEBUG=true",
+                docker_cmd.as_str(),
+            ]
         } else {
-            vec![]
+            vec!["ENV MADE_WITH_PECKISH=true"]
         };
         let options = CreateImageOptions {
             from_src: "-".to_string(),
