@@ -104,7 +104,7 @@ impl Artifact for DockerArtifact {
         let layers: Vec<&str> = manifest
             .as_array()
             .unwrap()
-            .get(0)
+            .first()
             .unwrap()
             .get("Layers")
             .unwrap()
