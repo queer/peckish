@@ -35,7 +35,7 @@ regex = "1.10.0"
 rpm = "0.13.1"
 serde = { version = "1.0.194", features = ["derive"] }
 serde_json = "1.0.109"
-serde_yaml = "0.9.29"
+serde_yaml = "0.9.30"
 sha2 = "0.10.8"
 smoosh = "0.2.1"
 thiserror = "1.0.56"
