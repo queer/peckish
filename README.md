@@ -214,7 +214,7 @@ injections:
 
 **crates.io:** https://crates.io/crates/peckish
 
-MSRV 1.71.
+MSRV 1.74.
 
 ```rust
 // artifacts
