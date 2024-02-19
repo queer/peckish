@@ -627,6 +627,7 @@ impl Injection {
         if dest_exists {
             let dest_type = fs.metadata(dest).await?;
 
+            #[allow(clippy::if_same_then_else)]
             if src_type.is_file() && dest_type.is_file() {
                 fs.rename(src, dest).await?;
             } else if src_type.is_file() && dest_type.is_dir() {
