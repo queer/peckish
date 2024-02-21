@@ -34,7 +34,7 @@ rand = "0.8.5"
 regex = "1.10.3"
 rpm = "0.13.1"
 serde = { version = "1.0.196", features = ["derive"] }
-serde_json = "1.0.113"
+serde_json = "1.0.114"
 serde_yaml = "0.9.31"
 sha2 = "0.10.8"
 smoosh = "0.2.1"
