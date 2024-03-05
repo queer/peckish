@@ -298,8 +298,9 @@ impl ArtifactProducer for DockerProducer {
             .await
             .map(|file| FramedRead::new(file, BytesCodec::new()))?;
         let req_body = hyper::body::Body::wrap_stream(file);
+        let req_body = hyper::body::to_bytes(req_body).await?;
 
-        let mut stream = docker.create_image(Some(options), Some(req_body), None);
+        let mut stream = docker.create_image(Some(options), Some(req_body.slice(..)), None);
 
         while let Some(progress) = stream.next().await {
             let progress = progress?;
