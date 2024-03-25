@@ -14,7 +14,7 @@ homepage = "https://github.com/queer/peckish"
 anyhow = "1.0.81"
 async-recursion = "1.1.0"
 async-trait = "0.1.77"
-bollard = "0.16.0"
+bollard = "0.16.1"
 clap = { version = "4.5.3", features = ["derive"] }
 color-eyre = { version = "0.6.3", features = ["issue-url"] }
 ctor = "0.2.7"
