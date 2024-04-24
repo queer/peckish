@@ -17,7 +17,7 @@ async-trait = "0.1.80"
 bollard = "0.16.0"
 clap = { version = "4.5.3", features = ["derive"] }
 color-eyre = { version = "0.6.3", features = ["issue-url"] }
-ctor = "0.2.7"
+ctor = "0.2.8"
 disk-drive = "0.1.10"
 eyre = "0.6.12"
 flail = "0.3.0"
