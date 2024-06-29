@@ -141,8 +141,6 @@ enum OutputProducer {
         name: String,
         path: PathBuf,
         #[serde(default)]
-        preserve_empty_directories: Option<bool>,
-        #[serde(default)]
         injections: Vec<String>,
     },
 
@@ -219,12 +217,10 @@ impl OutputProducer {
             OutputProducer::File {
                 name,
                 path,
-                preserve_empty_directories,
                 injections,
             } => ConfiguredProducer::File(FileProducer {
                 name: name.clone(),
                 path: path.clone(),
-                preserve_empty_directories: *preserve_empty_directories,
                 injections: injections
                     .iter()
                     .map(|i| config.injections[i].clone())

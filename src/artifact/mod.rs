@@ -35,6 +35,7 @@ pub trait Artifact: Send + Sync + SelfValidation {
 }
 
 /// An artifact producer takes in the previous artifact and produces a new one.
+#[allow(unused)]
 #[async_trait::async_trait]
 pub trait ArtifactProducer: SelfValidation {
     type Output: Artifact;
@@ -121,7 +122,6 @@ mod tests {
             name: "test-file-producer".into(),
             path: "test".into(),
             injections: vec![],
-            preserve_empty_directories: None,
         };
 
         let file_artifact = file_producer.produce_from(&tarball_artifact).await?;

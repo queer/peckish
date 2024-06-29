@@ -17,6 +17,7 @@ use super::{get_artifact_size, Artifact, ArtifactProducer, SelfBuilder, SelfVali
 
 /// An Arch Linux package. This is a tarball file with a `.pkg.tar` extension
 /// and a `.PKGINFO` file in the root.
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct ArchArtifact {
     /// The name of the artifact. Used for ex. logging.
@@ -27,6 +28,7 @@ pub struct ArchArtifact {
     pub pkginfo: Option<Pkginfo>,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct Pkginfo {
     pub pkgname: String,

@@ -7,6 +7,7 @@ use flop::tar::TarFloppyDisk;
 use floppy_disk::tokio_fs::TokioFloppyDisk;
 use floppy_disk::FloppyDisk;
 use smoosh::CompressionType;
+use tokio::fs::File;
 use tracing::*;
 
 use crate::fs::MemFS;
@@ -131,6 +132,33 @@ impl ArtifactProducer for TarballProducer {
         let tarball = TarFloppyDisk::open(&self.path).await?;
         DiskDrive::copy_between(&*memfs, &tarball).await?;
         tarball.close().await?;
+
+        // Compress tarball with smoosh
+        let mut built_tarball = File::open(&self.path).await?;
+        let compressed_path = {
+            let mut path = self.path.clone();
+            let file_name = path.clone();
+            let file_name = file_name
+                .file_name()
+                .expect("tarball filename not present!?");
+            path.pop();
+            path.push(format!(
+                "{}.compressed",
+                file_name
+                    .to_str()
+                    .expect("tarball filename not valid string?!")
+            ));
+            path
+        };
+        let mut compressed_tarball = File::open(&compressed_path).await?;
+        smoosh::recompress(
+            &mut built_tarball,
+            &mut compressed_tarball,
+            self.compression,
+        )
+        .await?;
+        tokio::fs::remove_file(&self.path).await?;
+        tokio::fs::rename(&compressed_path, &self.path).await?;
 
         Ok(TarballArtifact {
             name: self.path.to_string_lossy().to_string(),

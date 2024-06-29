@@ -21,6 +21,7 @@ use crate::util::config::Injection;
 use super::{Artifact, ArtifactProducer, SelfBuilder, SelfValidation};
 
 /// A Debian package. This is a **non-compressed** ar archive.
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct DebArtifact {
     pub name: String,
@@ -30,6 +31,7 @@ pub struct DebArtifact {
     pub prerm: Option<String>,
 }
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct ControlFile {
     pub package: String,

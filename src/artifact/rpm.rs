@@ -17,6 +17,7 @@ use crate::util::config::Injection;
 use super::file::FileProducer;
 use super::{ArtifactProducer, SelfBuilder, SelfValidation};
 
+#[allow(unused)]
 #[derive(Debug, Clone)]
 pub struct RpmArtifact {
     pub name: String,
@@ -170,7 +171,6 @@ impl ArtifactProducer for RpmProducer {
         FileProducer {
             name: self.name.clone(),
             path: tmp.path_view(),
-            preserve_empty_directories: None,
             injections: self.injections.clone(),
         }
         .produce_from(previous)

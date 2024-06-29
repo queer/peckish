@@ -109,7 +109,6 @@ impl SelfBuilder for FileArtifactBuilder {
 pub struct FileProducer {
     pub name: String,
     pub path: PathBuf,
-    pub preserve_empty_directories: Option<bool>,
     pub injections: Vec<Injection>,
 }
 
@@ -170,7 +169,6 @@ impl SelfValidation for FileProducer {
 pub struct FileProducerBuilder {
     name: String,
     path: PathBuf,
-    preserve_empty_directories: Option<bool>,
     injections: Vec<Injection>,
 }
 
@@ -178,11 +176,6 @@ pub struct FileProducerBuilder {
 impl FileProducerBuilder {
     pub fn path<P: Into<PathBuf>>(mut self, path: P) -> Self {
         self.path = path.into();
-        self
-    }
-
-    pub fn preserve_empty_directories(mut self, preserve_empty_directories: bool) -> Self {
-        self.preserve_empty_directories = Some(preserve_empty_directories);
         self
     }
 
@@ -199,7 +192,6 @@ impl SelfBuilder for FileProducerBuilder {
         Self {
             name: name.into(),
             path: PathBuf::from("/"),
-            preserve_empty_directories: None,
             injections: vec![],
         }
     }
@@ -208,7 +200,6 @@ impl SelfBuilder for FileProducerBuilder {
         Ok(FileProducer {
             name: self.name.clone(),
             path: self.path.clone(),
-            preserve_empty_directories: self.preserve_empty_directories,
             injections: self.injections.clone(),
         })
     }

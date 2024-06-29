@@ -169,7 +169,6 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
@@ -208,7 +207,6 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
@@ -247,7 +245,6 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
@@ -285,7 +282,6 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
@@ -323,7 +319,6 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
@@ -361,7 +356,6 @@ mod tests {
                 ConfiguredProducer::File(FileProducer {
                     name: "unwrapper".into(),
                     path: tmp.path_view(),
-                    preserve_empty_directories: None,
                     injections: vec![],
                 }),
             ],
