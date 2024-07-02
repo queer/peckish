@@ -28,8 +28,10 @@ pub fn test_init() {
         let subscriber = tracing_subscriber::FmtSubscriber::builder()
             .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
             .finish();
-        tracing::subscriber::set_global_default(subscriber)
-            .expect("setting default subscriber failed");
+        match tracing::subscriber::set_global_default(subscriber) {
+            Ok(_) => println!("set global tracing subscriber"),
+            Err(_) => println!("failed to set global tracing subscriber (already set?)"),
+        }
     });
 }
 

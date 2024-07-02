@@ -8,6 +8,7 @@ use floppy_disk::tokio_fs::TokioFloppyDisk;
 use floppy_disk::FloppyDisk;
 use smoosh::CompressionType;
 use tokio::fs::File;
+use tokio::fs::OpenOptions;
 use tracing::*;
 
 use crate::fs::MemFS;
@@ -150,7 +151,12 @@ impl ArtifactProducer for TarballProducer {
             ));
             path
         };
-        let mut compressed_tarball = File::open(&compressed_path).await?;
+        let mut compressed_tarball = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&compressed_path)
+            .await?;
         smoosh::recompress(
             &mut built_tarball,
             &mut compressed_tarball,

@@ -21,7 +21,7 @@ ctor = "0.2.7"
 disk-drive = "0.1.10"
 eyre = "0.6.12"
 flail = "0.3.0"
-flop = "0.2.4"
+flop = "0.2.7"
 floppy-disk = "0.2.6"
 futures-util = "0.3.30"
 hyper = { version = "0.14.27", features = ["stream"] }
